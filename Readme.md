@@ -1,4 +1,4 @@
-#cs-conf
+# cs-conf
 
 Exports and imports the configuration of an existing cids system in version 6.1. it is usefull for migrating
 systems (or parts of systems) and it will be the tool to upgrade systems to version 7 and above.
@@ -6,33 +6,48 @@ systems (or parts of systems) and it will be the tool to upgrade systems to vers
 
 ## Usage
 ```
-cs-conf export [to <folder>] [for <serverFolder>] [options]
-or
-cs-conf import [from <folder>] [to <serverFolder>] [in <targetSchema>] [options]
+Usage: cs-conf [options] [command]
+
+  Options:
+
+    -V, --version        output the version number
+    -c, --config <path>  set config path.  (default: ./runtime.properties)
+    -h, --help           output usage information
+
+  Commands:
+
+    import|i [options]   imports the meta information into the cids system
+    export|e [options]   exports the meta information of a cids system
 
 
+Usage: export|e [options]
 
+  exports the meta information of a cids system
 
-gitclick create [<repository>] [as <organization>] [on <account>] [options]
+  Options:
 
-  <repository>      Defaults to the name of the current folder
-  <organization>    Defaults to personal account
-  <account>         Defaults to the default account
+    -f, --folder <folder>  the folder where the config will be written (default: config)
+    -s, --schema <schema>  the schema where the cs-Tables are (default: public)
+    -o, --only             Only export the following topics
+    -x, --skip             Skip the export of the following topics
+    -C, --classes          The classes with their attributes and permissions
+    -S, --structure        The structure information of the system
+    -U, --usermanagement   The users and their groups
+    -h, --help             output usage information
 
-  --set-remote      Add the created repo as remote ('origin' if not set to anything else)
-  --no-issues       Create the repository without issues
-  --no-wiki         Create the repository without a wiki
-  --private         Create the repository privately
+Usage: import|i [options]
 
-gitclick use <account>       Set <account> as default account
-gitclick add                 Interactive prompt for creating a new account
-gitclick remove <account>    Remove <account>
-gitclick list                List your existing accounts
-gitclick default             Displays default account
+  imports the meta information into the cids system
 
-gitclick encrypt             Encrypt your configuration with a password
-gitclick decrypt             Permanently decrypt your configuration
+  Options:
 
-gitclick -v, --version       Output version number
-gitclick -h, --help          Output usage information
+    -f, --folder <folder>  the folder where the config is (default: config)
+    -s, --schema <schema>  the schema where the cs-Tables will be (default: public)
+    -o, --only             Only import the following topics
+    -x, --skip             Skip the import of the following topics
+    -C, --classes          The classes with their attributes and permissions
+    -S, --structure        The structure information of the system
+    -U, --usermanagement   The users and their groups
+    -h, --help             output usage information
+
 ```
