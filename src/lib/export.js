@@ -27,6 +27,18 @@ export async function worker(folder, schema, config) {
         await client.connect();
         console.log("...");
 
+        // Folder Check
+        if (!fs.existsSync(folder)){
+            fs.mkdirSync(folder);
+        }
+        if (!fs.existsSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder)){
+            fs.mkdirSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder);
+        }
+        if (!fs.existsSync("./" + folder + "/"+ constants.dynamicChildrenFolder)){
+            fs.mkdirSync("./" + folder + "/"+ constants.dynamicChildrenFolder);
+        }
+
+
         //ConfigAttr -----------------------------------------------------------------------
         const {
             userConfigAttrs,

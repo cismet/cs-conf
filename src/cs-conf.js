@@ -58,22 +58,23 @@ program
 // For development purpose
 // Should be commented out
 
-// IMPORT
-// program.parse(['node',
-//     'dev-cs-conf',           
-//     "-c", "./runtime/runtime.properties",
-//     'e',
-//     '-f', 'export'
-// ]);
-
 // // EXPORT
 program.parse(['node',
-    'dev-cs-conf',
+    'dev-cs-conf',           
     "-c", "./runtime/runtime.properties",
-    'i',
-    '-f', 'export',
-    '-s', '_demo',
+    'e',
+    '-f', 'export'
 ]);
+
+
+// // IMPORT
+// program.parse(['node',
+//     'dev-cs-conf',
+//     "-c", "./runtime/runtime.properties",
+//     'i',
+//     '-f', 'export',
+//     '-s', '_demo',
+// ]);
 
 
 // Helptexts
