@@ -523,6 +523,9 @@ CREATE OR REPLACE FUNCTION salt(integer) RETURNS text
 
 --- Trigger, der die Trigger-Funktion benutzt, wenn cs_usr geaendert wird
 CREATE TRIGGER password_trigger BEFORE INSERT OR UPDATE ON cs_usr FOR EACH ROW EXECUTE PROCEDURE public.set_pw();
+
+INSERT INTO cs_config_attr_value (id, value)
+VALUES (DEFAULT, 'true')
 `;
 
 export default sql;

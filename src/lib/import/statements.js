@@ -78,14 +78,8 @@ export const simple_cs_config_attr_key = `
 // $3 = user[]
 // $4 = key[]
 export const complex_cs_config_attrs4A = `
-    WITH 
-    valInsert AS (
-        INSERT INTO cs_config_attr_value (id,"value") 
-            VALUES (DEFAULT, 1)
-        RETURNING id
-    )   
     INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
-    SELECT cs_usr.id user_id, cs_ug.id group_id,cs_domain.id domain_id, cs_config_attr_key.id key_id, (select id from valInsert),cs_config_attr_type.id type_id
+    SELECT cs_usr.id user_id, cs_ug.id group_id,cs_domain.id domain_id, cs_config_attr_key.id key_id, 1,cs_config_attr_type.id type_id
         FROM (SELECT 
             UNNEST($1::text[]), 
             UNNEST($2::text[]), 
