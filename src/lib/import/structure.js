@@ -90,10 +90,6 @@ const importStructure = async (client, structure, sqlFiles) => {
     const { csCatLinkEntries } = prepareData2ndTime(flattenNodes, structureMap, dbids);
     console.log("importing cat links ("+csCatLinkEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_cat_link, csCatLinkEntries);
-    
-
-
-
 }
 
 export default importStructure;
