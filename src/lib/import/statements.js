@@ -360,3 +360,21 @@ export const complex_cs_cat_link = `
     ) as t(f,t)
     JOIN cs_domain ON (cs_domain.name='LOCAL');
 `;
+
+
+export const complex_cs_ug_cat_node_permission = `
+    INSERT INTO cs_ug_cat_node_perm 
+        (ug_id, "domain", cat_node_id, "permission" ) 
+    SELECT 
+        cs_ug.id uid, node_domain.id, cnid, cs_permission.id pid
+    FROM UNNEST (
+        $1::text[], -- group name
+        $2::text[], -- group domain
+        $3::integer[], -- cat_node_id
+        $4::text[] -- permission
+    )  AS t(g,d,cnid,p)   
+   JOIN cs_domain node_domain ON (node_domain.name='LOCAL')
+   JOIN cs_domain group_domain ON (d=group_domain.name)
+   JOIN cs_ug ON (g=cs_ug.name AND group_domain.id=cs_ug.domain)
+   JOIN cs_permission ON (p=cs_permission.key);
+`;
