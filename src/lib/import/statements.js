@@ -54,10 +54,14 @@ export const simple_cs_ug_membership = `
 
 export const nested_cs_ug_membership = `
     INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
-        SELECT cs_ug.id,cs_ug.domain,cs_usr.id FROM UNNEST ($1::text[], $2::text[], $3::text[]) AS t(g, d, u) 
-            JOIN cs_ug ON (cs_ug.name=g) 
-            JOIN cs_domain ON (cs_ug.domain=cs_domain.id) 
-            JOIN cs_usr ON (cs_usr.login_name=u)   
+        SELECT cs_ug.id,cs_ug.domain,cs_usr.id FROM (SELECT 
+            UNNEST($1::text[]), 
+            UNNEST($2::text[]), 
+            UNNEST($3::text[])
+        ) AS t(g, d, u) 
+        JOIN cs_ug ON (cs_ug.name=g) 
+        JOIN cs_domain ON (cs_ug.domain=cs_domain.id) 
+        JOIN cs_usr ON (cs_usr.login_name=u)   
 `;     
 
 
@@ -82,8 +86,11 @@ export const complex_cs_config_attrs4A = `
     )   
     INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
     SELECT cs_usr.id user_id, cs_ug.id group_id,cs_domain.id domain_id, cs_config_attr_key.id key_id, (select id from valInsert),cs_config_attr_type.id type_id
-        FROM UNNEST (
-            $1::text[], $2::text[], $3::text[], $4::text[]
+        FROM (SELECT 
+            UNNEST($1::text[]), 
+            UNNEST($2::text[]), 
+            UNNEST($3::text[]), 
+            UNNEST($4::text[])
         ) AS t(d, g, u, k) 
         LEFT OUTER JOIN cs_ug ON (cs_ug.name=g) 
         LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
@@ -113,8 +120,13 @@ export const complex_cs_config_attrs_C_X = `
         cs_config_attr_key.id key_id, 
         cs_config_attr_value.id value_id, 
         cs_config_attr_type.id type_id
-        FROM UNNEST (
-            $1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[]
+        FROM (SELECT 
+            UNNEST($1::text[]), 
+            UNNEST($2::text[]), 
+            UNNEST($3::text[]), 
+            UNNEST($4::text[]), 
+            UNNEST($5::text[]), 
+            UNNEST($6::text[])
         ) AS t(d, g, u, k, t, v) 
         LEFT OUTER JOIN cs_ug ON (cs_ug.name=g) 
         LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
@@ -140,8 +152,23 @@ export const simple_cs_java_class = `
 export const complex_cs_class = `
     INSERT INTO cs_class ("name", descr, class_icon_id, object_icon_id, "table_name", primary_key_field, indexed, tostring, editor, renderer, array_link, policy, attribute_policy) 
     SELECT n , d, class_icons.id, object_icons.id, t, pk, i, toStringClasses.id, editorClasses.id, rendererClasses.id, a, class_policy.id, attribute_policy.id
-    FROM UNNEST (
-        $1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::bool[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[], $13::text[], $14::bool[], $15::text[], $16::text[]
+    FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[]), 
+        UNNEST($3::text[]),         
+        UNNEST($4::text[]), 
+        UNNEST($5::text[]), 
+        UNNEST($6::text[]), 
+        UNNEST($7::bool[]), 
+        UNNEST($8::text[]), 
+        UNNEST($9::text[]), 
+        UNNEST($10::text[]), 
+        UNNEST($11::text[]), 
+        UNNEST($12::text[]), 
+        UNNEST($13::text[]), 
+        UNNEST($14::bool[]), 
+        UNNEST($15::text[]), 
+        UNNEST($16::text[])
     ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap)
     LEFT OUTER JOIN cs_icon class_icons ON (ci=class_icons.file_name)
     LEFT OUTER JOIN cs_icon object_icons ON (oi=object_icons.file_name)
@@ -156,8 +183,9 @@ export const complex_cs_class = `
 export const complex_cs_type = `
     INSERT INTO cs_type ("name", class_id, complex_type, descr, editor, renderer) 
     SELECT n, cs_class.id,true, null, null, null
-    FROM UNNEST (
-        $1::text[], $2::text[]
+    FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[])
     ) AS t(n, tn)
     JOIN cs_class ON (cs_class.table_name=tn);
 `;
@@ -174,33 +202,33 @@ export const complex_cs_attr4dbTypes = `
                 foreign_key_class.id,d,v,i,arr,
                 ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
                 dv, fromString_jc.id,p,pr,sc,ea
-    FROM UNNEST (
-        $1::text[], -- table
-        $2::text[], -- type_name
-        $3::text[], -- name
-        $4::text[], -- fieldname
-        $5::bool[], -- foreign_key
-        $6::bool[], -- substitute
-        $7::text[], -- foreign_key_references_to_table_name
-        $8::text[], -- descr
-        $9::bool[], -- visible
-        $10::bool[], -- indexed
-        $11::bool[], -- isarray
-        $12::text[], -- array_key
-        $13::text[], -- editor class
-        $14::text[], -- editor type
-        $15::text[], -- tostring class
-        $16::text[], -- tostring type
-        $17::text[], -- complex_editor class
-        $18::text[], -- complex_editor type
-        $19::bool[], -- optional
-        $20::text[], -- default_value
-        $21::text[], -- from_string class
-        $22::text[], -- from_string type
-        $23::integer[], -- pos
-        $24::integer[], -- precision
-        $25::integer[], -- scale
-        $26::bool[] -- extension attribute
+    FROM (SELECT
+        UNNEST($1::text[]), -- table
+        UNNEST($2::text[]), -- type_name
+        UNNEST($3::text[]), -- name
+        UNNEST($4::text[]), -- fieldname
+        UNNEST($5::bool[]), -- foreign_key
+        UNNEST($6::bool[]), -- substitute
+        UNNEST($7::text[]), -- foreign_key_references_to_table_name
+        UNNEST($8::text[]), -- descr
+        UNNEST($9::bool[]), -- visible
+        UNNEST($10::bool[]), -- indexed
+        UNNEST($11::bool[]), -- isarray
+        UNNEST($12::text[]), -- array_key
+        UNNEST($13::text[]), -- editor class
+        UNNEST($14::text[]), -- editor type
+        UNNEST($15::text[]), -- tostring class
+        UNNEST($16::text[]), -- tostring type
+        UNNEST($17::text[]), -- complex_editor class
+        UNNEST($18::text[]), -- complex_editor type
+        UNNEST($19::bool[]), -- optional
+        UNNEST($20::text[]), -- default_value
+        UNNEST($21::text[]), -- from_string class
+        UNNEST($22::text[]), -- from_string type
+        UNNEST($23::integer[]), -- pos
+        UNNEST($24::integer[]), -- precision
+        UNNEST($25::integer[]), -- scale
+        UNNEST($26::bool[]) -- extension attribute
     ) AS t(t,tn,n,fn,fk,s,fktn,d,v,i,arr,ak,ec,et,tsc,tst,cec,cet,o,dv,fsc,fst,p,pr,sc,ea)
 
     JOIN cs_class ON (t=cs_class.table_name)
@@ -226,34 +254,34 @@ export const complex_cs_attr4cidsTypes = `
                 type_class.id*xx,d,v,i,arr,
                 ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
                 dv, fromString_jc.id,p,pr,sc,ea
-    FROM UNNEST (
-        $1::text[], -- table
-        $2::text[], -- type_name (4 cidsTypes the table_name of the foreign key table)
-        $3::text[], -- name
-        $4::text[], -- fieldname
-        $5::bool[], -- foreign_key
-        $6::bool[], -- substitute
-        $7::text[], -- foreign_key_references_to_table_name
-        $8::text[], -- descr
-        $9::bool[], -- visible
-        $10::bool[], -- indexed
-        $11::bool[], -- isarray
-        $12::text[], -- array_key
-        $13::text[], -- editor class
-        $14::text[], -- editor type
-        $15::text[], -- tostring class
-        $16::text[], -- tostring type
-        $17::text[], -- complex_editor class
-        $18::text[], -- complex_editor type
-        $19::bool[], -- optional
-        $20::text[], -- default_value
-        $21::text[], -- from_string class
-        $22::text[], -- from_string type
-        $23::integer[], -- pos
-        $24::integer[], -- precision
-        $25::integer[], -- scale
-        $26::bool[], -- extension attribute
-        $27::integer[] -- -1 if oneToMany or 1 if else
+    FROM (SELECT
+        UNNEST($1::text[]), -- table
+        UNNEST($2::text[]), -- type_name (4 cidsTypes the table_name of the foreign key table)
+        UNNEST($3::text[]), -- name
+        UNNEST($4::text[]), -- fieldname
+        UNNEST($5::bool[]), -- foreign_key
+        UNNEST($6::bool[]), -- substitute
+        UNNEST($7::text[]), -- foreign_key_references_to_table_name
+        UNNEST($8::text[]), -- descr
+        UNNEST($9::bool[]), -- visible
+        UNNEST($10::bool[]), -- indexed
+        UNNEST($11::bool[]), -- isarray
+        UNNEST($12::text[]), -- array_key
+        UNNEST($13::text[]), -- editor class
+        UNNEST($14::text[]), -- editor type
+        UNNEST($15::text[]), -- tostring class
+        UNNEST($16::text[]), -- tostring type
+        UNNEST($17::text[]), -- complex_editor class
+        UNNEST($18::text[]), -- complex_editor type
+        UNNEST($19::bool[]), -- optional
+        UNNEST($20::text[]), -- default_value
+        UNNEST($21::text[]), -- from_string class
+        UNNEST($22::text[]), -- from_string type
+        UNNEST($23::integer[]), -- pos
+        UNNEST($24::integer[]), -- precision
+        UNNEST($25::integer[]), -- scale
+        UNNEST($26::bool[]), -- extension attribute
+        UNNEST($27::integer[]) -- -1 if oneToMany or 1 if else
     ) AS t(t,tn,n,fn,fk,s,fktn,d,v,i,arr,ak,ec,et,tsc,tst,cec,cet,o,dv,fsc,fst,p,pr,sc,ea,xx)
 
     JOIN cs_class ON (t=cs_class.table_name)
@@ -270,10 +298,10 @@ export const complex_cs_class_attr = `
         (class_id, type_id, attr_key, attr_value) 
     SELECT 
         cs_class.id, cs_type.id, key, value
-    FROM UNNEST (
-        $1::text[], -- table
-        $2::text[], -- attr_key
-        $3::text[] -- attr_value
+    FROM (SELECT
+        UNNEST($1::text[]), -- table
+        UNNEST($2::text[]), -- attr_key
+        UNNEST($3::text[]) -- attr_value
     )  AS t(tn,key,value)
     JOIN cs_class ON (tn=cs_class.table_name)
     JOIN cs_type ON (cs_type.name='TEXT');
@@ -285,11 +313,11 @@ export const complex_cs_class_permission = `
         (ug_id, class_id, "permission", "domain") 
     SELECT 
         cs_ug.id uid, cs_class.id cid, cs_permission.id pid, null
-    FROM UNNEST (
-        $1::text[], -- group name
-        $2::text[], -- group domain
-        $3::text[], -- table_name
-        $4::text[] -- permission
+    FROM ( SELECT
+        UNNEST($1::text[]), -- group name
+        UNNEST($2::text[]), -- group domain
+        UNNEST($3::text[]), -- table_name
+        UNNEST($4::text[]) -- permission
     )  AS t(g,d,t,p)   
    JOIN cs_class ON (t=cs_class.table_name)
    JOIN cs_domain ON (d=cs_domain.name)
@@ -303,12 +331,12 @@ export const complex_cs_attr_permission = `
         (ug_id, attr_id, "permission", "domain") 
     SELECT 
         cs_ug.id uid, cs_class.id cid, cs_permission.id pid, null
-    FROM UNNEST (
-        $1::text[], -- group name
-        $2::text[], -- group domain
-        $3::text[], -- table_name
-        $4::text[], -- attribute
-        $5::text[] -- permission
+    FROM (SELECT
+        UNNEST($1::text[]), -- group name
+        UNNEST($2::text[]), -- group domain
+        UNNEST($3::text[]), -- table_name
+        UNNEST($4::text[]), -- attribute
+        UNNEST($5::text[]) -- permission
     )  AS t(g,d,t,a,p)   
    JOIN cs_class ON (t=cs_class.table_name)
    JOIN cs_attr ON (a=cs_attr.field_name AND cs_attr.class_id=cs_class.id
@@ -327,23 +355,21 @@ export const complex_cs_cat_node = `
         n, null, cs_class.id, oid, nt,
         ir, o, dc, ss, cs_policy.id, 
         dpc, null, i, aid
-    FROM UNNEST (
-        $1::text[], -- name
-        $2::text[], -- descrurl
-        $3::text[], -- table_name
-        $4::integer[], -- object_id
-        $5::text[], -- node_type
-        $6::bool[], -- is_root
-        $7::text[], -- org
-        $8::text[], -- dynamic_children
-        $9::bool[], -- sql_sort
-        $10::text[], -- policy
-        $11::bool[], -- derive_permissions_from_class
-        $12::text[], -- iconfactory
-        $13::text[], -- icon
-        $14::text[] -- artificial_id
-        
-
+    FROM (SELECT
+        UNNEST($1::text[]), -- name
+        UNNEST($2::text[]), -- descrurl
+        UNNEST($3::text[]), -- table_name
+        UNNEST($4::integer[]), -- object_id
+        UNNEST($5::text[]), -- node_type
+        UNNEST($6::bool[]), -- is_root
+        UNNEST($7::text[]), -- org
+        UNNEST($8::text[]), -- dynamic_children
+        UNNEST($9::bool[]), -- sql_sort
+        UNNEST($10::text[]), -- policy
+        UNNEST($11::bool[]), -- derive_permissions_from_class
+        UNNEST($12::text[]), -- iconfactory
+        UNNEST($13::text[]), -- icon
+        UNNEST($14::text[]) -- artificial_id        
     ) AS t(n,d,t,oid,nt,ir,o,dc,ss,p,dpc,if,i,aid)
     LEFT OUTER JOIN  cs_class ON (t=cs_class.table_name)
     LEFT OUTER JOIN cs_policy ON (p=cs_policy.name)
@@ -354,9 +380,9 @@ export const complex_cs_cat_node = `
 export const complex_cs_cat_link = `
     INSERT INTO cs_cat_link (id_from, id_to, domain_to) 
     SELECT  f,t,cs_domain.id
-    FROM UNNEST (
-        $1::integer[], -- from
-        $2::integer[] -- to
+    FROM ( SELECT
+        UNNEST($1::integer[]), -- from
+        UNNEST($2::integer[]) -- to
     ) as t(f,t)
     JOIN cs_domain ON (cs_domain.name='LOCAL');
 `;
@@ -367,11 +393,11 @@ export const complex_cs_ug_cat_node_permission = `
         (ug_id, "domain", cat_node_id, "permission" ) 
     SELECT 
         cs_ug.id uid, node_domain.id, cnid, cs_permission.id pid
-    FROM UNNEST (
-        $1::text[], -- group name
-        $2::text[], -- group domain
-        $3::integer[], -- cat_node_id
-        $4::text[] -- permission
+    FROM (SELECT 
+        UNNEST($1::text[]), -- group name
+        UNNEST($2::text[]), -- group domain
+        UNNEST($3::integer[]), -- cat_node_id
+        UNNEST($4::text[]) -- permission
     )  AS t(g,d,cnid,p)   
    JOIN cs_domain node_domain ON (node_domain.name='LOCAL')
    JOIN cs_domain group_domain ON (d=group_domain.name)
