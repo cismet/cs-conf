@@ -21,11 +21,12 @@ import importClassPermissions from './import/classPermissions';
 import importAttrPermissions from './import/attrPermissions';
 import importStructure from './import/structure';
 import * as constants from './tools/constants.js';
+import { getClientForConfig } from './tools/db';
 
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
-const client = new Client({
+const clientX = new Client({
     user: 'postgres',
     host: '127.0.0.1',
     database: 'wunda',
@@ -38,8 +39,9 @@ const client = new Client({
 
 
 
-export async function worker(folder, schema) {
+export async function worker(folder, schema, config) {
     try {
+        const client = await getClientForConfig(config);
         await client.connect();
 
         let sql=`

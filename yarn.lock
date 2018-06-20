@@ -1262,6 +1262,10 @@ process-nextick-args@~2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/process-nextick-args/-/process-nextick-args-2.0.0.tgz#a37d732f4271b4ab1ad070d35508e8290788ffaa"
 
+properties-file@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/properties-file/-/properties-file-1.0.0.tgz#3508099c51d26c3b5c8f8210eab7e8fa6a4fe966"
+
 randomatic@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/randomatic/-/randomatic-3.0.0.tgz#d35490030eb4f7578de292ce6dfb04a91a128923"

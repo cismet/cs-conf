@@ -15,6 +15,7 @@
     "lodash": "^4.17.10",
     "lodash-transpose": "^0.2.1",
     "pg": "^7.4.3",
+    "properties-file": "^1.0.0",
     "slug": "^0.9.1",
     "striptags": "^3.1.1",
     "xml-formatter": "^1.0.1",

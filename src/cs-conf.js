@@ -22,9 +22,10 @@ program
     .option('-U, --usermanagement', 'The users and their groups')
     .action(function (cmd) {
         console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< IMPORT")
-        console.log("... in " + cmd.folder);
-        console.log("... from " + cmd.schema + ".cs_*");
-        csImport.worker(cmd.folder, cmd.schema);
+        console.log("... from " + cmd.folder);
+        console.log("... to " + cmd.schema + ".cs_*");
+        console.log("... for " + cmd.parent.config );
+        csImport.worker(cmd.folder, cmd.schema, cmd.parent.config);
 
     });
 
@@ -41,12 +42,10 @@ program
     .option('-U, --usermanagement', 'The users and their groups')
     .action(function (cmd) {
         console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXPORT")
-        console.log("... in " + cmd.folder);
+        console.log("... to " + cmd.folder);
         console.log("... from " + cmd.schema + ".cs_*");
-        console.log(cmd.only);
-        console.log(cmd.parent.config);
-
-        csExport.worker(cmd.folder, cmd.schema);
+        console.log("... for " + cmd.parent.config );
+        csExport.worker(cmd.folder, cmd.schema, cmd.parent.config);
     });
 
 
@@ -55,23 +54,23 @@ program
 
 
 
-// program.parse(['node',
-//     'dev-cs-conf',           
-//     "-c", "./tmp/runtime.properties",
-//     'e',
-//     '-f', 'export'
-// ]);
-
-
-
-
 program.parse(['node',
-    'dev-cs-conf',
-    "-c", "./tmp/runtime.properties",
-    'i',
-    '-f', 'export',
-    '-s', '_demo',
+    'dev-cs-conf',           
+    "-c", "./runtime/runtime.properties",
+    'e',
+    '-f', 'export'
 ]);
+
+
+
+
+// program.parse(['node',
+//     'dev-cs-conf',
+//     "-c", "./runtime/runtime.properties",
+//     'i',
+//     '-f', 'export',
+//     '-s', '_demo',
+// ]);
 
 
 // program.parse(['node',

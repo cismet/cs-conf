@@ -17,18 +17,13 @@ import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
 import * as constants from './tools/constants.js';
+import { getClientForConfig } from './tools/db';
 
 const writeFile = util.promisify(fs.writeFile);
-const client = new Client({
-    user: 'postgres',
-    host: '127.0.0.1',
-    database: 'wunda',
-    password: 'xxx',
-    port: 5433,
-});
-
-export async function worker(folder, schema) {
+export async function worker(folder, schema, config) {
     try {
+
+        const client = await getClientForConfig(config);
         await client.connect();
         console.log("...");
 
