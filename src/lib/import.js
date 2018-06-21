@@ -36,22 +36,30 @@ const clientX = new Client({
 });
 
 
-
-
-
 export async function worker(folder, schema, config) {
     try {
         const client = await getClientForConfig(config);
         await client.connect();
 
-        let sql=`
-            CREATE SCHEMA IF NOT EXISTS ${schema};
+       
+        console.log("create chema (if not existing)");
+
+        try {
+            await client.query(" CREATE SCHEMA ${schema};"); //ditched IF NOT EXISTS due to backwards compatibility
+            console.log("Schema created.")
+
+        }
+        catch (skip){
+            console.log("Schema is already there.")
+        }
+
+        let sql=`           
             SET SCHEMA '${schema}';
             
             ${csDrop}
 
             ${csInit}
-           
+        
         `;
 
         console.log("initialize schema");
@@ -125,7 +133,7 @@ export async function worker(folder, schema, config) {
        
        // await importAttrPermissions(client, configfiles.classPerms);
 
-       await importStructure(client, configfiles.structure, configfiles.sqlFiles);
+        await importStructure(client, configfiles.structure, configfiles.sqlFiles);
 
         //close the connection -----------------------------------------------------------------------
 
