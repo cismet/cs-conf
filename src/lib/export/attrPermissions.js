@@ -12,7 +12,6 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
     let attrWritePerms = new Map();
 
     for (let ap of attrPermResult) {
-        console.log(ap)
         let ug = ap.group + "@" + ap.domain ;
         let key = ap.table + "." + ap.field;
         let attrReadPermissions = attrReadPerms.get(key);
@@ -31,7 +30,6 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
             attrWritePermissions.push(ug);
         }
     }
-    console.log(attrWritePerms)
     let aPermByTable = [];
     let normalizedAPerms = new Map();
     for (let a of attributes) {
