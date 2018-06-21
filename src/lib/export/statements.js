@@ -15,7 +15,7 @@ export const configAttr = `
         LEFT OUTER JOIN cs_domain md ON (jt.dom_id=md.id)
         LEFT OUTER JOIN cs_usr u ON (jt.usr_id=u.id) 
         LEFT OUTER JOIN cs_ug ug ON (jt.ug_id=ug.id) LEFT OUTER JOIN cs_domain ugd ON (ug."domain"=ugd.id)
-        order by 1,3,2;
+        order by 1,3,2,4,5,6,7;
 `;
 
 export const domains = `
