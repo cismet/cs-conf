@@ -63,5 +63,7 @@ typings/
 
 /export
 /runtime
+/build
+/config
 
 **.DS_Store
