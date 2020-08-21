@@ -34,8 +34,11 @@ export async function worker(folder, schema, config) {
         if (!fs.existsSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder)){
             fs.mkdirSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder);
         }
-        if (!fs.existsSync("./" + folder + "/"+ constants.dynamicChildrenFolder)){
-            fs.mkdirSync("./" + folder + "/"+ constants.dynamicChildrenFolder);
+        if (!fs.existsSync("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder)){
+            fs.mkdirSync("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder);
+        }
+        if (!fs.existsSync("./" + folder + "/"+ constants.structureHelperStatementsFolder)){
+            fs.mkdirSync("./" + folder + "/"+ constants.structureHelperStatementsFolder);
         }
 
 
@@ -122,7 +125,9 @@ export async function worker(folder, schema, config) {
         //structure -----------------------------------------------------------------------
         const {
             rootNodes,
-            sqlDocuments
+            structureSqlDocuments,
+            dynchildhelpers,
+            helperSqlDocuments
         } = await exportStructure(client);
 
         console.log("writing structure.json");
@@ -131,11 +136,18 @@ export async function worker(folder, schema, config) {
         await writeFile("./" + folder + "/structure.json", stringify(rootNodes, {
             maxLength: 80
         }), "utf8");
+        await writeFile("./" + folder + "/dynchildhelpers.json", stringify(dynchildhelpers, {
+            maxLength: 80
+        }), "utf8");
 
 
         console.log("writing sql snippets");
-        sqlDocuments.forEach(async (value, key) => {
-            await writeFile("./" + folder + "/"+ constants.dynamicChildrenFolder +"/" + key, value, "utf8");
+        structureSqlDocuments.forEach(async (value, key) => {
+            await writeFile("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder +"/" + key, value, "utf8");
+        });
+
+        helperSqlDocuments.forEach(async (value, key) => {
+            await writeFile("./" + folder + "/"+ constants.structureHelperStatementsFolder +"/" + key, value, "utf8");
         });
 
         //close the connection -----------------------------------------------------------------------

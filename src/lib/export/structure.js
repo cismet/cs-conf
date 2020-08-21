@@ -14,10 +14,13 @@ const exportStructure = async (client) => {
     const {
         rows: nodePermResult
     } = await client.query(stmnts.nodePermissions);
-    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult);
+    const {
+        rows: dynchildhelpersResult
+    } = await client.query(stmnts.dynchildhelpers);
+    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
 }
-export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult) {
 
+export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
     let nodeReadPerms = new Map();
     let nodeWritePerms = new Map();
     for (let np of nodePermResult) {
@@ -102,10 +105,12 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult) {
 
 
     let parentIds = new Set();
-    let sqlDocCounter = 0;
-    let sqlDocuments = new Map();
+    let structureSqlCounter = 0;
+    let structureSqlDocuments = new Map();
+    let helperSqlCounter = 0;
+    let helperSqlDocuments = new Map();
 
-    let getChildren = (parent) => {
+    let getChildrenFromNode = (parent) => {
         if (parentIds.has(parent.id) === false) {
             parentIds.add(parent.id);
         } else {
@@ -117,9 +122,8 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult) {
         delete parent.id;
 
         if (parent.dynamic_children) {
-            sqlDocCounter++;
-            let fileName = zeroFill(3, sqlDocCounter) + "." + slug(striptags(parent.name)) + ".sql"
-            sqlDocuments.set(fileName, parent.dynamic_children);
+            let fileName = zeroFill(3, ++structureSqlCounter) + "." + slug(striptags(parent.name)) + ".sql"
+            structureSqlDocuments.set(fileName, parent.dynamic_children);
             parent.dynamic_children_file = fileName;
         }
         delete parent.dynamic_children;
@@ -129,7 +133,7 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult) {
             for (let childId of childrenIds) {
                 let childNode = nodes.get(childId);
                 if (childNode) {
-                    getChildren(childNode);
+                    getChildrenFromNode(childNode);
                     childrenArray.push(childNode);
 
                 }
@@ -142,12 +146,24 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult) {
 
 
     for (let node of rootNodes) {
-        getChildren(node);
+        getChildrenFromNode(node);
+    }
+
+    let dynchildhelpers = [];
+    for (let dynchildhelper of dynchildhelpersResult) {
+        let fileName = zeroFill(3, ++helperSqlCounter) + "." + slug(striptags(dynchildhelper.name)) + ".sql"
+        helperSqlDocuments.set(fileName, dynchildhelper.code);
+        dynchildhelper.code_file = fileName;    
+        delete dynchildhelper.id;
+        delete dynchildhelper.code;
+        dynchildhelpers.push(dynchildhelper);
     }
 
     return {
         rootNodes,
-        sqlDocuments
+        structureSqlDocuments,
+        dynchildhelpers,
+        helperSqlDocuments
     };
 }
 export default exportStructure;

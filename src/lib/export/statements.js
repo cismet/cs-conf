@@ -163,6 +163,15 @@ export const nodes = `
         n.name;
 `;
 
+export const dynchildhelpers = `
+SELECT 
+    id, name, code
+FROM
+    cs_dynamic_children_helper
+ORDER BY
+    name;
+`;
+
 export const links = `
     SELECT 
         id_from,id_to,org 
