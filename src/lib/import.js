@@ -80,6 +80,7 @@ export async function worker(folder, schema, config) {
         configfiles.attrPerms= JSON.parse(await readFile("./"+folder+"/attrPerms.json", {encoding: 'utf8'}));
         configfiles.normalizedAttrPerms= JSON.parse(await readFile("./"+folder+"/normalizedAttrPerms.json", {encoding: 'utf8'}));
         configfiles.structure= JSON.parse(await readFile("./"+folder+"/structure.json", {encoding: 'utf8'}));
+        configfiles.dynchildhelpers= JSON.parse(await readFile("./"+folder+"/dynchildhelpers.json", {encoding: 'utf8'}));
 
         let xmlFolderPart="./"+folder+"/"+ constants.confAttrXmlSnippetsFolder +"/"
         let xmlConfigs=await glob(xmlFolderPart+"*.xml");
@@ -90,14 +91,15 @@ export async function worker(folder, schema, config) {
             configfiles.xmlFiles.set(onlyFileName,xml);
         }
 
-        let sqlFolderPart="./"+folder+"/"+ constants.dynamicChildrenFolder +"/"
+        let structureDynamicChildrenHelperFolderPart="./"+folder+"/"+ constants.structureDynamicChildrenHelperFolder +"/"
+        let structureHelperStatementsFolderPart="./"+folder+"/"+ constants.structureHelperStatementsFolder +"/"
 
-        let dynChildrenStatements= await glob(sqlFolderPart+"/*.sql");
+        let sqlDocuments= await glob("(" + structureDynamicChildrenHelperFolderPart + "|" +structureHelperStatementsFolderPart + ")/*.sql");
 
         configfiles.sqlFiles=new Map();
-        for (let sqlFile of dynChildrenStatements){
+        for (let sqlFile of sqlDocuments){
             let sql=await readFile(sqlFile, {encoding: 'utf8'});
-            let onlyFileName=sqlFile.substr(sqlFolderPart.length);
+            let onlyFileName=sqlFile.substr(structureDynamicChildrenHelperFolderPart.length);
 
             configfiles.sqlFiles.set(onlyFileName,sql);
         }
@@ -133,7 +135,7 @@ export async function worker(folder, schema, config) {
        
        // await importAttrPermissions(client, configfiles.classPerms);
 
-        await importStructure(client, configfiles.structure, configfiles.sqlFiles);
+        await importStructure(client, configfiles.structure, configfiles.dynchildhelpers, configfiles.sqlFiles);
 
         //close the connection -----------------------------------------------------------------------
 

@@ -2,7 +2,7 @@ const sql = `CREATE TABLE cs_attr (
     id integer DEFAULT NEXTVAL(('cs_attr_sequence'::text)::regclass) NOT NULL,
     class_id integer NOT NULL,
     type_id integer NOT NULL,
-    name character varying(100) NOT NULL,
+    name character varying(150) NOT NULL,
     field_name character varying(50) NOT NULL,
     foreign_key BOOLEAN DEFAULT false NOT NULL,
     substitute BOOLEAN DEFAULT false NOT NULL,
@@ -514,7 +514,7 @@ CREATE OR REPLACE FUNCTION salt(integer) RETURNS text
     AS '(SELECT array_to_string(array 
        ( 
               SELECT substr(''abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'', trunc(random() * 62)::INTEGER + 1, 1)
-              FROM   generate_series(1, $1)), ''''))'
+              FROM   generate_series(1, \$1)), ''''))'
     LANGUAGE SQL
     VOLATILE
     RETURNS NULL ON NULL INPUT;
@@ -525,7 +525,71 @@ CREATE OR REPLACE FUNCTION salt(integer) RETURNS text
 CREATE TRIGGER password_trigger BEFORE INSERT OR UPDATE ON cs_usr FOR EACH ROW EXECUTE PROCEDURE public.set_pw();
 
 INSERT INTO cs_config_attr_value (id, value)
-VALUES (DEFAULT, 'true')
+VALUES (DEFAULT, 'true');
+
+-- Dynamic Children Helper
+
+-- cs_dynamic_children_helper
+
+CREATE SEQUENCE cs_dynamic_children_helper_sequence
+    INCREMENT BY 1
+    NO MAXVALUE
+    NO MINVALUE
+    CACHE 1;
+CREATE TABLE cs_dynamic_children_helper
+(
+    id integer DEFAULT NEXTVAL(('cs_dynamic_children_helper_sequence'::text)::regclass) NOT NULL,
+    name character varying(256),
+    code text,
+    CONSTRAINT cs_dynamic_children_helper_pkey PRIMARY KEY (id)
+)
+WITH (
+    OIDS=FALSE
+);
+
+-- execute()
+CREATE OR REPLACE FUNCTION execute(_command character varying)
+  RETURNS character varying AS
+\$BODY\$
+DECLARE _r int;
+BEGIN
+EXECUTE _command;
+    RETURN 'Yes: ' || _command || ' executed';
+EXCEPTION
+    WHEN OTHERS THEN
+    RETURN 'No:  ' || _command || ' failed';
+END;
+\$BODY\$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+
+-- cs_refresh_dynchilds_functions()
+CREATE OR REPLACE FUNCTION cs_refresh_dynchilds_functions()
+  RETURNS character varying AS
+\$BODY\$
+DECLARE
+   dropBackupSchema boolean;
+   renameSchema boolean;
+BEGIN
+SELECT EXISTS(SELECT * FROM information_schema.schemata WHERE schema_name = 'csdc_backup') INTO dropBackupSchema;
+SELECT EXISTS(SELECT * FROM information_schema.schemata WHERE schema_name = 'csdc') INTO renameSchema;
+IF dropBackupSchema THEN
+	drop schema csdc_backup cascade;
+END IF;
+IF renameSchema THEN
+    ALTER SCHEMA csdc RENAME TO csdc_backup;
+END IF;
+create schema csdc;
+perform execute('CREATE OR REPLACE FUNCTION csdc.'||name||' RETURNS VARCHAR AS \$\$ select'''||regexp_replace(replace(code,'''',''''''),'(.*?)<ds::param.*>(.*?)</ds::param>(.*?)',E'\\\\1''||\$\\\\2||''\\\\3','g')||'''::varchar \$\$ LANGUAGE ''sql'';') from cs_dynamic_children_helper;
+    RETURN 'Functions refreshed';
+EXCEPTION
+    WHEN OTHERS THEN
+    RETURN 'Error occured';
+END;
+\$BODY\$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+
 `;
 
 export default sql;

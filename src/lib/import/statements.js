@@ -54,14 +54,14 @@ export const simple_cs_ug_membership = `
 
 export const nested_cs_ug_membership = `
     INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
-        SELECT cs_ug.id,cs_ug.domain,cs_usr.id FROM (SELECT 
+        SELECT cs_ug.id,cs_usr.id,cs_ug.domain FROM (SELECT 
             UNNEST($1::text[]), 
             UNNEST($2::text[]), 
             UNNEST($3::text[])
-        ) AS t(g, d, u) 
+        ) AS t(g, u, d) 
         JOIN cs_ug ON (cs_ug.name=g) 
-        JOIN cs_domain ON (cs_ug.domain=cs_domain.id) 
         JOIN cs_usr ON (cs_usr.login_name=u)   
+        JOIN cs_domain ON (cs_ug.domain=cs_domain.id) 
 `;     
 
 
@@ -142,6 +142,14 @@ export const simple_cs_java_class = `
 	VALUES ($1, NULL, $2);
 `;
 
+export const simple_cs_dynamic_children_helper = `
+    INSERT INTO cs_dynamic_children_helper (name, code) 
+    VALUES ($1, $2);
+`;
+
+export const execute_cs_refresh_dynchilds_functions = `
+    SELECT cs_refresh_dynchilds_functions();
+`;
 
 export const complex_cs_class = `
     INSERT INTO cs_class ("name", descr, class_icon_id, object_icon_id, "table_name", primary_key_field, indexed, tostring, editor, renderer, array_link, policy, attribute_policy) 
