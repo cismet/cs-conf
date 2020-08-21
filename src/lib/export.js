@@ -34,8 +34,8 @@ export async function worker(folder, schema, config) {
         if (!fs.existsSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder)){
             fs.mkdirSync("./" + folder + "/"+ constants.confAttrXmlSnippetsFolder);
         }
-        if (!fs.existsSync("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder)){
-            fs.mkdirSync("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder);
+        if (!fs.existsSync("./" + folder + "/"+ constants.structureDynamicChildrenFolder)){
+            fs.mkdirSync("./" + folder + "/"+ constants.structureDynamicChildrenFolder);
         }
         if (!fs.existsSync("./" + folder + "/"+ constants.structureHelperStatementsFolder)){
             fs.mkdirSync("./" + folder + "/"+ constants.structureHelperStatementsFolder);
@@ -143,7 +143,7 @@ export async function worker(folder, schema, config) {
 
         console.log("writing sql snippets");
         structureSqlDocuments.forEach(async (value, key) => {
-            await writeFile("./" + folder + "/"+ constants.structureDynamicChildrenHelperFolder +"/" + key, value, "utf8");
+            await writeFile("./" + folder + "/"+ constants.structureDynamicChildrenFolder +"/" + key, value, "utf8");
         });
 
         helperSqlDocuments.forEach(async (value, key) => {

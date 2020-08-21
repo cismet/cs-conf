@@ -2,7 +2,7 @@ import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
 
-export function prepareData(structure, dynchildhelpers, sqlFiles) {
+export function prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
     // cs_domain
     let csCatNodeEntries=[];
     let csDynamicChildrenHelperEntries = [];
@@ -13,12 +13,12 @@ export function prepareData(structure, dynchildhelpers, sqlFiles) {
         index: 1000,
         childrenByParent: new Map()
     };
-    let rootNodes=addChildrenToArray(structure,csCatNodeEntries,flattenNodes,baton,0,sqlFiles);
+    let rootNodes=addChildrenToArray(structure,csCatNodeEntries,flattenNodes,baton,0,structureSqlFiles);
     baton.childrenByParent.set("root",rootNodes);
     let structureMap=baton.childrenByParent;
 
     for (let h of dynchildhelpers) {
-        csDynamicChildrenHelperEntries.push([h.name, sqlFiles.get(h.code_file)]);
+        csDynamicChildrenHelperEntries.push([h.name, helperSqlFiles.get(h.code_file)]);
     }
 
     return { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes, structureMap };
@@ -119,8 +119,8 @@ export function prepareData2ndTime(flattenNodes, structureMap, dbids) {
     return { csCatLinkEntries, csCatNodePermEntries };
 }
 
-const importStructure = async (client, structure, dynchildhelpers, sqlFiles) => {
-    const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes, structureMap } = prepareData(structure, dynchildhelpers, sqlFiles);
+const importStructure = async (client, structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) => {
+    const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes, structureMap } = prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
     console.log("importing cat nodes ("+csCatNodeEntries.length+")");
     const {rows: dbids} = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
     const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(flattenNodes, structureMap, dbids);
