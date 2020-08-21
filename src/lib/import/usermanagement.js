@@ -25,11 +25,13 @@ export function prepareData(usermanagement) {
         else {
             csUserEntries.push([u.login_name, admin, u.pw_hash, u.salt]);
         }
-        for (let g of u.groups) {
-            const groupComponents=g.split('@');
-            const gName=groupComponents[0];
-            const domain=groupComponents[1];
-            csUgMembershipEntries.push([gName,domain,u.login_name]);
+        if (u.groups) {
+            for (let g of u.groups) {
+                const groupComponents=g.split('@');
+                const gName=groupComponents[0];
+                const domain=groupComponents[1];
+                csUgMembershipEntries.push([gName,u.login_name,domain]);
+            }
         }
     }
 
