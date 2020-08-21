@@ -170,7 +170,7 @@ export const complex_cs_class = `
     LEFT OUTER JOIN cs_java_class editorClasses ON (ec=editorClasses.qualifier AND et=editorClasses.type)
     LEFT OUTER JOIN cs_java_class rendererClasses ON (rc=rendererClasses.qualifier AND rt=rendererClasses.type)
     LEFT OUTER JOIN cs_policy class_policy ON (p=class_policy.name)
-    LEFT OUTER JOIN cs_policy attribute_policy ON (p=attribute_policy.name);
+    LEFT OUTER JOIN cs_policy attribute_policy ON (ap=attribute_policy.name);
 `;
 
 
