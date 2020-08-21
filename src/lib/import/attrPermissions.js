@@ -9,7 +9,7 @@ export function prepareData(attrPerms) {
         if (p.read) {
             for (let groupkey of p.read) {
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
+                csAttrPermEntries.push(
                     [
                         group,
                         domain,
@@ -21,7 +21,7 @@ export function prepareData(attrPerms) {
         if (p.write) {
             for (let groupkey of p.write) {
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
+                csAttrPermEntries.push(
                     [
                         group,
                         domain,
@@ -32,7 +32,7 @@ export function prepareData(attrPerms) {
         }  
     }
 
-    return { csClassPermEntries };
+    return { csAttrPermEntries };
 }
 
 const importAttrPermissions = async (client, attrPerms) => {
