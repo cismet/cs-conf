@@ -383,6 +383,8 @@ INSERT INTO cs_type ( name, class_id, complex_type, descr, editor, renderer) VAL
 
 INSERT INTO cs_type ( name, class_id, complex_type, descr, editor, renderer) VALUES ( 'TIMESTAMP', NULL, FALSE, NULL, NULL, NULL);
 
+INSERT INTO cs_type ( name, class_id, complex_type, descr, editor, renderer) VALUES ( 'TIMESTAMPTZ', NULL, FALSE, NULL, NULL, NULL);
+
 INSERT INTO cs_type ( name, class_id, complex_type, descr, editor, renderer) VALUES ( 'BPCHAR', NULL, FALSE, NULL, NULL, NULL);
 
 INSERT INTO cs_type ( name, class_id, complex_type, descr, editor, renderer) VALUES ( 'Extension Type', NULL, FALSE, NULL, NULL, NULL);
@@ -492,7 +494,12 @@ WITH (
   OIDS=FALSE
 );
 
-
+CREATE VIEW cs_class_hierarchy AS 
+ SELECT father_child.father, father_child.child
+   FROM ( SELECT a.foreign_key_references_to AS child, a.class_id AS father, c.primary_key_field AS pk, c.table_name, a.field_name, a.isarray
+           FROM cs_attr a, cs_class c
+          WHERE a.foreign_key = true AND a.class_id = c.id AND a.indexed = true) father_child;
+          
 INSERT INTO cs_config_attr_type (type, descr) VALUES ('C', 'regular configuration attribute, a simple string value');
 INSERT INTO cs_config_attr_type (type, descr) VALUES ('A', 'action tag configuration attribute, value of no relevance');
 INSERT INTO cs_config_attr_type (type, descr) VALUES ('X', 'XML configuration attribute, XML content wrapped by some root element');
