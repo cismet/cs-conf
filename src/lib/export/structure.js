@@ -54,9 +54,6 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
         }
         if (node.node_type === 'N') {
             delete node.node_type;
-            if (node.table && node.derive_permissions_from_class === true) {
-                delete node.derive_permissions_from_class;
-            }
         }
         if (!node.table && node.derive_permissions_from_class === false) {
             delete node.derive_permissions_from_class;
