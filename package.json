@@ -17,7 +17,7 @@
     "pg": "^7.4.3",
     "properties-file": "^1.0.0",
     "slug": "^0.9.1",
-    "striptags": "^3.1.1",
+    "striptags": "^3.2.0",
     "xml-formatter": "^1.0.1",
     "zero-fill": "^2.2.3"
   },
