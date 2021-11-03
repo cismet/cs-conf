@@ -44,8 +44,15 @@ program
 		csExport.worker(cmd.folder, cmd.schema, cmd.parent.config);
 	});
 
-// Parse the commandline
-program.parse(process.argv);
+
+if (process.argv.slice(2).length == 0) {
+	// show help
+	program.outputHelp();	
+	process.exit(1);
+} else {
+	// Parse the commandline
+	program.parse(process.argv);
+}
 
 // For development purpose
 // Should be commented out
