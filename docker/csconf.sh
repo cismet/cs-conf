@@ -3,7 +3,7 @@
 ARGS=$*
 
 TAG=latest;
-IMAGE=reg.cismet.de/abstract/cs-conf
+IMAGE=reg.cismet.de/abstract/csconf
 EXEC_DIR=$(pwd)
 
 if [ -z "${TAG}" ]; then 
@@ -29,4 +29,4 @@ if [ "$VOLUMES" != "" ]; then
   echo " - folder: $FOLDER"
 fi
 
-docker run -it --rm $VOLUMES ${IMAGE_TAG} csconf $*
+docker run -it --rm $VOLUMES ${IMAGE_TAG} $*
