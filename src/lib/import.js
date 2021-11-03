@@ -70,19 +70,19 @@ export async function worker(folder, schema, config) {
         // read the conf-files
 
         const configfiles={};
-        configfiles.domains= JSON.parse(await readFile("./"+folder+"/domains.json", {encoding: 'utf8'}));
-        configfiles.policy_rules= JSON.parse(await readFile("./"+folder+"/policy_rules.json", {encoding: 'utf8'}));
-        configfiles.usergroups= JSON.parse(await readFile("./"+folder+"/usergroups.json", {encoding: 'utf8'}));
-        configfiles.usermanagement= JSON.parse(await readFile("./"+folder+"/usermanagement.json", {encoding: 'utf8'}));
-        configfiles.classes= JSON.parse(await readFile("./"+folder+"/classes.json", {encoding: 'utf8'}));
-        configfiles.classPerms= JSON.parse(await readFile("./"+folder+"/classPerms.json", {encoding: 'utf8'}));
-        configfiles.normalizedClassPerms= JSON.parse(await readFile("./"+folder+"/normalizedClassPerms.json", {encoding: 'utf8'}));
-        configfiles.attrPerms= JSON.parse(await readFile("./"+folder+"/attrPerms.json", {encoding: 'utf8'}));
-        configfiles.normalizedAttrPerms= JSON.parse(await readFile("./"+folder+"/normalizedAttrPerms.json", {encoding: 'utf8'}));
-        configfiles.structure= JSON.parse(await readFile("./"+folder+"/structure.json", {encoding: 'utf8'}));
-        configfiles.dynchildhelpers= JSON.parse(await readFile("./"+folder+"/dynchildhelpers.json", {encoding: 'utf8'}));
+        configfiles.domains= JSON.parse(await readFile(folder+"/domains.json", {encoding: 'utf8'}));
+        configfiles.policy_rules= JSON.parse(await readFile(folder+"/policy_rules.json", {encoding: 'utf8'}));
+        configfiles.usergroups= JSON.parse(await readFile(folder+"/usergroups.json", {encoding: 'utf8'}));
+        configfiles.usermanagement= JSON.parse(await readFile(folder+"/usermanagement.json", {encoding: 'utf8'}));
+        configfiles.classes= JSON.parse(await readFile(folder+"/classes.json", {encoding: 'utf8'}));
+        configfiles.classPerms= JSON.parse(await readFile(folder+"/classPerms.json", {encoding: 'utf8'}));
+        configfiles.normalizedClassPerms= JSON.parse(await readFile(folder+"/normalizedClassPerms.json", {encoding: 'utf8'}));
+        configfiles.attrPerms= JSON.parse(await readFile(folder+"/attrPerms.json", {encoding: 'utf8'}));
+        configfiles.normalizedAttrPerms= JSON.parse(await readFile(folder+"/normalizedAttrPerms.json", {encoding: 'utf8'}));
+        configfiles.structure= JSON.parse(await readFile(folder+"/structure.json", {encoding: 'utf8'}));
+        configfiles.dynchildhelpers= JSON.parse(await readFile(folder+"/dynchildhelpers.json", {encoding: 'utf8'}));
 
-        let xmlFolderPart="./"+folder+"/"+ constants.confAttrXmlSnippetsFolder +"/"
+        let xmlFolderPart=folder+"/"+ constants.confAttrXmlSnippetsFolder +"/"
         let xmlConfigs=await glob(xmlFolderPart+"*.xml");
         configfiles.xmlFiles=new Map();
         for (let xmlFile of xmlConfigs){
@@ -91,8 +91,8 @@ export async function worker(folder, schema, config) {
             configfiles.xmlFiles.set(onlyFileName,xml);
         }
 
-        let structureDynamicChildrenFolderPart="./"+folder+"/"+ constants.structureDynamicChildrenFolder +"/"
-        let structureHelperStatementsFolderPart="./"+folder+"/"+ constants.structureHelperStatementsFolder +"/"
+        let structureDynamicChildrenFolderPart=folder+"/"+ constants.structureDynamicChildrenFolder +"/"
+        let structureHelperStatementsFolderPart=folder+"/"+ constants.structureHelperStatementsFolder +"/"
 
         let structureSqlDocuments= await glob(structureDynamicChildrenFolderPart + "/*.sql");
         let helperSqlDocuments= await glob(structureHelperStatementsFolderPart + "/*.sql");
@@ -112,7 +112,7 @@ export async function worker(folder, schema, config) {
             configfiles.helperSqlFiles.set(onlyFileName,sql);
         }
 
-        //await writeFile("./"+folder+"/all.json", stringify(configfiles, {maxLength:80}), "utf8");
+        //await writeFile(folder+"/all.json", stringify(configfiles, {maxLength:80}), "utf8");
 
         //Import =======================================================================================================
 
