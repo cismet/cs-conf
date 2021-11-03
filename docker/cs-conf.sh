@@ -3,7 +3,7 @@
 ARGS=$*
 
 TAG=latest;
-IMAGE=cismet/cs-conf
+IMAGE=reg.cismet.de/abstract/cs-conf
 EXEC_DIR=$(pwd)
 
 if [ -z "${TAG}" ]; then 

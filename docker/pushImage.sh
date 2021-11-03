@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TAG=$1;
-IMAGE=cismet/cs-conf
+IMAGE=reg.cismet.de/abstract/cs-conf
 
 if [ -z "${TAG}" ]; then 
   IMAGE_TAG=${IMAGE}

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TAG=$1;
-IMAGE=cismet/cs-conf
+IMAGE=reg.cismet.de/abstract/cs-conf
 SCRIPT_DIR=$(dirname $(readlink -f $0))
 
 if [ -z "${TAG}" ]; then 
