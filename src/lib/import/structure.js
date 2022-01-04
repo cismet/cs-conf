@@ -118,7 +118,7 @@ const importStructure = async (client, structure, structureSqlFiles, dynchildhel
     const {rows: dbids} = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
     for(let i = 0; i < csCatNodeEntries.length; i++) {
         let n = flattenNodes[i];
-        n.dbid = dbids[i];
+        n.dbid = dbids[i].id;
     }
     const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(structure, flattenNodes, dbids);
     console.log("importing cat links ("+csCatLinkEntries.length+")");
