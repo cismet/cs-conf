@@ -58,8 +58,6 @@ export function generateCsCatLinkEntries(parent, csCatLinkEntries) {
         let children = parent.children;
         for (let i = 0; i < children.length; i++) {
             let child = children[i];
-            console.log("parent", parent);
-            console.log("child", child);
             csCatLinkEntries.push([
                 parent.dbid,
                 child.dbid
@@ -73,7 +71,7 @@ export function prepareData2ndTime(structure, flattenNodes, dbids) {
     // map the internal ids to the db generated ids
     for (let i = 0; i < flattenNodes.length; i++) {
         if (i < dbids.length) {
-            let dbid = dbids[i];
+            let dbid = dbids[i].id;
             flattenNodes.dbid = dbid;
         }
     }
