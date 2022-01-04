@@ -1,30 +1,25 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
+import { symlinkSync } from 'fs';
+import { getSystemErrorMap } from 'util';
 
 export function prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
     // cs_domain
-    let csCatNodeEntries=[];
+    let csCatNodeEntries = [];
+    let flattenNodes = [];
+
+    addChildrenToArray(structure, csCatNodeEntries, flattenNodes, 0, structureSqlFiles);
+
     let csDynamicChildrenHelperEntries = [];
-    
-    let flattenNodes=[];
-
-    let baton={
-        index: 1000,
-        childrenByParent: new Map()
-    };
-    let rootNodes=addChildrenToArray(structure,csCatNodeEntries,flattenNodes,baton,0,structureSqlFiles);
-    baton.childrenByParent.set("root",rootNodes);
-    let structureMap=baton.childrenByParent;
-
     for (let h of dynchildhelpers) {
         csDynamicChildrenHelperEntries.push([h.name, helperSqlFiles.get(h.code_file)]);
     }
 
-    return { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes, structureMap };
+    return { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes };
 }
 
-function addChildrenToArray(children,entryArray,nodeArray,baton,level,sqlFiles){
+function addChildrenToArray(children, csCatNodeEntries, flattenNodes, level, sqlFiles) {
     let root;
     if (level===0){
         root=true;
@@ -32,9 +27,8 @@ function addChildrenToArray(children,entryArray,nodeArray,baton,level,sqlFiles){
     else {
         root=false;
     }
-    let localIds=[];
     for (let n of children) { 
-        entryArray.push(
+        let myid = csCatNodeEntries.push(
             [
                 n.name,
                 n.descr,
@@ -49,45 +43,46 @@ function addChildrenToArray(children,entryArray,nodeArray,baton,level,sqlFiles){
                 n.derive_permissions_from_class,
                 n.iconfactory,
                 n.icon,
-                baton.index //n.artificial_id
+                n.artificial_id
             ]
         );
-        nodeArray.push(n);
-        n.myid=baton.index;
-        localIds.push(n.myid);
-        baton.index+=1;
-        if (n.children){
-            let childIds=addChildrenToArray(n.children,entryArray,nodeArray,baton,level+1,sqlFiles);
-            baton.childrenByParent.set(n.myid,childIds);
+        flattenNodes.push(n);
+        if (n.children) {
+            addChildrenToArray(n.children, csCatNodeEntries, flattenNodes, level+1, sqlFiles);
         }
     } 
-    return localIds;
-
 }
 
-export function prepareData2ndTime(flattenNodes, structureMap, dbids) {
-    let i=0;
-    let internalIdToDbIdMap=new Map();
+export function generateCsCatLinkEntries(parent, csCatLinkEntries) {
+    if (parent.hasOwnProperty('children')) {
+        let children = parent.children;
+        for (let i = 0; i < children.length; i++) {
+            let child = children[i];
+            console.log("parent", parent);
+            console.log("child", child);
+            csCatLinkEntries.push([
+                parent.dbid,
+                child.dbid
+            ]);    
+            generateCsCatLinkEntries(child, csCatLinkEntries);
+        }
+    }    
+}
+
+export function prepareData2ndTime(structure, flattenNodes, dbids) {
     // map the internal ids to the db generated ids
-    for (let n of flattenNodes) {
-        n.dbid=dbids[i].id;
-        i+=1;
-        internalIdToDbIdMap.set(n.myid,n.dbid);
+    for (let i = 0; i < flattenNodes.length; i++) {
+        if (i < dbids.length) {
+            let dbid = dbids[i];
+            flattenNodes.dbid = dbid;
+        }
     }
 
     //Links
     let csCatLinkEntries=[];
-
-    structureMap.forEach((children,parent) => {
-        if (parent!=="root") {
-            for (let child of children){
-                csCatLinkEntries.push([
-                    internalIdToDbIdMap.get(parent),
-                    internalIdToDbIdMap.get(child)
-                ]);    
-            }
-        }
-    });
+    for (let parent of structure) { 
+        generateCsCatLinkEntries(parent, csCatLinkEntries)
+    }
 
     //Permissions
     let csCatNodePermEntries=[];
@@ -120,10 +115,14 @@ export function prepareData2ndTime(flattenNodes, structureMap, dbids) {
 }
 
 const importStructure = async (client, structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) => {
-    const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes, structureMap } = prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+    const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes } = prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
     console.log("importing cat nodes ("+csCatNodeEntries.length+")");
     const {rows: dbids} = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
-    const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(flattenNodes, structureMap, dbids);
+    for(let i = 0; i < csCatNodeEntries.length; i++) {
+        let n = flattenNodes[i];
+        n.dbid = dbids[i];
+    }
+    const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(structure, flattenNodes, dbids);
     console.log("importing cat links ("+csCatLinkEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_cat_link, csCatLinkEntries);
     console.log("importing cat node permissions ("+csCatNodePermEntries.length+")");

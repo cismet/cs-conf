@@ -41,18 +41,15 @@ export async function worker(folder, schema, config) {
         const client = await getClientForConfig(config);
         await client.connect();
 
-       
         console.log("create chema (if not existing)");
-
         try {
             await client.query(" CREATE SCHEMA ${schema};"); //ditched IF NOT EXISTS due to backwards compatibility
             console.log("Schema created.")
-
-        }
-        catch (skip){
+        } catch (skip){
             console.log("Schema is already there.")
         }
 
+        console.log("initialize schema");
         let sql=`           
             SET SCHEMA '${schema}';
             
@@ -61,10 +58,7 @@ export async function worker(folder, schema, config) {
             ${csInit}
         
         `;
-
-        console.log("initialize schema");
         await client.query(sql);
-
         console.log("initialization done.");
 
         // read the conf-files
@@ -117,29 +111,29 @@ export async function worker(folder, schema, config) {
         //Import =======================================================================================================
 
         //Domains -----------------------------------------------------------------------
-        console.log("importing domains");
-        await importDomains(client, configfiles.domains);
+//        console.log("importing domains");
+//        await importDomains(client, configfiles.domains);
 
         // Policy defaults -----------------------------------------------------------------------
-        console.log("importing policy_rules");
-        await importPolicyDefaults(client, configfiles.policy_rules);
+//        console.log("importing policy_rules");
+//        await importPolicyDefaults(client, configfiles.policy_rules);
 
         // Usergroups -----------------------------------------------------------------------
-        console.log("importing usergroups");
-        await importUsergroups(client, configfiles.usergroups);
+//        console.log("importing usergroups");
+//        await importUsergroups(client, configfiles.usergroups);
 
         // Usergroups -----------------------------------------------------------------------
-        console.log("importing usermanagement");
-        await importUsermanagement(client, configfiles.usermanagement);
+//        console.log("importing usermanagement");
+//        await importUsermanagement(client, configfiles.usermanagement);
 
         // ConfigAttrs -----------------------------------------------------------------------
-        await importConfigAttrs(client, configfiles.domains, configfiles.usergroups, configfiles.usermanagement, configfiles.xmlFiles);
+//        await importConfigAttrs(client, configfiles.domains, configfiles.usergroups, configfiles.usermanagement, configfiles.xmlFiles);
         
         // Classes -----------------------------------------------------------------------
-        await importClasses(client, configfiles.classes);
+//        await importClasses(client, configfiles.classes);
         
         // Classpermissions -----------------------------------------------------------------------
-        await importClassPermissions(client, configfiles.classPerms);
+//        await importClassPermissions(client, configfiles.classPerms);
        
        // await importAttrPermissions(client, configfiles.classPerms);
 
@@ -147,7 +141,7 @@ export async function worker(folder, schema, config) {
 
         //close the connection -----------------------------------------------------------------------
 
-        await client.end()
+//        await client.end()
     } catch (e) {
         console.error(e); // 💩
         process.exit(1);

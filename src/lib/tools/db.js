@@ -17,7 +17,7 @@ export async function nestedFiller(client, stmnt, rows) {
 
 export async function singleRowFiller(client, stmnt, rows) {
     for (let row of rows) {
-       await client.query(stmnt, row);
+        await client.query(stmnt, row);
     }
 }
 
