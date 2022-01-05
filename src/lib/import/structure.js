@@ -113,13 +113,13 @@ export function prepareData2ndTime(structure, flattenNodes, dbids) {
 }
 
 const importStructure = async (client, structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) => {
-    console.log("importing cat nodes ("+csCatNodeEntries.length+")");
     const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes } = prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+
+    console.log("importing cat nodes ("+csCatNodeEntries.length+")");
     await client.query(stmnts.prepare_cs_cat_node);
     const {rows: dbids} = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
     await client.query(stmnts.clean_cs_cat_node);
 
-    console.log("importing cat links ("+csCatLinkEntries.length+")");
     let tmpidToDbid = []
     for (let i = 0; i < dbids.length; i++) {
         let dbid = dbids[i];
@@ -130,6 +130,7 @@ const importStructure = async (client, structure, structureSqlFiles, dynchildhel
         n.dbid = tmpidToDbid[n.tmp_id];
     }
     const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(structure, flattenNodes, dbids);
+    console.log("importing cat links ("+csCatLinkEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_cat_link, csCatLinkEntries);
 
     console.log("importing cat node permissions ("+csCatNodePermEntries.length+")");
