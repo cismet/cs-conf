@@ -378,7 +378,7 @@ export const complex_cs_cat_node = `
         UNNEST($12::text[]), -- iconfactory
         UNNEST($13::text[]), -- icon
         UNNEST($14::text[]), -- artificial_id
-        UNNEST($15::text[]) -- tmp_id
+        UNNEST($15::integer[]) -- tmp_id
     ) AS t(n,d,t,oid,nt,ir,o,dc,ss,p,dpc,if,i,aid,tid)
     LEFT OUTER JOIN  cs_class ON (t=cs_class.table_name)
     LEFT OUTER JOIN cs_policy ON (p=cs_policy.name)
