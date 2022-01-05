@@ -136,11 +136,9 @@ export async function worker(folder, schema, config) {
         await importClassPermissions(client, configfiles.classPerms);
        
        // await importAttrPermissions(client, configfiles.classPerms);
-
         await importStructure(client, configfiles.structure, configfiles.structureSqlFiles, configfiles.dynchildhelpers, configfiles.helperSqlFiles);
 
         //close the connection -----------------------------------------------------------------------
-
         await client.end()
     } catch (e) {
         console.error(e); // 💩
