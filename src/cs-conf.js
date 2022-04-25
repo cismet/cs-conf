@@ -12,17 +12,24 @@ program
  	.description('imports the meta information into the cids system')
  	.option('-f, --folder <folder>', 'the folder where the config is', 'config')
  	.option('-s, --schema <schema>', 'the schema where the cs-Tables will be', 'public')
- 	.option('-o, --only', 'Only import the following topics')
- 	.option('-x, --skip', 'Skip the import of the following topics')
- 	.option('-C, --classes', 'The classes with their attributes and permissions')
- 	.option('-S, --structure', 'The structure information of the system')
- 	.option('-U, --usermanagement', 'The users and their groups')
+	.option('-I, --force-import', 'the schema where the cs-Tables will be')
+// 	.option('-o, --only', 'Only import the following topics')
+// 	.option('-x, --skip', 'Skip the import of the following topics')
+// 	.option('-C, --classes', 'The classes with their attributes and permissions')
+// 	.option('-S, --structure', 'The structure information of the system')
+// 	.option('-U, --usermanagement', 'The users and their groups')
  	.action(function(cmd) {
- 		console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< IMPORT');
- 		console.log('... from ' + cmd.folder);
- 		console.log('... to ' + cmd.schema + '.cs_*');
- 		console.log('... for ' + cmd.parent.config);
- 		csImport.worker(cmd.folder, cmd.schema, cmd.parent.config);
+		 if (cmd.forceImport) {
+			console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< IMPORT');
+			console.log('... from ' + cmd.folder);
+			console.log('... to ' + cmd.schema + '.cs_*');
+			console.log('... for ' + cmd.parent.config);
+			csImport.worker(cmd.folder, cmd.schema, cmd.parent.config);
+		} else {
+			console.log("!!!!!!!!!!!!!");
+			console.log("!!! ERROR !!! import disabled for security reasons. Use -I to force import.");
+			console.log("!!!!!!!!!!!!!");
+		}
  	});
 
 program
