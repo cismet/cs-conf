@@ -1,16 +1,8 @@
 #!/usr/bin/env ./node_modules/.bin/babel-node
-import {
-    Pool,
-    Client
-} from 'pg'
-import stringify from 'json-stringify-pretty-compact';
 import fs from 'fs';
 import util from 'util';
 import glob from 'glob-promise';
 
-
-import csDrop from './import/drop-init';
-import csInit from './import/cids-init';
 import importDomains from './import/domains';
 import importPolicyDefaults from './import/policyDefaults';
 import importUsergroups from './import/usergroups';
@@ -18,7 +10,6 @@ import importUsermanagement from './import/usermanagement';
 import importConfigAttrs from './import/configAttrs';
 import importClasses from './import/classes';
 import importClassPermissions from './import/classPermissions';
-import importAttrPermissions from './import/attrPermissions';
 import importStructure from './import/structure';
 import * as constants from './tools/constants.js';
 import { getClientForConfig } from './tools/db';
@@ -26,45 +17,29 @@ import { getClientForConfig } from './tools/db';
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
-const clientX = new Client({
-    user: 'postgres',
-    host: '127.0.0.1',
-    database: 'wunda',
-    password: 'xxx',
-    schema: "demo",
-    port: 5433,
-});
-
-
 export async function worker(folder, schema, config) {
     try {
         const client = await getClientForConfig(config);
         await client.connect();
 
-       
         console.log("create chema (if not existing)");
-
         try {
             await client.query(" CREATE SCHEMA ${schema};"); //ditched IF NOT EXISTS due to backwards compatibility
             console.log("Schema created.")
-
-        }
-        catch (skip){
+        } catch (skip){
             console.log("Schema is already there.")
         }
 
-        let sql=`           
-            SET SCHEMA '${schema}';
-            
-            ${csDrop}
-
-            ${csInit}
-        
-        `;
-
         console.log("initialize schema");
-        await client.query(sql);
-
+        await client.query(`SET SCHEMA '${schema}';`);
+        console.log("... drop");
+        await client.query(fs.readFileSync('resources/cids-init/cids-drop.sql', 'utf8'));
+        console.log("... create");
+        await client.query(fs.readFileSync('resources/cids-init/cids-create.sql', 'utf8'));
+        console.log("... init");
+        await client.query(fs.readFileSync('resources/cids-init/cids-init.sql', 'utf8'));
+        console.log("... truncate");
+        await client.query(fs.readFileSync('resources/cids-init/cids-truncate.sql', 'utf8'));
         console.log("initialization done.");
 
         // read the conf-files
@@ -137,16 +112,14 @@ export async function worker(folder, schema, config) {
         
         // Classes -----------------------------------------------------------------------
         await importClasses(client, configfiles.classes);
-        
+
         // Classpermissions -----------------------------------------------------------------------
         await importClassPermissions(client, configfiles.classPerms);
        
        // await importAttrPermissions(client, configfiles.classPerms);
-
         await importStructure(client, configfiles.structure, configfiles.structureSqlFiles, configfiles.dynchildhelpers, configfiles.helperSqlFiles);
 
         //close the connection -----------------------------------------------------------------------
-
         await client.end()
     } catch (e) {
         console.error(e); // 💩

@@ -6,24 +6,24 @@ import * as csImport from './lib/import';
 
 program.version('0.9.0').option('-c, --config <path>', 'set config path. ', './runtime.properties');
 
-// program
-// 	.command('import')
-// 	.alias('i')
-// 	.description('imports the meta information into the cids system')
-// 	.option('-f, --folder <folder>', 'the folder where the config is', 'config')
-// 	.option('-s, --schema <schema>', 'the schema where the cs-Tables will be', 'public')
-// 	.option('-o, --only', 'Only import the following topics')
-// 	.option('-x, --skip', 'Skip the import of the following topics')
-// 	.option('-C, --classes', 'The classes with their attributes and permissions')
-// 	.option('-S, --structure', 'The structure information of the system')
-// 	.option('-U, --usermanagement', 'The users and their groups')
-// 	.action(function(cmd) {
-// 		console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< IMPORT');
-// 		console.log('... from ' + cmd.folder);
-// 		console.log('... to ' + cmd.schema + '.cs_*');
-// 		console.log('... for ' + cmd.parent.config);
-// 		csImport.worker(cmd.folder, cmd.schema, cmd.parent.config);
-// 	});
+program
+ 	.command('import')
+ 	.alias('i')
+ 	.description('imports the meta information into the cids system')
+ 	.option('-f, --folder <folder>', 'the folder where the config is', 'config')
+ 	.option('-s, --schema <schema>', 'the schema where the cs-Tables will be', 'public')
+ 	.option('-o, --only', 'Only import the following topics')
+ 	.option('-x, --skip', 'Skip the import of the following topics')
+ 	.option('-C, --classes', 'The classes with their attributes and permissions')
+ 	.option('-S, --structure', 'The structure information of the system')
+ 	.option('-U, --usermanagement', 'The users and their groups')
+ 	.action(function(cmd) {
+ 		console.log('<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< IMPORT');
+ 		console.log('... from ' + cmd.folder);
+ 		console.log('... to ' + cmd.schema + '.cs_*');
+ 		console.log('... for ' + cmd.parent.config);
+ 		csImport.worker(cmd.folder, cmd.schema, cmd.parent.config);
+ 	});
 
 program
 	.command('export')

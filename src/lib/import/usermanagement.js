@@ -41,9 +41,9 @@ export function prepareData(usermanagement) {
 const importUsermanagement = async (client, usermanagement) => {
     const { csUserEntries, csUserEntriesWithPasswords, csUgMembershipEntries } = prepareData(usermanagement);
     console.log("importing users with pw_hashes ("+csUserEntries.length+")");
-    await await client.query("SET session_replication_role = replica;");
+    await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_usr, csUserEntries);
-    await await client.query("SET session_replication_role = DEFAULT;");
+    await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");
     
     console.log("importing users with new passwords ("+csUserEntriesWithPasswords.length+")");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_usr_with_password, csUserEntriesWithPasswords);

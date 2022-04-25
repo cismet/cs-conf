@@ -30,9 +30,9 @@
   },
   "scripts": {
     "start": "babel-node src/cs-conf.js",
-    "build": "babel -d ./build src/  && chmod +x build/cs-conf.js && mv build/cs-conf.js build/csconf",
-    "dev": "nodemon src/cs-conf.js  --exec babel-node --ignore './export/*'",
-    "test": "node_modules/.bin/mocha  --require babel-core/register --recursive || true",
+    "build": "babel -d ./build src/ && cp -r resources/ build/ && chmod +x build/cs-conf.js && mv build/cs-conf.js build/csconf",
+    "dev": "nodemon src/cs-conf.js --exec babel-node --ignore './export/*'",
+    "test": "node_modules/.bin/mocha --require babel-core/register --recursive || true",
     "testmon": "node_modules/.bin/mocha --require babel-core/register --recursive -w"
   }
 }

@@ -347,16 +347,22 @@ export const complex_cs_attr_permission = `
    JOIN cs_permission ON (p=cs_permission.key);
 `;
 
+export const prepare_cs_cat_node = `
+    ALTER TABLE cs_cat_node ADD COLUMN tmp_id INTEGER;
+`;
+export const clean_cs_cat_node = `
+    ALTER TABLE cs_cat_node DROP COLUMN tmp_id;
+`;
 
 export const complex_cs_cat_node = `
     INSERT INTO cs_cat_node 
         ("name", descr, class_id, object_id, node_type, 
         is_root, org, dynamic_children, sql_sort, policy, 
-        derive_permissions_from_class, iconfactory, icon, artificial_id) 
+        derive_permissions_from_class, iconfactory, icon, artificial_id, tmp_id) 
     SELECT     
         n, null, cs_class.id, oid, nt,
         ir, o, dc, ss, cs_policy.id, 
-        dpc, null, i, aid
+        dpc, null, i, aid, tid
     FROM (SELECT
         UNNEST($1::text[]), -- name
         UNNEST($2::text[]), -- descrurl
@@ -371,11 +377,12 @@ export const complex_cs_cat_node = `
         UNNEST($11::bool[]), -- derive_permissions_from_class
         UNNEST($12::text[]), -- iconfactory
         UNNEST($13::text[]), -- icon
-        UNNEST($14::text[]) -- artificial_id        
-    ) AS t(n,d,t,oid,nt,ir,o,dc,ss,p,dpc,if,i,aid)
+        UNNEST($14::text[]), -- artificial_id
+        UNNEST($15::integer[]) -- tmp_id
+    ) AS t(n,d,t,oid,nt,ir,o,dc,ss,p,dpc,if,i,aid,tid)
     LEFT OUTER JOIN  cs_class ON (t=cs_class.table_name)
     LEFT OUTER JOIN cs_policy ON (p=cs_policy.name)
-    returning id
+    returning id, tmp_id
 `;
 
 
