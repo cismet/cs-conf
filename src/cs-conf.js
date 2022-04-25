@@ -3,6 +3,7 @@
 import program from 'commander';
 import * as csExport from './lib/export';
 import * as csImport from './lib/import';
+import * as csSyncDatamodel from './lib/syncDatamodel';
 
 program.version('0.9.0').option('-c, --config <path>', 'set config path. ', './runtime.properties');
 
@@ -51,6 +52,21 @@ program
 		csExport.worker(cmd.folder, cmd.schema, cmd.parent.config);
 	});
 
+program
+	.command('syncDatamodel')
+	.alias('s')
+	.description('synchronizes the cids classes with the database')
+	.option('-f, --classes <file>', 'the file containing the classes configuration', 'config/classes.json')
+	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
+	.option('-d, --dry-run', 'only print the sql statements without executing them')
+	.option('-p, --purge', 'activate all drop statements')
+	.action(function(cmd) {
+		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> SYNC DATAMODEL');
+ 		console.log('... from ' + cmd.classes);
+ 		console.log('... to ' + cmd.schema + '.cs_*');
+ 		console.log('... for ' + cmd.parent.config);
+		csSyncDatamodel.worker(cmd.classes, cmd.dry_run, cmd.parent.purge, cmd.parent.config);
+	});
 
 if (process.argv.slice(2).length == 0) {
 	// show help
