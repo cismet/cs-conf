@@ -14,7 +14,8 @@ export function prepareData(classes) {
 
     let javaClasses=new Set();
 
-    
+    let defaulValueWarning = false;
+
     for (let c of classes) {
         let cEntry={};
         cEntry.name=c.name||c.table;
@@ -150,7 +151,12 @@ export function prepareData(classes) {
                 aEntry.fromStringClass=a.fromString.class;
                 aEntry.fromStringType=a.fromString.type;
             }
-            aEntry.defaultValue=a.defaulValue;
+            if (a.defaulValue) {
+                defaulValueWarning = true;
+                aEntry.defaultValue=a.defaulValue;
+            } else if (a.defaultValue) {
+                aEntry.defaultValue=a.defaultValue;
+            }
             aEntry.pos=posCounter;
             posCounter+=10;
             aEntry.precision=a.precision;
@@ -253,7 +259,13 @@ export function prepareData(classes) {
         }
     }
 
-    
+
+    if (defaulValueWarning) {
+        console.log(" !!!!!!!!!!!!!!!");
+        console.log(" !!! WARNING !!! usage of typo 'defaulValue' in classes.js. This should by changed to the correct spelling 'defaultValue'. The typo is still interpreted though.");
+        console.log(" !!!!!!!!!!!!!!!");
+    }
+
     return { csTypeEntries, 
         csJavaClassEntries, 
         csIconEntries, 
