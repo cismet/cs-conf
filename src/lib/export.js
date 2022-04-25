@@ -1,9 +1,5 @@
 #!/usr/bin/env ./node_modules/.bin/babel-node
 
-import {
-    Pool,
-    Client
-} from 'pg'
 import stringify from 'json-stringify-pretty-compact';
 import fs from 'fs';
 import util from 'util';
