@@ -89,7 +89,7 @@ export const classes = `
 export const attributes = `
     SELECT 
         a.field_name field, a.name, c.table_name "table" ,a.descr,
-        t.name "dbType",tc.table_name "cidsType",tc.table_name "oneToMany", tc.table_name "manyToMany", a.precision, a.scale, a.extension_attr, NOT a.optional mandatory, a.default_value "defaulValue",
+        t.name "dbType",tc.table_name "cidsType",tc.table_name "oneToMany", tc.table_name "manyToMany", a.precision, a.scale, a.extension_attr, NOT a.optional mandatory, a.default_value "defaultValue",
         a.foreign_key, a.foreign_key_references_to "foreignKeyTableId", fkc.table_name foreignkeytable, a.substitute,
         NOT a.visible hidden, a.indexed,
         a.isarray "isArrray", a.array_key "arrayKey",
