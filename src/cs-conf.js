@@ -56,16 +56,36 @@ program
 	.command('syncDatamodel')
 	.alias('s')
 	.description('synchronizes the cids classes with the database')
-	.option('-f, --classes <file>', 'the file containing the classes configuration', 'config/classes.json')
+	.option('-f, --folder <folder>', 'the folder containing the classes configuration', 'config')
 	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
-	.option('-d, --dry-run', 'only print the sql statements without executing them')
 	.option('-p, --purge', 'activate all drop statements')
-	.action(function(cmd) {
+	.option('-S, --execute-sync', 'execute the queries on the db instead of juste printing them to the console')
+	.action(function(cmd, options) {
 		console.log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> SYNC DATAMODEL');
- 		console.log('... from ' + cmd.classes);
+ 		console.log('... from ' + cmd.folder);
  		console.log('... to ' + cmd.schema + '.cs_*');
  		console.log('... for ' + cmd.parent.config);
-		csSyncDatamodel.worker(cmd.classes, cmd.dry_run, cmd.parent.purge, cmd.parent.config);
+ 		console.log('... execute-sync = ' + cmd.executeSync);
+ 		console.log('... purge = ' + cmd.purge);
+		csSyncDatamodel.worker(cmd.folder, cmd.executeSync, cmd.purge, cmd.parent.config);
+	});
+
+program
+	.command('backup')
+	.alias('b')
+	.description('backups the meta-information (cs_*)')
+	.option('-f, --folder <folder>', 'the folder to backup into', 'backups')
+	.action(function(cmd, options) {
+		console.log('not implemented yet')
+	});
+
+program
+	.command('restore')
+	.alias('r')
+	.description('restore a backup (cs_*) to the database')
+	.option('-f, --file <file>', 'the file to restore from', 'backups/latest.tgz')
+	.action(function(cmd, options) {
+		console.log('not implemented yet')
 	});
 
 if (process.argv.slice(2).length == 0) {
