@@ -65,5 +65,7 @@ typings/
 /runtime
 /build
 /config
+/backups
+/diffs
 
 **.DS_Store

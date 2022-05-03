@@ -287,26 +287,26 @@ const importClasses = async (client, classes) => {
      } = prepareData(classes);
     
     
-    console.log("importing icons ("+csIconEntries.length+")");
+    console.log("* importing icons ("+csIconEntries.length+")");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_icon, csIconEntries);
     
-    console.log("importing java classes ("+csJavaClassEntries.length+")");
+    console.log("* importing java classes ("+csJavaClassEntries.length+")");
     //console.log(csJavaClassEntries);
     await dbtools.singleRowFiller(client,stmnts.simple_cs_java_class, csJavaClassEntries);
     
-    console.log("importing classes ("+csClassEntries.length+")");
+    console.log("* importing classes ("+csClassEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_class, csClassEntries);
     
-    console.log("importing types ("+csTypeEntries.length+")");
+    console.log("* importing types ("+csTypeEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_type, csTypeEntries);
    
-    console.log("importing simple attributes ("+csAttrDbTypeEntries.length+")");
+    console.log("* importing simple attributes ("+csAttrDbTypeEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_attr4dbTypes, csAttrDbTypeEntries);
     
-    console.log("importing complex attributes ("+csAttrCidsTypeEntries.length+")");
+    console.log("* importing complex attributes ("+csAttrCidsTypeEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_attr4cidsTypes, csAttrCidsTypeEntries);
    
-    console.log("importing class attributes ("+csClassAttrEntries.length+")");
+    console.log("* importing class attributes ("+csClassAttrEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_class_attr, csClassAttrEntries);
 
 }

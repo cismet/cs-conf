@@ -9,8 +9,11 @@
   "dependencies": {
     "babel-preset-env": "^1.6.1",
     "commander": "^2.15.1",
+    "diff": "^3.5.0",
     "fs": "^0.0.1-security",
     "glob-promise": "^3.4.0",
+    "json-diff": "^0.7.4",
+    "json-stable-stringify": "^1.0.1",
     "json-stringify-pretty-compact": "^1.2.0",
     "lodash": "^4.17.21",
     "lodash-transpose": "^0.2.1",
@@ -18,9 +21,12 @@
     "properties-file": "^1.0.0",
     "slug": "^0.9.1",
     "striptags": "^3.2.0",
+    "tar.gz": "^1.0.7",
+    "targz": "^1.0.1",
     "wildcard-match": "^5.1.2",
     "xml-formatter": "^1.0.1",
-    "zero-fill": "^2.2.3"
+    "zero-fill": "^2.2.3",
+    "zlib": "^1.0.5"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

@@ -16,12 +16,19 @@ import * as constants from './tools/constants.js';
 import { getClientForConfig } from './tools/db';
 
 const writeFile = util.promisify(fs.writeFile);
-export async function worker(folder, schema, config) {
+export async function worker(options) {
+    let  { folder, schema, config } = options;
     try {
+        let client;
+        if (options.client) {
+            client = options.client;
+        } else {
+            console.log(util.format("* loading config %s...", config));
+            client = await getClientForConfig(config);
 
-        const client = await getClientForConfig(config);
-        await client.connect();
-        console.log("...");
+            console.log(util.format("* connecting to db %s@%s:%d/%s...", client.user, client.host, client.port, client.database));
+            await client.connect();
+        }
 
         // Folder Check
         if (!fs.existsSync(folder)){
@@ -147,8 +154,9 @@ export async function worker(folder, schema, config) {
         });
 
         //close the connection -----------------------------------------------------------------------
-
-        await client.end()
+        if (!options.client) {
+            await client.end();
+        }
     } catch (e) {
         console.error(e); // 💩
         process.exit(1);

@@ -9,6 +9,7 @@ const readFile = util.promisify(fs.readFile);
 const createSyncStatements = async (client, existingData, allCidsClassesByTableName, tablesDone, cidsClass) => {
     let statements = [];
     let cidsTableName = cidsClass.table.toLowerCase();
+
     if (!tablesDone.includes(cidsTableName) && !existingData.ignoredTables.includes(cidsTableName)) {
         tablesDone.push(cidsTableName);
 
@@ -17,9 +18,9 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
             pk = cidsClass.pk.toLowerCase();
         }
 
-        // table not yet existing => creating
-
         if (!existingData.tables.hasOwnProperty(cidsTableName)) {
+
+            // table not yet existing => creating
 
             let sequenceName = util.format("%s_seq", cidsTableName);
             let columns = [];
@@ -136,7 +137,7 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                                         )                            
                                         && (cidsAttribute.precision == existingColumn.precision)
                                         && (cidsAttribute.scale == existingColumn.scale);
-                                    
+
                                     if (!typeIdentical) {
                                         // type changes detected => altering
                                         statement.type = fullTypeFromAttribute(cidsAttribute);
@@ -357,7 +358,7 @@ function queriesFromStatement(statement) {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s;", statement.table, statement.column, statement.default));    
                 }
                 if (statement.null !== undefined) {
-                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET %s;", statement.table, statement.column, statement.null ? "NULL" : "NOT NULL"));
+                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s %s %s;", statement.table, statement.column, statement.null ? "DROP" : "SET", "NOT NULL"));
                 }
     
             }
@@ -371,12 +372,13 @@ function queriesFromStatement(statement) {
     return queries;
 }
 
-export async function worker(folder, executeSync, purge, config) {
-    try {
+export async function worker(options) {
+    let { folder, execute, purge, config } = options;
+    try {    
         console.log("* reading classes...");
         let classes = JSON.parse(await readFile(folder + "/classes.json", {encoding: 'utf8'}));
 
-        let ignoreRules = ["cs_*", "geometry_columns"];
+        let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
         try {
             let sync = JSON.parse(await readFile(folder + "/sync.json", {encoding: 'utf8'}));        
             ignoreRules.push(... sync.tablesToIgnore);
@@ -413,11 +415,16 @@ export async function worker(folder, executeSync, purge, config) {
             console.log("");
         }
 
-        console.log(util.format("* loading config %s...", config));
-        const client = await getClientForConfig(config);
+        let client;
+        if (options.client) {
+            client = options.client;
+        } else {
+            console.log(util.format("* loading config %s...", config));
+            client = await getClientForConfig(config);
 
-        console.log(util.format("* connecting to db %s@%s:%d/%s...", client.user, client.host, client.port, client.database));
-        await client.connect();
+            console.log(util.format("* connecting to db %s@%s:%d/%s...", client.user, client.host, client.port, client.database));
+            await client.connect();
+        }
 
         let existingData = {
             tables : {},
@@ -552,7 +559,7 @@ export async function worker(folder, executeSync, purge, config) {
                 query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
                 query += "-- ######################################\n";
 
-                if (executeSync) {
+                if (execute) {
                     console.log(util.format("\n* start syncing (%d queries)...", subQueries.filter((value) => {
                         return value.trim() != "" && !value.trim().startsWith("--");
                     }).length));
@@ -581,7 +588,10 @@ export async function worker(folder, executeSync, purge, config) {
 
         // ----
 
-        await client.end()
+        if (!options.client) {
+            //close the connection -----------------------------------------------------------------------
+            await client.end();
+        }
     } catch (e) {
         console.error(e); // 💩
         process.exit(1);
