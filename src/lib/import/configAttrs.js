@@ -45,10 +45,10 @@ export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {
     let duplicateKeyFinder=new Set();
     for (let ca of allConfigurationAttributes){
         let type;
-        if (ca.value) {
+        if (ca.value != null) {
             type='C';
         }
-        else if (ca.xmlfile) {
+        else if (ca.xmlfile != null) {
             type='X';
         }
         else {
@@ -88,18 +88,18 @@ const importConfigAttrs = async (client, domains, usergroups, usermanagement, xm
         csConfigAttrValues4A, 
         csConfigAttrValues4CandX , 
         csConfigAttrValueEntriesArray} = prepareData(domains, usergroups, usermanagement, xmlConfigs);
-    console.log("* importing config attribute keys ("+csConfigAttrKeyEntries.length+")");
+    console.log("importing config attribute keys ("+csConfigAttrKeyEntries.length+")");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
 
-    console.log("* importing config attributes values ("+csConfigAttrValueEntriesArray.length+")");
+    console.log("importing config attributes values ("+csConfigAttrValueEntriesArray.length+")");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
 
     if (csConfigAttrValues4A.length>0){
-        console.log("* importing action attributes  ("+csConfigAttrValues4A.length+")");
+        console.log("importing action attributes  ("+csConfigAttrValues4A.length+")");
         await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
     }
         
-     console.log("* importing config attributes  ("+csConfigAttrValues4CandX.length+")");
+     console.log("importing config attributes  ("+csConfigAttrValues4CandX.length+")");
      await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
 }
 

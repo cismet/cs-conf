@@ -37,7 +37,7 @@ export function prepareData(classPerms) {
 
 const importClassPermissions = async (client, classPerms) => {
     const { csClassPermEntries } = prepareData(classPerms);
-    console.log("* importing class permission ("+csClassPermEntries.length+")");
+    console.log("importing class permission ("+csClassPermEntries.length+")");
     await dbtools.nestedFiller(client,stmnts.complex_cs_class_permission, csClassPermEntries);
 }
 

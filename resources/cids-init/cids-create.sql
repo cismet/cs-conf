@@ -1,10 +1,10 @@
 -- cs_attr_object
 
 CREATE TABLE cs_attr_object (
-    class_id integer NOT NULL,
-    object_id integer NOT NULL,
-    attr_class_id integer NOT NULL,
-    attr_object_id integer NOT NULL
+    class_id INTEGER NOT NULL,
+    object_id INTEGER NOT NULL,
+    attr_class_id INTEGER NOT NULL,
+    attr_object_id INTEGER NOT NULL
 );
 
 CREATE INDEX attr_object_index
@@ -16,10 +16,10 @@ CREATE INDEX attr_object_index
 
 CREATE TABLE cs_attr_object_derived
 (
-  class_id integer NOT NULL,
-  object_id integer NOT NULL,
-  attr_class_id integer NOT NULL,
-  attr_object_id integer NOT NULL
+  class_id INTEGER NOT NULL,
+  object_id INTEGER NOT NULL,
+  attr_class_id INTEGER NOT NULL,
+  attr_object_id INTEGER NOT NULL
 )
 WITH (
   OIDS=FALSE
@@ -49,28 +49,28 @@ CREATE SEQUENCE cs_attr_sequence
     CACHE 1;
 
 CREATE TABLE cs_attr (
-    id integer DEFAULT NEXTVAL(('cs_attr_sequence'::text)::regclass) NOT NULL,
-    class_id integer NOT NULL,
-    type_id integer NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_attr_sequence'::TEXT)::regclass) NOT NULL,
+    class_id INTEGER NOT NULL,
+    type_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     field_name TEXT NOT NULL,
     foreign_key BOOLEAN DEFAULT false NOT NULL,
     substitute BOOLEAN DEFAULT false NOT NULL,
-    foreign_key_references_to integer,
-    descr text,
+    foreign_key_references_to INTEGER,
+    descr TEXT,
     visible BOOLEAN DEFAULT true NOT NULL,
     indexed BOOLEAN DEFAULT false NOT NULL,
     isarray BOOLEAN DEFAULT false NOT NULL,
     array_key TEXT,
-    editor integer,
-    tostring integer,
-    complex_editor integer,
+    editor INTEGER,
+    tostring INTEGER,
+    complex_editor INTEGER,
     optional BOOLEAN DEFAULT true NOT NULL,
     default_value TEXT,
-    from_string integer,
-    pos integer DEFAULT 0,
-    "precision" integer,
-    scale integer,
+    from_string INTEGER,
+    pos INTEGER DEFAULT 0,
+    "precision" INTEGER,
+    scale INTEGER,
     extension_attr BOOLEAN DEFAULT false NOT NULL
 );
 
@@ -80,10 +80,10 @@ ALTER TABLE ONLY cs_attr
 -- cs_attr_string
 
 CREATE TABLE cs_attr_string (
-    class_id integer NOT NULL,
-    attr_id integer NOT NULL,
-    object_id integer NOT NULL,
-    string_val text NOT NULL
+    class_id INTEGER NOT NULL,
+    attr_id INTEGER NOT NULL,
+    object_id INTEGER NOT NULL,
+    string_val TEXT NOT NULL
 );
 
 CREATE INDEX i_cs_attr_string_aco_id ON cs_attr_string USING btree (attr_id, class_id, object_id);
@@ -107,11 +107,11 @@ CREATE SEQUENCE cs_cat_link_sequence
     CACHE 1;
 
 CREATE TABLE cs_cat_link (
-    id_from integer NOT NULL,
-    id_to integer NOT NULL,
-    org text,
-    domain_to integer,
-    id integer DEFAULT NEXTVAL('cs_cat_link_sequence'::regclass) NOT NULL
+    id_from INTEGER NOT NULL,
+    id_to INTEGER NOT NULL,
+    org TEXT,
+    domain_to INTEGER,
+    id INTEGER DEFAULT NEXTVAL('cs_cat_link_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_cat_link
@@ -126,19 +126,19 @@ CREATE SEQUENCE cs_cat_node_sequence
     CACHE 1;
 
 CREATE TABLE cs_cat_node (
-    id integer DEFAULT NEXTVAL(('cs_cat_node_sequence'::text)::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_cat_node_sequence'::TEXT)::regclass) NOT NULL,
     name TEXT NOT NULL,
-    descr integer DEFAULT 1,
-    class_id integer,
-    object_id integer,
-    node_type character(1) DEFAULT 'N'::bpchar NOT NULL,
+    descr INTEGER DEFAULT 1,
+    class_id INTEGER,
+    object_id INTEGER,
+    node_type CHARACTER(1) DEFAULT 'N'::bpchar NOT NULL,
     is_root BOOLEAN DEFAULT false NOT NULL,
-    org text,
-    dynamic_children text,
+    org TEXT,
+    dynamic_children TEXT,
     sql_sort BOOLEAN,
-    policy integer,
+    policy INTEGER,
     derive_permissions_from_class BOOLEAN DEFAULT true,
-    iconfactory integer,
+    iconfactory INTEGER,
     icon TEXT,
     artificial_id TEXT
 );
@@ -155,20 +155,20 @@ CREATE INDEX obj_cl_idx ON cs_cat_node USING btree (class_id, object_id);
 -- cs_class
 
 CREATE TABLE cs_class (
-    id integer DEFAULT NEXTVAL(('cs_class_sequence'::text)::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_class_sequence'::TEXT)::regclass) NOT NULL,
     name TEXT NOT NULL,
-    descr text,
-    class_icon_id integer NOT NULL,
-    object_icon_id integer NOT NULL,
+    descr TEXT,
+    class_icon_id INTEGER NOT NULL,
+    object_icon_id INTEGER NOT NULL,
     table_name TEXT NOT NULL,
     primary_key_field TEXT DEFAULT 'ID'::TEXT NOT NULL,
     indexed BOOLEAN DEFAULT false NOT NULL,
-    tostring integer,
-    editor integer,
-    renderer integer,
+    tostring INTEGER,
+    editor INTEGER,
+    renderer INTEGER,
     array_link BOOLEAN DEFAULT false NOT NULL,
-    policy integer,
-    attribute_policy integer
+    policy INTEGER,
+    attribute_policy INTEGER
 );
 
 CREATE SEQUENCE cs_class_sequence
@@ -192,11 +192,11 @@ CREATE SEQUENCE cs_class_attr_sequence
     CACHE 1;
 
 CREATE TABLE cs_class_attr (
-    id integer DEFAULT NEXTVAL('cs_class_attr_sequence'::regclass) NOT NULL,
-    class_id integer NOT NULL,
-    type_id integer NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_class_attr_sequence'::regclass) NOT NULL,
+    class_id INTEGER NOT NULL,
+    type_id INTEGER NOT NULL,
     attr_key TEXT NOT NULL,
-    attr_value text
+    attr_value TEXT
 );
 
 ALTER TABLE ONLY cs_class_attr
@@ -211,7 +211,7 @@ CREATE SEQUENCE cs_domain_sequence
     CACHE 1;
 
 CREATE TABLE cs_domain (
-    id integer DEFAULT NEXTVAL('cs_domain_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_domain_sequence'::regclass) NOT NULL,
     name TEXT
 );
 
@@ -227,7 +227,7 @@ CREATE SEQUENCE cs_icon_sequence
     CACHE 1;
 
 CREATE TABLE cs_icon (
-    id integer DEFAULT NEXTVAL('cs_icon_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_icon_sequence'::regclass) NOT NULL,
     name TEXT NOT NULL,
     file_name TEXT DEFAULT 'default_icon.gif'::TEXT NOT NULL
 );
@@ -244,7 +244,7 @@ CREATE SEQUENCE cs_java_class_sequence
     CACHE 1;
 
 CREATE TABLE cs_java_class (
-    id integer DEFAULT NEXTVAL('cs_java_class_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_java_class_sequence'::regclass) NOT NULL,
     qualifier TEXT,
     type TEXT DEFAULT 'unknown'::TEXT NOT NULL,
     notice TEXT
@@ -262,11 +262,11 @@ CREATE SEQUENCE cs_locks_seq
     CACHE 1;
 
 CREATE TABLE cs_locks (
-    class_id integer,
-    object_id integer,
+    class_id INTEGER,
+    object_id INTEGER,
     user_string TEXT,
     additional_info TEXT,
-    id integer DEFAULT NEXTVAL('cs_locks_seq'::regclass) NOT NULL
+    id INTEGER DEFAULT NEXTVAL('cs_locks_seq'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_locks
@@ -281,8 +281,8 @@ CREATE SEQUENCE cs_method_sequence
     CACHE 1;
 
 CREATE TABLE cs_method (
-    id integer DEFAULT NEXTVAL(('cs_method_sequence'::text)::regclass) NOT NULL,
-    descr text,
+    id INTEGER DEFAULT NEXTVAL(('cs_method_sequence'::TEXT)::regclass) NOT NULL,
+    descr TEXT,
     mult BOOLEAN DEFAULT false NOT NULL,
     class_mult BOOLEAN DEFAULT false NOT NULL,
     plugin_id TEXT DEFAULT ''::TEXT NOT NULL,
@@ -301,9 +301,9 @@ CREATE SEQUENCE cs_method_class_assoc_sequence
     CACHE 1;
 
 CREATE TABLE cs_method_class_assoc (
-    class_id integer NOT NULL,
-    method_id integer NOT NULL,
-    id integer DEFAULT NEXTVAL('cs_method_class_assoc_sequence'::regclass) NOT NULL
+    class_id INTEGER NOT NULL,
+    method_id INTEGER NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_method_class_assoc_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_method_class_assoc
@@ -318,7 +318,7 @@ CREATE SEQUENCE cs_permission_sequence
     CACHE 1;
 
 CREATE TABLE cs_permission (
-    id integer DEFAULT NEXTVAL('cs_permission_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_permission_sequence'::regclass) NOT NULL,
     KEY TEXT,
     description TEXT
 );
@@ -336,7 +336,7 @@ CREATE SEQUENCE cs_policy_sequence
     CACHE 1;
 
 CREATE TABLE cs_policy (
-    id integer DEFAULT NEXTVAL('cs_policy_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_policy_sequence'::regclass) NOT NULL,
     name TEXT NOT NULL
 );
 
@@ -352,9 +352,9 @@ CREATE SEQUENCE cs_policy_rule_sequence
     CACHE 1;
 
 CREATE TABLE cs_policy_rule (
-    id integer DEFAULT NEXTVAL('cs_policy_rule_sequence'::regclass) NOT NULL,
-    policy integer NOT NULL,
-    permission integer NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_policy_rule_sequence'::regclass) NOT NULL,
+    policy INTEGER NOT NULL,
+    permission INTEGER NOT NULL,
     default_value BOOLEAN NOT NULL
 );
 
@@ -373,11 +373,11 @@ CREATE SEQUENCE cs_query_sequence
     CACHE 1;
 
 CREATE TABLE cs_query (
-    id integer DEFAULT NEXTVAL(('cs_query_sequence'::text)::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_query_sequence'::TEXT)::regclass) NOT NULL,
     name TEXT NOT NULL,
-    descr text,
-    statement text,
-    result integer,
+    descr TEXT,
+    statement TEXT,
+    result INTEGER,
     is_update BOOLEAN DEFAULT false NOT NULL,
     is_union BOOLEAN DEFAULT false NOT NULL,
     is_root BOOLEAN DEFAULT false NOT NULL,
@@ -401,9 +401,9 @@ CREATE SEQUENCE cs_query_class_assoc_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_class_assoc (
-    class_id integer NOT NULL,
-    query_id integer NOT NULL,
-    id integer DEFAULT NEXTVAL('cs_query_class_assoc_sequence'::regclass) NOT NULL
+    class_id INTEGER NOT NULL,
+    query_id INTEGER NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_query_class_assoc_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_query_class_assoc
@@ -418,10 +418,10 @@ CREATE SEQUENCE cs_query_link_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_link (
-    id integer DEFAULT NEXTVAL('cs_query_link_sequence'::regclass) NOT NULL,
-    id_from integer NOT NULL,
-    id_to integer NOT NULL,
-    domain_to integer
+    id INTEGER DEFAULT NEXTVAL('cs_query_link_sequence'::regclass) NOT NULL,
+    id_from INTEGER NOT NULL,
+    id_to INTEGER NOT NULL,
+    domain_to INTEGER
 );
 
 ALTER TABLE ONLY cs_query_link
@@ -436,13 +436,13 @@ CREATE SEQUENCE cs_query_parameter_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_parameter (
-    id integer DEFAULT NEXTVAL(('cs_query_parameter_sequence'::text)::regclass) NOT NULL,
-    query_id integer NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_query_parameter_sequence'::TEXT)::regclass) NOT NULL,
+    query_id INTEGER NOT NULL,
     param_key TEXT NOT NULL,
-    descr text,
+    descr TEXT,
     is_query_result BOOLEAN DEFAULT false NOT NULL,
-    type_id integer,
-    query_position integer DEFAULT 0
+    type_id INTEGER,
+    query_position INTEGER DEFAULT 0
 );
 
 ALTER TABLE ONLY cs_query_parameter
@@ -457,8 +457,8 @@ CREATE SEQUENCE cs_query_store_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_store (
-    id integer DEFAULT NEXTVAL('cs_query_store_sequence'::regclass) NOT NULL,
-    user_id integer NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_query_store_sequence'::regclass) NOT NULL,
+    user_id INTEGER NOT NULL,
     name TEXT NOT NULL,
     file_name TEXT NOT NULL
 );
@@ -475,11 +475,11 @@ CREATE SEQUENCE cs_query_store_ug_assoc_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_store_ug_assoc (
-    ug_id integer NOT NULL,
-    query_store_id integer NOT NULL,
-    permission integer,
-    domain integer,
-    id integer DEFAULT NEXTVAL('cs_query_store_ug_assoc_sequence'::regclass) NOT NULL
+    ug_id INTEGER NOT NULL,
+    query_store_id INTEGER NOT NULL,
+    permission INTEGER,
+    domain INTEGER,
+    id INTEGER DEFAULT NEXTVAL('cs_query_store_ug_assoc_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_query_store_ug_assoc
@@ -495,11 +495,11 @@ CREATE SEQUENCE cs_query_ug_assoc_sequence
     CACHE 1;
 
 CREATE TABLE cs_query_ug_assoc (
-    ug_id integer NOT NULL,
-    query_id integer NOT NULL,
-    permission integer,
-    domain integer,
-    id integer DEFAULT NEXTVAL('cs_query_ug_assoc_sequence'::regclass) NOT NULL
+    ug_id INTEGER NOT NULL,
+    query_id INTEGER NOT NULL,
+    permission INTEGER,
+    domain INTEGER,
+    id INTEGER DEFAULT NEXTVAL('cs_query_ug_assoc_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_query_ug_assoc
@@ -514,13 +514,13 @@ CREATE SEQUENCE cs_type_sequence
     CACHE 1;
 
 CREATE TABLE cs_type (
-    id integer DEFAULT NEXTVAL(('cs_type_sequence'::text)::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL(('cs_type_sequence'::TEXT)::regclass) NOT NULL,
     name TEXT NOT NULL,
-    class_id integer,
+    class_id INTEGER,
     complex_type BOOLEAN DEFAULT false NOT NULL,
-    descr text,
-    editor integer,
-    renderer integer
+    descr TEXT,
+    editor INTEGER,
+    renderer INTEGER
 );
 
 ALTER TABLE ONLY cs_type
@@ -538,12 +538,11 @@ CREATE SEQUENCE cs_ug_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug (
-    id integer DEFAULT NEXTVAL('cs_ug_sequence'::regclass) NOT NULL,
+    id INTEGER DEFAULT NEXTVAL('cs_ug_sequence'::regclass) NOT NULL,
     name TEXT NOT NULL,
-    descr text,
-    domain integer NOT NULL,
-    prio integer NOT NULL,
-    UNIQUE ( prio )
+    descr TEXT,
+    domain INTEGER NOT NULL,
+    prio INTEGER NOT NULL
 );
 
 ALTER TABLE ONLY cs_ug
@@ -558,11 +557,11 @@ CREATE SEQUENCE cs_ug_attr_perm_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug_attr_perm (
-    id integer DEFAULT NEXTVAL(('cs_ug_attr_perm_sequence'::text)::regclass) NOT NULL,
-    ug_id integer NOT NULL,
-    attr_id integer NOT NULL,
-    permission integer,
-    domain integer
+    id INTEGER DEFAULT NEXTVAL(('cs_ug_attr_perm_sequence'::TEXT)::regclass) NOT NULL,
+    ug_id INTEGER NOT NULL,
+    attr_id INTEGER NOT NULL,
+    permission INTEGER,
+    domain INTEGER
 );
 
 ALTER TABLE ONLY cs_ug_attr_perm
@@ -577,11 +576,11 @@ CREATE SEQUENCE cs_ug_cat_node_perm_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug_cat_node_perm (
-    id integer DEFAULT NEXTVAL(('cs_ug_cat_node_perm_sequence'::text)::regclass) NOT NULL,
-    ug_id integer NOT NULL,
-    domain integer,
-    cat_node_id integer NOT NULL,
-    permission integer
+    id INTEGER DEFAULT NEXTVAL(('cs_ug_cat_node_perm_sequence'::TEXT)::regclass) NOT NULL,
+    ug_id INTEGER NOT NULL,
+    domain INTEGER,
+    cat_node_id INTEGER NOT NULL,
+    permission INTEGER
 );
 
 ALTER TABLE ONLY cs_ug_cat_node_perm
@@ -596,11 +595,11 @@ CREATE SEQUENCE cs_ug_class_perm_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug_class_perm (
-    id integer DEFAULT NEXTVAL('cs_ug_class_perm_sequence'::regclass) NOT NULL,
-    ug_id integer NOT NULL,
-    class_id integer NOT NULL,
-    permission integer,
-    domain integer
+    id INTEGER DEFAULT NEXTVAL('cs_ug_class_perm_sequence'::regclass) NOT NULL,
+    ug_id INTEGER NOT NULL,
+    class_id INTEGER NOT NULL,
+    permission INTEGER,
+    domain INTEGER
 );
 
 ALTER TABLE ONLY cs_ug_class_perm
@@ -615,10 +614,10 @@ CREATE SEQUENCE cs_ug_membership_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug_membership (
-    ug_id integer NOT NULL,
-    usr_id integer NOT NULL,
-    ug_domain integer,
-    id integer DEFAULT NEXTVAL('cs_ug_membership_sequence'::regclass) NOT NULL
+    ug_id INTEGER NOT NULL,
+    usr_id INTEGER NOT NULL,
+    ug_domain INTEGER,
+    id INTEGER DEFAULT NEXTVAL('cs_ug_membership_sequence'::regclass) NOT NULL
 );
 
 ALTER TABLE ONLY cs_ug_membership
@@ -633,11 +632,11 @@ CREATE SEQUENCE cs_ug_method_perm_sequence
     CACHE 1;
 
 CREATE TABLE cs_ug_method_perm (
-    id integer DEFAULT NEXTVAL(('cs_ug_method_perm_sequence'::text)::regclass) NOT NULL,
-    ug_id integer NOT NULL,
-    domain integer,
-    method_id integer NOT NULL,
-    permission integer
+    id INTEGER DEFAULT NEXTVAL(('cs_ug_method_perm_sequence'::TEXT)::regclass) NOT NULL,
+    ug_id INTEGER NOT NULL,
+    domain INTEGER,
+    method_id INTEGER NOT NULL,
+    permission INTEGER
 );
 
 ALTER TABLE ONLY cs_ug_method_perm
@@ -652,55 +651,18 @@ CREATE SEQUENCE cs_usr_sequence
     CACHE 1;
 
 CREATE TABLE cs_usr (
-    id integer DEFAULT NEXTVAL(('cs_usr_sequence'::text)::regclass) NOT NULL,
-    login_name TEXT NOT NULL,
-    password TEXT,
-    last_pwd_change timestamp without time zone NOT NULL,
-    administrator BOOLEAN DEFAULT false NOT NULL,
-    pw_hash char(64),
-    salt char(16),
-    last_pw_hash char(64),
-    last_salt char(16)
-);
-
-ALTER TABLE ONLY cs_usr
-    ADD CONSTRAINT x_cs_usr_login_name_key UNIQUE (login_name);
-
-ALTER TABLE ONLY cs_usr
-    ADD CONSTRAINT x_cs_usr_pkey PRIMARY KEY (id);
-
--- geom
-
-CREATE SEQUENCE geom_seq MINVALUE 1 START 1;
-
-CREATE TABLE geom
-(
-    id integer PRIMARY KEY DEFAULT NEXTVAL('geom_seq')
-);
-
-SELECT AddGeometryColumn( 'public','geom','geo_field', -1, 'GEOMETRY', 2 );
-
-CREATE INDEX geo_index ON geom USING GIST ( geo_field );
-
--- url_base
-
-CREATE SEQUENCE url_base_seq MINVALUE 1 START 1;
-
-CREATE TABLE url_base(
-    id INTEGER PRIMARY KEY DEFAULT NEXTVAL('url_base_seq'),
-    prot_prefix TEXT NOT NULL,
-    path TEXT NOT NULL,
-    server TEXT NOT NULL
-);
-
--- url
-
-CREATE SEQUENCE url_seq MINVALUE 1 START 1;
-
-CREATE TABLE url(
-    id INTEGER PRIMARY KEY DEFAULT NEXTVAL('url_seq'),
-    object_name TEXT NOT NULL,
-    url_base_id INTEGER NOT NULL
+	id int4 NOT NULL DEFAULT nextval('cs_usr_sequence'::TEXT::regclass),
+	login_name TEXT NOT NULL,
+	"password" TEXT NULL,
+	last_pwd_change TIMESTAMP NOT NULL,
+	administrator BOOLEAN NOT NULL DEFAULT false,
+	last_password TEXT NULL,
+	pw_hash bpchar(64) NULL,
+	salt bpchar(16) NULL,
+	last_pw_hash bpchar(64) NULL,
+	last_salt bpchar(16) NULL,
+	CONSTRAINT x_cs_usr_login_name_key UNIQUE (login_name),
+	CONSTRAINT x_cs_usr_pkey PRIMARY KEY (id)
 );
 
 -- cs_config_attr_key
@@ -792,9 +754,9 @@ CREATE TABLE cs_config_attr_exempt (
 
 CREATE TABLE cs_changed
 (
-  class_id integer NOT NULL,
-  object_id integer NOT NULL,
-  "time" timestamp with time zone DEFAULT now(),
+  class_id INTEGER NOT NULL,
+  object_id INTEGER NOT NULL,
+  "time" TIMESTAMP with time zone DEFAULT now(),
   CONSTRAINT cs_changed_primary_key PRIMARY KEY (class_id, object_id)
 );
 
@@ -807,13 +769,13 @@ CREATE SEQUENCE cs_scheduled_serveractions_sequence
     CACHE 1;
 
 CREATE TABLE cs_scheduled_serveractions (
-  id integer NOT NULL DEFAULT nextval(('cs_scheduled_serveractions_sequence'::text)::regclass),
+  id INTEGER NOT NULL DEFAULT nextval(('cs_scheduled_serveractions_sequence'::TEXT)::regclass),
   key TEXT,
   params_json TEXT,
   body_json TEXT,
-  start_timestamp timestamp without time zone,
+  start_timestamp TIMESTAMP without time zone,
   execution_rule TEXT,
-  execution_timestamp timestamp without time zone,
+  execution_timestamp TIMESTAMP without time zone,
   result_json TEXT,
   aborted boolean,
   taskname TEXT,
@@ -848,10 +810,10 @@ CREATE TABLE cs_history (
 
 CREATE TABLE cs_cache
 (
-  class_id integer NOT NULL,
-  object_id integer NOT NULL,
+  class_id INTEGER NOT NULL,
+  object_id INTEGER NOT NULL,
   stringrep TEXT,
-  lightweight_json text,
+  lightweight_json TEXT,
   CONSTRAINT cid_oid PRIMARY KEY (class_id , object_id )
 )
 WITH (
@@ -869,8 +831,8 @@ CREATE SEQUENCE cs_dynamic_children_helper_sequence
 CREATE TABLE cs_dynamic_children_helper
 (
     id INTEGER PRIMARY KEY DEFAULT NEXTVAL('cs_dynamic_children_helper_sequence'),
-    name text,
-    code text
+    name TEXT,
+    code TEXT
 )
 WITH (
   OIDS=FALSE
@@ -989,7 +951,7 @@ CREATE VIEW cs_class_hierarchy AS
 
 select addgeometrycolumn(''::TEXT, 'public'::TEXT,'cs_cache'::TEXT,'geometry'::TEXT, -1,'GEOMETRY'::TEXT,2);
 
-CREATE OR REPLACE FUNCTION insert_cache_entry(classid integer, objectId integer)
+CREATE OR REPLACE FUNCTION insert_cache_entry(classid INTEGER, objectId INTEGER)
   RETURNS void AS
 '
 begin
@@ -1034,8 +996,8 @@ END;
 $BODY$;
   
 
-select case when substring(version(), position(' ' in version()) + 1,  (position('.' in version()) - position(' ' in version()) - 1) )::integer < 10 then
-createFunction('CREATE OR REPLACE FUNCTION update_cache_entry(classid integer, objectId integer)
+select case when substring(version(), position(' ' in version()) + 1,  (position('.' in version()) - position(' ' in version()) - 1) )::INTEGER < 10 then
+createFunction('CREATE OR REPLACE FUNCTION update_cache_entry(classid INTEGER, objectId INTEGER)
   RETURNS void AS
 ''
 begin
@@ -1060,9 +1022,9 @@ begin
 end
 ''
   LANGUAGE plpgsql VOLATILE
-  COST 100;'::text)
+  COST 100;'::TEXT)
 else 
-createFunction ('CREATE OR REPLACE FUNCTION update_cache_entry(classid integer, objectId integer)
+createFunction ('CREATE OR REPLACE FUNCTION update_cache_entry(classid INTEGER, objectId INTEGER)
   RETURNS void AS
 ''
 begin
@@ -1087,7 +1049,7 @@ begin
 end
 ''
   LANGUAGE plpgsql VOLATILE
-  COST 100;'::text)
+  COST 100;'::TEXT)
 
 end;
 
@@ -1112,7 +1074,7 @@ end
   COST 100;
 
 
-CREATE OR REPLACE FUNCTION recreate_cache(classid integer)
+CREATE OR REPLACE FUNCTION recreate_cache(classid INTEGER)
   RETURNS void AS
 '
 begin
@@ -1131,7 +1093,7 @@ end
   COST 100;
 
 
-CREATE OR REPLACE FUNCTION recreate_cache(tablename text)
+CREATE OR REPLACE FUNCTION recreate_cache(tablename TEXT)
   RETURNS void AS
 '
 begin
@@ -1152,7 +1114,7 @@ end
 
 
 
-CREATE OR REPLACE FUNCTION insert_cache_entry(tableName text, objectId integer)
+CREATE OR REPLACE FUNCTION insert_cache_entry(tableName TEXT, objectId INTEGER)
   RETURNS void AS
 '
 begin
@@ -1173,7 +1135,7 @@ end
 
 
 
-CREATE OR REPLACE FUNCTION update_cache_entry(tableName text, objectId integer)
+CREATE OR REPLACE FUNCTION update_cache_entry(tableName TEXT, objectId INTEGER)
   RETURNS void AS
 '
 begin
@@ -1193,7 +1155,7 @@ end
   COST 100;
 
 
-CREATE OR REPLACE FUNCTION reindexpure(classid integer)
+CREATE OR REPLACE FUNCTION reindexpure(classid INTEGER)
   RETURNS void AS
 $BODY$
 declare
@@ -1211,8 +1173,8 @@ declare
 	backreference TEXT;
 	
 begin
-	CREATE TEMP TABLE cs_attr_object_temp (class_id integer, object_id integer, attr_class_id integer, attr_object_id integer);
-	CREATE TEMP TABLE cs_attr_string_temp (class_id integer, attr_id integer, object_id integer, string_val text);
+	CREATE TEMP TABLE cs_attr_object_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
+	CREATE TEMP TABLE cs_attr_string_temp (class_id INTEGER, attr_id INTEGER, object_id INTEGER, string_val TEXT);
 	
 	SELECT * INTO class FROM cs_class WHERE id = classId;
 
@@ -1220,9 +1182,9 @@ begin
 		--RAISE NOTICE '%     %', attr.field_name, class.table_name ;
 		IF attr.indexed THEN
 			IF attr.foreign_key_references_to < 0 THEN
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as text) AS fName FROM ' || class.table_name;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as TEXT) AS fName FROM ' || class.table_name;
 			ELSE
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as text) AS fName FROM ' || class.table_name;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as TEXT) AS fName FROM ' || class.table_name;
 			END IF;
 			FOR obj IN EXECUTE query LOOP
 				IF attr.foreign_key THEN
@@ -1270,13 +1232,13 @@ $BODY$
   COST 100;
 
 
-CREATE OR REPLACE FUNCTION reindexderivedobjects(classid integer)
+CREATE OR REPLACE FUNCTION reindexderivedobjects(classid INTEGER)
   RETURNS void AS
 $BODY$
 declare
 	ids INTEGER;
 begin
-	CREATE TEMP TABLE cs_attr_object_derived_temp (class_id integer, object_id integer, attr_class_id integer, attr_object_id integer);
+	CREATE TEMP TABLE cs_attr_object_derived_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
 	INSERT INTO   cs_attr_object_derived_temp WITH recursive derived_index
 	       (
 		      xocid,
@@ -1353,7 +1315,7 @@ $BODY$
 
 
 
-CREATE OR REPLACE FUNCTION reindex(class_id integer)
+CREATE OR REPLACE FUNCTION reindex(class_id INTEGER)
   RETURNS void AS
 $BODY$
 declare
@@ -1409,7 +1371,7 @@ $BODY$
 
 
 
-CREATE OR REPLACE FUNCTION reindexpure(classid integer, objectid integer)
+CREATE OR REPLACE FUNCTION reindexpure(classid INTEGER, objectid INTEGER)
   RETURNS void AS
 $BODY$
 declare
@@ -1427,8 +1389,8 @@ declare
 	backreference TEXT;
 	
 begin
-	CREATE TEMP TABLE cs_attr_object_temp (class_id integer, object_id integer, attr_class_id integer, attr_object_id integer);
-	CREATE TEMP TABLE cs_attr_string_temp (class_id integer, attr_id integer, object_id integer, string_val text);
+	CREATE TEMP TABLE cs_attr_object_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
+	CREATE TEMP TABLE cs_attr_string_temp (class_id INTEGER, attr_id INTEGER, object_id INTEGER, string_val TEXT);
 	
 	SELECT * INTO class FROM cs_class WHERE id = classId;
 
@@ -1436,9 +1398,9 @@ begin
 		--RAISE NOTICE '%     %', attr.field_name, class.table_name ;
 		IF attr.indexed THEN
 			IF attr.foreign_key_references_to < 0 THEN
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as text) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as TEXT) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
 			ELSE
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as text) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as TEXT) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
 			END IF;
 			FOR obj IN EXECUTE query LOOP
 				IF attr.foreign_key THEN
@@ -1486,7 +1448,7 @@ $BODY$
   COST 100;
 
 --- Funktion zur SALT Erzeugung
-CREATE OR REPLACE FUNCTION salt(integer) RETURNS text
+CREATE OR REPLACE FUNCTION salt(INTEGER) RETURNS TEXT
     AS '(SELECT array_to_string(array 
        ( 
               SELECT substr(''abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'', trunc(random() * 62)::INTEGER + 1, 1)
@@ -1496,31 +1458,35 @@ CREATE OR REPLACE FUNCTION salt(integer) RETURNS text
     RETURNS NULL ON NULL INPUT;
 
 --- Trigger-Funktion, die den Password-Hash aus dem Passwort erzeugt und das Passwort unkenntlich macht
-CREATE OR REPLACE FUNCTION set_pw()
-  RETURNS trigger AS
-'    
+CREATE or replace FUNCTION public.set_pw()
+    RETURNS trigger
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE NOT LEAKPROOF
+AS $BODY$    
 BEGIN
-   IF TG_OP = ''INSERT'' THEN
-       NEW.salt = salt(16);
-       NEW.pw_hash = md5(NEW.salt || NEW.password);
-       NEW.password = ''*****'';
-       NEW.last_pwd_change = now();
-   elsif NEW.password IS NOT NULL and NEW.password <> OLD.password then
-       NEW.salt = salt(16);
-       NEW.pw_hash = md5(NEW.salt || NEW.password);
-       NEW.password = ''*****'';
-       NEW.last_pwd_change = now();
+   IF ltrim(NEW.password, '*') <> '' or NEW.password = '' THEN 
+       IF TG_OP = 'INSERT' THEN
+           NEW.salt = salt(16);
+           NEW.pw_hash = md5(NEW.salt || NEW.password);
+           NEW.password = '*****';
+           NEW.last_pwd_change = now();
+       elsif NEW.password IS NOT NULL and NEW.password <> OLD.password then
+           NEW.salt = salt(16);
+           NEW.pw_hash = md5(NEW.salt || NEW.password);
+           NEW.password = '*****';
+           NEW.last_pwd_change = now();
+       END IF;
    END IF;
+   
    RETURN NEW;
 END;
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
 
 --- Trigger, der die Trigger-Funktion benutzt, wenn cs_usr geaendert wird
 CREATE TRIGGER password_trigger BEFORE INSERT OR UPDATE ON cs_usr FOR EACH ROW EXECUTE PROCEDURE set_pw();
 
-CREATE OR REPLACE FUNCTION cidsObjectExists(cid integer, oid integer)
+CREATE OR REPLACE FUNCTION cidsObjectExists(cid INTEGER, oid INTEGER)
   RETURNS boolean AS
 $BODY$
 declare
@@ -1612,7 +1578,7 @@ BEGIN
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION public.cs_refresh_changed(classId integer)
+CREATE OR REPLACE FUNCTION public.cs_refresh_changed(classId INTEGER)
     RETURNS void
     LANGUAGE 'plpgsql'
     COST 100
@@ -1620,11 +1586,11 @@ CREATE OR REPLACE FUNCTION public.cs_refresh_changed(classId integer)
 AS $BODY$
 DECLARE
    ref Record;
-   c integer;
-   t timestamp;
-   oid integer;
-   oidArray integer[];
-   queryToExecute text;
+   c INTEGER;
+   t TIMESTAMP;
+   oid INTEGER;
+   oidArray INTEGER[];
+   queryToExecute TEXT;
 BEGIN
 	--delete all objects from the cs_changed table, if this class should not be monitored
 	if not exists (select 1 from cs_class c join cs_class_attr a on (a.class_id = c.id) where attr_key ilike 'class_changed_monitoring_level' and (attr_value ilike 'class' or attr_value ilike 'object') and c.id = classId) then
@@ -1679,9 +1645,9 @@ BEGIN
 END;
 $BODY$;
 
--- DROP FUNCTION cs_recreatecacheddaqview(text);
+-- DROP FUNCTION cs_recreatecacheddaqview(TEXT);
 
-CREATE OR REPLACE FUNCTION cs_recreatecacheddaqview(viewname text)
+CREATE OR REPLACE FUNCTION cs_recreatecacheddaqview(viewname TEXT)
   RETURNS void AS
 $BODY$
 declare
@@ -1690,9 +1656,9 @@ begin
 	execute 'SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE  table_schema = ''daq'' AND table_name   = ''' || viewName || '_cached'')' into e;
 
 	if (e is not null and e) then
-		execute 'insert into daq.' || viewName || '_cached (md5, json, time, version, status) (select md5(json) as md5, json as json, now() as refreshed, ''version''::text as version, null::text from daq.' || viewName || ')';
+		execute 'insert into daq.' || viewName || '_cached (md5, json, time, version, status) (select md5(json) as md5, json as json, now() as refreshed, ''version''::TEXT as version, null::TEXT from daq.' || viewName || ')';
 	else 
-		execute 'create table daq.' || viewName || '_cached as select json as json,md5(json) as md5, now() as time, ''version''::text as version, null::text as status from daq.' || viewName;
+		execute 'create table daq.' || viewName || '_cached as select json as json,md5(json) as md5, now() as time, ''version''::TEXT as version, null::TEXT as status from daq.' || viewName;
 	end if;
 end
 $BODY$
@@ -1700,8 +1666,8 @@ $BODY$
   COST 100;
 
 -- execute()
-CREATE OR REPLACE FUNCTION execute(_command character varying)
-  RETURNS character varying AS
+CREATE OR REPLACE FUNCTION execute(_command CHARACTER varying)
+  RETURNS CHARACTER varying AS
 $BODY$
 DECLARE _r int;
 BEGIN
@@ -1717,7 +1683,7 @@ $BODY$
 
 -- cs_refresh_dynchilds_functions()
 CREATE OR REPLACE FUNCTION cs_refresh_dynchilds_functions()
-  RETURNS character varying AS
+  RETURNS CHARACTER varying AS
 $BODY$
 DECLARE
    dropBackupSchema boolean;
@@ -1743,9 +1709,9 @@ $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
 
-CREATE OR REPLACE FUNCTION public.cs_dump_cs_tables(tabs text[]
+CREATE OR REPLACE FUNCTION public.cs_dump_cs_tables(tabs TEXT[]
     )
-    RETURNS SETOF text 
+    RETURNS SETOF TEXT 
     LANGUAGE 'plpgsql'
     COST 100
     VOLATILE 
@@ -1755,13 +1721,13 @@ AS $BODY$
 declare
     ref record;
     rec record;
-    cols text[];
-    result text;
-    selectStatement text;
+    cols TEXT[];
+    result TEXT;
+    selectStatement TEXT;
     cur refcursor;
-    kap text;
-    ind integer;
-    dTypes text[];
+    kap TEXT;
+    ind INTEGER;
+    dTypes TEXT[];
 begin
     result = '';
     
@@ -1781,7 +1747,7 @@ begin
         result = 'DELETE FROM ' || ref.tablename || ';';
         return next result;
         result = '';
-        SELECT array_agg(column_name::text), array_agg(data_type::text) into cols, dTypes FROM information_schema.columns WHERE table_schema = 'public' and table_name = ref.tablename;
+        SELECT array_agg(column_name::TEXT), array_agg(data_type::TEXT) into cols, dTypes FROM information_schema.columns WHERE table_schema = 'public' and table_name = ref.tablename;
         selectStatement = 'SELECT ' || array_to_string(cols, ',') || ' from ' || ref.tablename;
         if cols is null then
             raise notice 'cols = null for table %', ref.tablename;
@@ -1826,3 +1792,24 @@ begin
     return;
 end
 $BODY$;
+
+-- url_base
+
+CREATE SEQUENCE url_base_seq MINVALUE 1 START 1;
+
+CREATE TABLE url_base(
+    id INTEGER PRIMARY KEY DEFAULT NEXTVAL('url_base_seq'),
+    prot_prefix TEXT NOT NULL,
+    path TEXT NOT NULL,
+    server TEXT NOT NULL
+);
+
+-- url
+
+CREATE SEQUENCE url_seq MINVALUE 1 START 1;
+
+CREATE TABLE url(
+    id INTEGER PRIMARY KEY DEFAULT NEXTVAL('url_seq'),
+    object_name TEXT NOT NULL,
+    url_base_id INTEGER NOT NULL
+);

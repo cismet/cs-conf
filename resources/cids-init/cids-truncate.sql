@@ -62,6 +62,14 @@ ALTER SEQUENCE cs_icon_sequence RESTART WITH 1;
 DELETE FROM cs_java_class;
 ALTER SEQUENCE cs_java_class_sequence RESTART WITH 1;
 
+--TRUNCATE TABLE cs_policy CASCADE;
+DELETE FROM cs_permission;
+ALTER SEQUENCE cs_permission_sequence RESTART WITH 1;
+
+--TRUNCATE TABLE cs_policy CASCADE;
+DELETE FROM cs_policy;
+ALTER SEQUENCE cs_policy_sequence RESTART WITH 1;
+
 --TRUNCATE TABLE cs_policy_rule CASCADE;
 DELETE FROM cs_policy_rule;
 ALTER SEQUENCE cs_policy_rule_sequence RESTART WITH 1;
@@ -94,6 +102,10 @@ ALTER SEQUENCE cs_cat_node_sequence RESTART WITH 1;
 DELETE FROM cs_config_attr_exempt;
 ALTER SEQUENCE cs_config_attr_exempt_sequence RESTART WITH 1;
 
+--TRUNCATE TABLE cs_config_attr_type CASCADE; 
+DELETE FROM cs_config_attr_type;
+ALTER SEQUENCE cs_config_attr_type_sequence RESTART WITH 1;
+
 --TRUNCATE TABLE cs_ug_attr_perm CASCADE; 
 DELETE FROM cs_ug_attr_perm;
 ALTER SEQUENCE cs_ug_attr_perm_sequence RESTART WITH 1;
@@ -101,3 +113,11 @@ ALTER SEQUENCE cs_ug_attr_perm_sequence RESTART WITH 1;
 --TRUNCATE TABLE cs_ug_cat_node_perm CASCADE; 
 DELETE FROM cs_ug_cat_node_perm;
 ALTER SEQUENCE cs_ug_cat_node_perm_sequence RESTART WITH 1;
+
+--TRUNCATE TABLE url CASCADE; 
+DELETE FROM url;
+ALTER SEQUENCE url_seq RESTART WITH 1;
+
+--TRUNCATE TABLE url_base CASCADE; 
+DELETE FROM url_base;
+ALTER SEQUENCE url_base_seq RESTART WITH 1;

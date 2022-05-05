@@ -4,7 +4,7 @@ import xmlFormatter from 'xml-formatter';
 import * as stmnts from './statements';
 
 const exportConfigAttributes = async (client, folder, schema) => {
-    console.log("loading Configuration Attributes ...");
+    console.log("loading Configuration Attributes");
     const {
         rows: configAttributes
     } = await client.query(stmnts.configAttr);
@@ -17,7 +17,7 @@ export function analyzeAndPreprocess(configAttributes) {
     const domainConfigAttrs = new Map();
     const xmlFiles = new Map();
 
-    console.log("analyze Configuration Attributes ...");
+    console.log("analyze Configuration Attributes");
     let xmlDocCounter = new Map();
     for (let attr of configAttributes) {
         let attrInfo = {

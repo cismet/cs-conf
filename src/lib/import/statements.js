@@ -1,67 +1,70 @@
 export const simple_cs_domain = `
-    INSERT INTO cs_domain ("name") 
-    VALUES ($1);
+INSERT INTO cs_domain ("name") VALUES ($1);
 `;
 
 
 export const simple_cs_policy_rules = `
-    INSERT INTO cs_policy_rule (policy, "permission", default_value) 
-    VALUES (
-        (SELECT id FROM cs_policy WHERE "name"=$1),
-        (SELECT id from cs_permission WHERE "key"=$2),
-        $3);
+INSERT INTO cs_policy_rule (policy, "permission", default_value) VALUES (
+    (SELECT id FROM cs_policy WHERE "name"=$1),
+    (SELECT id from cs_permission WHERE "key"=$2),
+    $3
+);
 `;
 
 
 export const simple_cs_ug = `
-    INSERT INTO cs_ug ("name", descr, "domain", prio) 
-    VALUES ($1, 
-            $2, 
-            (SELECT id FROM cs_domain WHERE "name"=$3), 
-            $4);
+INSERT INTO cs_ug ("name", descr, "domain", prio) VALUES (
+    $1, 
+    $2, 
+    (SELECT id FROM cs_domain WHERE "name"=$3), 
+    $4
+);
 `;
 
 export const simple_cs_usr = `
-    INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator, pw_hash, salt, last_pw_hash, last_salt) 
-    VALUES ($1, 
-            '*',
-            CURRENT_TIMESTAMP, 
-            $2, 
-            $3, 
-            $4, 
-            NULL, 
-            NULL);
+INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator, pw_hash, salt, last_pw_hash, last_salt) VALUES (
+    $1, 
+    '*',
+    CURRENT_TIMESTAMP, 
+    $2, 
+    $3, 
+    $4, 
+    NULL, 
+    NULL
+);
 `;
 
 export const simple_cs_usr_with_password = `
-    INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator) 
-    VALUES ($1, 
-            $2,
-            CURRENT_TIMESTAMP, 
-            $3
-            );
+INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator) VALUES (
+    $1, 
+    $2,
+    CURRENT_TIMESTAMP, 
+    $3
+);
 `;
 
 export const simple_cs_ug_membership = `
-    INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
-        ( SELECT ug.id, u.id, d.id 
-        FROM cs_usr u, cs_ug ug JOIN cs_domain d ON (ug.domain=d.id )
-        WHERE 
-        ug.name=$1 AND d.name=$2
-        AND u.login_name=$3 );
+INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) ( 
+    SELECT ug.id, u.id, d.id 
+    FROM cs_usr u, cs_ug ug JOIN cs_domain d ON (ug.domain=d.id )
+    WHERE 
+    ug.name=$1 AND d.name=$2
+    AND u.login_name=$3 
+);
 `;     
 
 
 export const nested_cs_ug_membership = `
-    INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
-        SELECT cs_ug.id,cs_usr.id,cs_ug.domain FROM (SELECT 
-            UNNEST($1::text[]), 
-            UNNEST($2::text[]), 
-            UNNEST($3::text[])
-        ) AS t(g, u, d) 
-        JOIN cs_ug ON (cs_ug.name=g) 
-        JOIN cs_usr ON (cs_usr.login_name=u)   
-        JOIN cs_domain ON (cs_ug.domain=cs_domain.id) 
+INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
+    SELECT cs_ug.id,cs_usr.id,cs_ug.domain FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[]), 
+        UNNEST($3::text[])
+    ) AS t(g, u, d) 
+    JOIN cs_ug ON (cs_ug.name=g) 
+    JOIN cs_usr ON (cs_usr.login_name=u)   
+    JOIN cs_domain ON (cs_ug.domain=cs_domain.id)
+;
 `;     
 
 
@@ -69,8 +72,7 @@ export const nested_cs_ug_membership = `
 // $1 = cs_config_attr_key.key
 // $2 = cs_config_attr_key.group_name
 export const simple_cs_config_attr_key = `
-    INSERT INTO cs_config_attr_key (id, "key", group_name) 
-    VALUES (DEFAULT, $1, $2)
+INSERT INTO cs_config_attr_key (id, "key", group_name) VALUES (DEFAULT, $1, $2);
 `;
 
 // $1 = domain[[]
@@ -78,25 +80,25 @@ export const simple_cs_config_attr_key = `
 // $3 = user[]
 // $4 = key[]
 export const complex_cs_config_attrs4A = `
-    INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
+INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
     SELECT cs_usr.id user_id, cs_ug.id group_id,cs_domain.id domain_id, cs_config_attr_key.id key_id, 1,cs_config_attr_type.id type_id
-        FROM (SELECT 
-            UNNEST($1::text[]), 
-            UNNEST($2::text[]), 
-            UNNEST($3::text[]), 
-            UNNEST($4::text[])
-        ) AS t(d, g, u, k) 
-        LEFT OUTER JOIN cs_ug ON (cs_ug.name=g) 
-        LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
-        LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
-        JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
-        JOIN cs_config_attr_type ON (cs_config_attr_type.type='A')
-    ;
+    FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[]), 
+        UNNEST($3::text[]), 
+        UNNEST($4::text[])
+    ) AS t(d, g, u, k) 
+    LEFT OUTER JOIN cs_domain ugd ON (ugd.name=d) 
+    LEFT OUTER JOIN cs_ug ON (cs_ug.name=g AND cs_ug.domain=ugd.id) 
+    LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
+    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
+    JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
+    JOIN cs_config_attr_type ON (cs_config_attr_type.type='A')
+;
 `;
 
 export const simple_cs_config_attr_value = `
-    INSERT INTO cs_config_attr_value (id, value) 
-    VALUES (DEFAULT, $1)
+INSERT INTO cs_config_attr_value (id, value) VALUES (DEFAULT, $1);
 `;
 
 // $1 = domain[[]
@@ -106,7 +108,7 @@ export const simple_cs_config_attr_value = `
 // $5 = type[]
 // $6 = value[]
 export const complex_cs_config_attrs_C_X = `
-    INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
+INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
     SELECT
         cs_usr.id user_id, 
         cs_ug.id group_id,
@@ -114,45 +116,43 @@ export const complex_cs_config_attrs_C_X = `
         cs_config_attr_key.id key_id, 
         cs_config_attr_value.id value_id, 
         cs_config_attr_type.id type_id
-        FROM (SELECT 
-            UNNEST($1::text[]), 
-            UNNEST($2::text[]), 
-            UNNEST($3::text[]), 
-            UNNEST($4::text[]), 
-            UNNEST($5::text[]), 
-            UNNEST($6::text[])
-        ) AS t(d, g, u, k, t, v) 
-        LEFT OUTER JOIN cs_ug ON (cs_ug.name=g) 
-        LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
-        LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
-        JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
-        JOIN cs_config_attr_type ON (cs_config_attr_type.type=t)
-        JOIN cs_config_attr_value ON (cs_config_attr_value.value=v)
-    ;
+    FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[]), 
+        UNNEST($3::text[]), 
+        UNNEST($4::text[]), 
+        UNNEST($5::text[]), 
+        UNNEST($6::text[])
+    ) AS t(d, g, u, k, t, v) 
+    LEFT OUTER JOIN cs_domain ugd ON (ugd.name=d) 
+    LEFT OUTER JOIN cs_ug ON (cs_ug.name=g AND cs_ug.domain=ugd.id) 
+    LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
+    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
+    JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
+    JOIN cs_config_attr_type ON (cs_config_attr_type.type=t)
+    JOIN cs_config_attr_value ON (cs_config_attr_value.value=v)
+;
 `;
 
 
 export const simple_cs_icon = `
-    INSERT INTO cs_icon ("name", file_name) 
-	VALUES ($1, $2);
+INSERT INTO cs_icon ("name", file_name) VALUES ($1, $2);
 `;
 
 export const simple_cs_java_class = `
-    INSERT INTO cs_java_class (qualifier, notice, "type") 
-	VALUES ($1, NULL, $2);
+INSERT INTO cs_java_class (qualifier, notice, "type") VALUES ($1, NULL, $2);
 `;
 
 export const simple_cs_dynamic_children_helper = `
-    INSERT INTO cs_dynamic_children_helper (name, code) 
-    VALUES ($1, $2);
+INSERT INTO cs_dynamic_children_helper (name, code) VALUES ($1, $2);
 `;
 
 export const execute_cs_refresh_dynchilds_functions = `
-    SELECT cs_refresh_dynchilds_functions();
+SELECT cs_refresh_dynchilds_functions();
 `;
 
 export const complex_cs_class = `
-    INSERT INTO cs_class ("name", descr, class_icon_id, object_icon_id, "table_name", primary_key_field, indexed, tostring, editor, renderer, array_link, policy, attribute_policy) 
+INSERT INTO cs_class ("name", descr, class_icon_id, object_icon_id, "table_name", primary_key_field, indexed, tostring, editor, renderer, array_link, policy, attribute_policy) 
     SELECT n , d, class_icons.id, object_icons.id, t, pk, i, toStringClasses.id, editorClasses.id, rendererClasses.id, a, class_policy.id, attribute_policy.id
     FROM (SELECT 
         UNNEST($1::text[]), 
@@ -178,32 +178,34 @@ export const complex_cs_class = `
     LEFT OUTER JOIN cs_java_class editorClasses ON (ec=editorClasses.qualifier AND et=editorClasses.type)
     LEFT OUTER JOIN cs_java_class rendererClasses ON (rc=rendererClasses.qualifier AND rt=rendererClasses.type)
     LEFT OUTER JOIN cs_policy class_policy ON (p=class_policy.name)
-    LEFT OUTER JOIN cs_policy attribute_policy ON (ap=attribute_policy.name);
+    LEFT OUTER JOIN cs_policy attribute_policy ON (ap=attribute_policy.name)
+;
 `;
 
 
 export const complex_cs_type = `
-    INSERT INTO cs_type ("name", class_id, complex_type, descr, editor, renderer) 
+INSERT INTO cs_type ("name", class_id, complex_type, descr, editor, renderer) 
     SELECT n, cs_class.id,true, null, null, null
     FROM (SELECT 
         UNNEST($1::text[]), 
         UNNEST($2::text[])
     ) AS t(n, tn)
-    JOIN cs_class ON (cs_class.table_name=tn);
+    JOIN cs_class ON (cs_class.table_name=tn)
+;
 `;
 
 export const complex_cs_attr4dbTypes = `
-    INSERT INTO cs_attr (
-                class_id, type_id, "name", field_name, foreign_key, substitute, 
-                foreign_key_references_to, descr, visible, indexed, isarray, 
-                array_key, editor, tostring, complex_editor, optional, 
-                default_value, from_string, pos, "precision", "scale", extension_attr
-                    ) 
+INSERT INTO cs_attr (
+    class_id, type_id, "name", field_name, foreign_key, substitute, 
+    foreign_key_references_to, descr, visible, indexed, isarray, 
+    array_key, editor, tostring, complex_editor, optional, 
+    default_value, from_string, pos, "precision", "scale", extension_attr
+) 
     SELECT 
-                cs_class.id,cs_type.id,n,fn,fk,s,
-                foreign_key_class.id,d,v,i,arr,
-                ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
-                dv, fromString_jc.id,p,pr,sc,ea
+        cs_class.id,cs_type.id,n,fn,fk,s,
+        foreign_key_class.id,d,v,i,arr,
+        ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
+        dv, fromString_jc.id,p,pr,sc,ea
     FROM (SELECT
         UNNEST($1::text[]), -- table
         UNNEST($2::text[]), -- type_name
@@ -232,7 +234,6 @@ export const complex_cs_attr4dbTypes = `
         UNNEST($25::integer[]), -- scale
         UNNEST($26::bool[]) -- extension attribute
     ) AS t(t,tn,n,fn,fk,s,fktn,d,v,i,arr,ak,ec,et,tsc,tst,cec,cet,o,dv,fsc,fst,p,pr,sc,ea)
-
     JOIN cs_class ON (t=cs_class.table_name)
     JOIN cs_type ON (tn=cs_type.name)
     LEFT OUTER JOIN cs_class foreign_key_class ON (fktn=foreign_key_class.table_name)
@@ -240,22 +241,22 @@ export const complex_cs_attr4dbTypes = `
     LEFT OUTER JOIN cs_java_class toString_jc ON (tsc=toString_jc.qualifier AND tst=toString_jc.type)
     LEFT OUTER JOIN cs_java_class complexeditor_jc ON (cec=complexeditor_jc.qualifier AND cet=complexeditor_jc.type)
     LEFT OUTER JOIN cs_java_class fromString_jc ON (fsc=fromString_jc.qualifier AND fst=fromString_jc.type)
+;
 `;
 
 
 export const complex_cs_attr4cidsTypes = `
-    INSERT INTO cs_attr 
-            (
-                class_id, type_id, "name", field_name, foreign_key, substitute, 
-                foreign_key_references_to, descr, visible, indexed, isarray, 
-                array_key, editor, tostring, complex_editor, optional, 
-                default_value, from_string, pos, "precision", "scale", extension_attr
-            ) 
-        SELECT  
-                cs_class.id ,cs_type.id,n,fn,fk,s,
-                type_class.id*xx,d,v,i,arr,
-                ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
-                dv, fromString_jc.id,p,pr,sc,ea
+INSERT INTO cs_attr (
+    class_id, type_id, "name", field_name, foreign_key, substitute, 
+    foreign_key_references_to, descr, visible, indexed, isarray, 
+    array_key, editor, tostring, complex_editor, optional, 
+    default_value, from_string, pos, "precision", "scale", extension_attr
+) 
+    SELECT  
+        cs_class.id ,cs_type.id,n,fn,fk,s,
+        type_class.id*xx,d,v,i,arr,
+        ak, editor_jc.id, toString_jc.id, complexeditor_jc.id, o,
+        dv, fromString_jc.id,p,pr,sc,ea
     FROM (SELECT
         UNNEST($1::text[]), -- table
         UNNEST($2::text[]), -- type_name (4 cidsTypes the table_name of the foreign key table)
@@ -285,7 +286,6 @@ export const complex_cs_attr4cidsTypes = `
         UNNEST($26::bool[]), -- extension attribute
         UNNEST($27::integer[]) -- -1 if oneToMany or 1 if else
     ) AS t(t,tn,n,fn,fk,s,fktn,d,v,i,arr,ak,ec,et,tsc,tst,cec,cet,o,dv,fsc,fst,p,pr,sc,ea,xx)
-
     JOIN cs_class ON (t=cs_class.table_name)
     JOIN cs_class type_class ON (tn=type_class.table_name)
     JOIN cs_type ON (cs_type.class_id=type_class.id)
@@ -293,11 +293,11 @@ export const complex_cs_attr4cidsTypes = `
     LEFT OUTER JOIN cs_java_class toString_jc ON (tsc=toString_jc.qualifier AND tst=toString_jc.type)
     LEFT OUTER JOIN cs_java_class complexeditor_jc ON (cec=complexeditor_jc.qualifier AND cet=complexeditor_jc.type)
     LEFT OUTER JOIN cs_java_class fromString_jc ON (fsc=fromString_jc.qualifier AND fst=fromString_jc.type)
+;
 `;
 
 export const complex_cs_class_attr = `
-    INSERT INTO cs_class_attr 
-        (class_id, type_id, attr_key, attr_value) 
+INSERT INTO cs_class_attr (class_id, type_id, attr_key, attr_value) 
     SELECT 
         cs_class.id, cs_type.id, key, value
     FROM (SELECT
@@ -306,13 +306,13 @@ export const complex_cs_class_attr = `
         UNNEST($3::text[]) -- attr_value
     )  AS t(tn,key,value)
     JOIN cs_class ON (tn=cs_class.table_name)
-    JOIN cs_type ON (cs_type.name='TEXT');
+    JOIN cs_type ON (cs_type.name='TEXT')
+;
 `;
 
 
 export const complex_cs_class_permission = `
-    INSERT INTO cs_ug_class_perm 
-        (ug_id, class_id, "permission", "domain") 
+INSERT INTO cs_ug_class_perm (ug_id, class_id, "permission", "domain") 
     SELECT 
         cs_ug.id uid, cs_class.id cid, cs_permission.id pid, null
     FROM ( SELECT
@@ -324,13 +324,13 @@ export const complex_cs_class_permission = `
    JOIN cs_class ON (t=cs_class.table_name)
    JOIN cs_domain ON (d=cs_domain.name)
    JOIN cs_ug ON (g=cs_ug.name AND cs_domain.id=cs_ug.domain)
-   JOIN cs_permission ON (p=cs_permission.key);
+   JOIN cs_permission ON (p=cs_permission.key)
+;
 `;
 
 
 export const complex_cs_attr_permission = `
-    INSERT INTO cs_ug_attr_perm 
-        (ug_id, attr_id, "permission", "domain") 
+INSERT INTO cs_ug_attr_perm (ug_id, attr_id, "permission", "domain") 
     SELECT 
         cs_ug.id uid, cs_class.id cid, cs_permission.id pid, null
     FROM (SELECT
@@ -344,21 +344,23 @@ export const complex_cs_attr_permission = `
    JOIN cs_attr ON (a=cs_attr.field_name AND cs_attr.class_id=cs_class.id
    JOIN cs_domain ON (d=cs_domain.name)
    JOIN cs_ug ON (g=cs_ug.name AND cs_domain.id=cs_ug.domain)
-   JOIN cs_permission ON (p=cs_permission.key);
+   JOIN cs_permission ON (p=cs_permission.key)
+;
 `;
 
 export const prepare_cs_cat_node = `
-    ALTER TABLE cs_cat_node ADD COLUMN tmp_id INTEGER;
+ALTER TABLE cs_cat_node ADD COLUMN tmp_id INTEGER;
 `;
 export const clean_cs_cat_node = `
-    ALTER TABLE cs_cat_node DROP COLUMN tmp_id;
+ALTER TABLE cs_cat_node DROP COLUMN tmp_id;
 `;
 
 export const complex_cs_cat_node = `
-    INSERT INTO cs_cat_node 
-        ("name", descr, class_id, object_id, node_type, 
-        is_root, org, dynamic_children, sql_sort, policy, 
-        derive_permissions_from_class, iconfactory, icon, artificial_id, tmp_id) 
+INSERT INTO cs_cat_node (
+    "name", descr, class_id, object_id, node_type, 
+    is_root, org, dynamic_children, sql_sort, policy, 
+    derive_permissions_from_class, iconfactory, icon, artificial_id, tmp_id
+) 
     SELECT     
         n, null, cs_class.id, oid, nt,
         ir, o, dc, ss, cs_policy.id, 
@@ -383,23 +385,24 @@ export const complex_cs_cat_node = `
     LEFT OUTER JOIN  cs_class ON (t=cs_class.table_name)
     LEFT OUTER JOIN cs_policy ON (p=cs_policy.name)
     returning id, tmp_id
+;
 `;
 
 
 export const complex_cs_cat_link = `
-    INSERT INTO cs_cat_link (id_from, id_to, domain_to) 
+INSERT INTO cs_cat_link (id_from, id_to, domain_to) 
     SELECT  f,t,cs_domain.id
     FROM ( SELECT
         UNNEST($1::integer[]), -- from
         UNNEST($2::integer[]) -- to
     ) as t(f,t)
-    JOIN cs_domain ON (cs_domain.name='LOCAL');
+    JOIN cs_domain ON (cs_domain.name='LOCAL')
+;
 `;
 
 
 export const complex_cs_ug_cat_node_permission = `
-    INSERT INTO cs_ug_cat_node_perm 
-        (ug_id, "domain", cat_node_id, "permission" ) 
+INSERT INTO cs_ug_cat_node_perm (ug_id, "domain", cat_node_id, "permission" ) 
     SELECT 
         cs_ug.id uid, node_domain.id, cnid, cs_permission.id pid
     FROM (SELECT 
@@ -411,5 +414,6 @@ export const complex_cs_ug_cat_node_permission = `
    JOIN cs_domain node_domain ON (node_domain.name='LOCAL')
    JOIN cs_domain group_domain ON (d=group_domain.name)
    JOIN cs_ug ON (g=cs_ug.name AND group_domain.id=cs_ug.domain)
-   JOIN cs_permission ON (p=cs_permission.key);
+   JOIN cs_permission ON (p=cs_permission.key)
+;
 `;

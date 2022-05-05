@@ -6,8 +6,6 @@ import {
 import util from 'util';
 import fs from 'fs';
 
-const readFile = util.promisify(fs.readFile);
-
 export async function nestedFiller(client, stmnt, rows) {
     //make column arrays
     let cols = _.transpose(rows);
@@ -22,7 +20,7 @@ export async function singleRowFiller(client, stmnt, rows) {
 }
 
 export async function getClientForConfig(config) {
-    const propFileContent=await readFile(config, {encoding: 'utf8'})
+    const propFileContent=fs.readFileSync(config, {encoding: 'utf8'})
     const props=propertyParser.parse(propFileContent);
     const conUrl=props["connection.url"];
     const conImportant=conUrl.split("//")[1];

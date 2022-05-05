@@ -96,9 +96,9 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
 
     //Debug Output
     // console.log("writing nodes.json");
-    // await writeFile("./"+folder+"/nodes.json", stringify(nodes, {maxLength:100}), "utf8");
+    // fs.writeFileSync("./"+folder+"/nodes.json", stringify(nodes, {maxLength:100}), "utf8");
     // console.log("writing links.json");
-    // await writeFile("./"+folder+"/links.json", stringify(links, {maxLength:100}), "utf8");
+    // fs.writeFileSync("./"+folder+"/links.json", stringify(links, {maxLength:100}), "utf8");
 
 
     let parentIds = new Set();
