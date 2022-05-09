@@ -63,6 +63,7 @@ export async function worker(options) {
     }
 
     //ConfigAttr -----------------------------------------------------------------------
+    console.log("analyzing configuration attributes");
     const {
         userConfigAttrs,
         groupConfigAttrs,
@@ -72,83 +73,79 @@ export async function worker(options) {
 
     //Write XML Files -----------------------------------------------------------------------
     xmlFiles.forEach(async (xmlToSave, fileName) => {
-        fs.writeFileSync(folder + "/"+ constants.confAttrXmlSnippetsFolder +"/" + fileName, xmlToSave, "utf8");
+        fs.writeFileSync(util.format("%s/%s/%s", folder, constants.confAttrXmlSnippetsFolder, fileName), xmlToSave, "utf8");
     });
 
     //Domains -----------------------------------------------------------------------
-    const domainArray = await exportDomains(client, domainConfigAttrs);
     console.log("writing domains.json");
-    fs.writeFileSync(folder + "/domains.json", stringify(domainArray), "utf8");
+    const domainArray = await exportDomains(client, domainConfigAttrs);
+    fs.writeFileSync(util.format("%s/domains.json", folder), stringify(domainArray), "utf8");
 
 
     // Policy defaults -----------------------------------------------------------------------
-    const policyDefaults = await exportPolicyDefaults(client);
     console.log("writing policy_rules.json");
-    fs.writeFileSync(folder + "/policy_rules.json", stringify(policyDefaults), "utf8");
+    const policyDefaults = await exportPolicyDefaults(client);
+    fs.writeFileSync(util.format("%s/policy_rules.json", folder), stringify(policyDefaults), "utf8");
 
     // Usermanegement -----------------------------------------------------------------------
+    console.log("writing usergroups.json");
     const {
         userArray,
         groups
     } = await exportUserManagement(client, groupConfigAttrs, userConfigAttrs);
-    console.log("writing usergroups.json");
-    fs.writeFileSync(folder + "/usergroups.json", stringify(groups, { maxLength: 160 }), "utf8");
+    fs.writeFileSync(util.format("%s/usergroups.json", folder), stringify(groups, { maxLength: 160 }), "utf8");
 
     console.log("writing usermanagement.json");
-    fs.writeFileSync(folder + "/usermanagement.json", stringify(userArray, { maxLength: 120 }), "utf8");
+    fs.writeFileSync(util.format("%s/usermanagement.json", folder), stringify(userArray, { maxLength: 120 }), "utf8");
 
     // classes and attributes -----------------------------------------------------------------------
+    console.log("writing classes.json");
     const {
         cidsClasses,
         attributes
     } = await exportClasses(client);
-    console.log("writing classes.json");
-    fs.writeFileSync(folder + "/classes.json", stringify(cidsClasses, { maxLength: 100 }), "utf8");
+    fs.writeFileSync(util.format("%s/classes.json", folder), stringify(cidsClasses, { maxLength: 100 }), "utf8");
 
     //class permissions -----------------------------------------------------------------------
+    console.log("writing classPerms.json");
     const {
         cPermByTable,
         normalizedClassPermResult,
         classReadPerms,
         classWritePerms
     } = await exportClassPermissions(client, cidsClasses);
-    console.log("writing classPerms.json");
-    fs.writeFileSync(folder + "/classPerms.json", stringify(cPermByTable, { maxLength: 100 }), "utf8");
+    fs.writeFileSync(util.format("%s/classPerms.json", folder), stringify(cPermByTable, { maxLength: 100 }), "utf8");
 
     console.log("writing normalized classPerms.json");
-    fs.writeFileSync(folder + "/normalizedClassPerms.json", stringify(normalizedClassPermResult, { maxLength: 100 }), "utf8");
+    fs.writeFileSync(util.format("%s/normalizedClassPerms.json", folder), stringify(normalizedClassPermResult, { maxLength: 100 }), "utf8");
 
     //attr permissions -----------------------------------------------------------------------
+    console.log("writing attrPerms.json");
     const {
         aPermByTable,
         normalizedAttrPermResult
     } = await exportAttrPermissions(client, attributes, classReadPerms, classWritePerms);
-    console.log("writing attrPerms.json");
-    fs.writeFileSync(folder + "/attrPerms.json", stringify(aPermByTable, { maxLength: 100 }), "utf8");
+    fs.writeFileSync(util.format("%s/attrPerms.json", folder), stringify(aPermByTable, { maxLength: 100 }), "utf8");
     console.log("writing normalized attrPerms.json");
-    fs.writeFileSync(folder + "/normalizedAttrPerms.json", stringify(normalizedAttrPermResult, { maxLength: 100 }), "utf8");
+    fs.writeFileSync(util.format("%s/normalizedAttrPerms.json", folder), stringify(normalizedAttrPermResult, { maxLength: 100 }), "utf8");
 
     //structure -----------------------------------------------------------------------
+    console.log("writing structure.json");
     const {
         rootNodes,
         structureSqlDocuments,
         dynchildhelpers,
         helperSqlDocuments
     } = await exportStructure(client);
-
-    console.log("writing structure.json");
-    fs.writeFileSync(folder + "/structure.json", stringify(rootNodes, { maxLength: 80 }), "utf8");
-    fs.writeFileSync(folder + "/dynchildhelpers.json", stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
+    fs.writeFileSync(util.format("%s/structure.json", folder), stringify(rootNodes, { maxLength: 80 }), "utf8");
+    fs.writeFileSync(util.format("%s/dynchildhelpers.json", folder), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
 
     console.log("writing sql snippets");
     structureSqlDocuments.forEach(async (value, key) => {
-        let file = util.format("%s/%s/%s", folder, constants.structureDynamicChildrenFolder, key);
-        fs.writeFileSync(file, value, "utf8");
+        fs.writeFileSync(util.format("%s/%s/%s", folder, constants.structureDynamicChildrenFolder, key), value, "utf8");
     });
-
     helperSqlDocuments.forEach(async (value, key) => {
-        let file = util.format("%s/%s/%s", folder, constants.structureDynamicChildrenFolder, key);
-        fs.writeFileSync(file, value, "utf8");
+        fs.writeFileSync(util.format("%s/%s/%s", folder, constants.structureHelperStatementsFolder, key), value, "utf8");
     });
 
     //close the connection -----------------------------------------------------------------------

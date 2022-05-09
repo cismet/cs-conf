@@ -1,6 +1,7 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
+import util from 'util';
 
 export function prepareData(classPerms) {
     // cs_domain
@@ -37,7 +38,7 @@ export function prepareData(classPerms) {
 
 const importClassPermissions = async (client, classPerms) => {
     const { csClassPermEntries } = prepareData(classPerms);
-    console.log("importing class permission ("+csClassPermEntries.length+")");
+    console.log(util.format("importing class permission (%d)", csClassPermEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_class_permission, csClassPermEntries);
 }
 

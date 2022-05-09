@@ -1,4 +1,5 @@
 import * as stmnts from './statements';
+import util from 'util';
 
 const exportAttrPermissions = async (client, attributes, classReadPerms, classWritePerms) => {
     const {
@@ -12,8 +13,8 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
     let attrWritePerms = new Map();
 
     for (let ap of attrPermResult) {
-        let ug = ap.group + "@" + ap.domain ;
-        let key = ap.table + "." + ap.field;
+        let ug = util.format("%s@%s", ap.group, ap.domain);
+        let key = util.format("%s.%s", ap.table, ap.field);
         let attrReadPermissions = attrReadPerms.get(key);
         if (ap.permission === "read") {
             if (!attrReadPermissions) {
@@ -33,7 +34,7 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
     let aPermByTable = [];
     let normalizedAPerms = new Map();
     for (let a of attributes) {
-        let key = a.table + "." + a.field;
+        let key = util.format("%s.%s", a.table, a.field);
         let attrReadPermissions = classReadPerms.get(key);
         let attrWritePermissions = classWritePerms.get(key);
         let entry = {
@@ -42,11 +43,11 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
         let normKey = "";
         if (attrReadPermissions) {
             entry.read = attrReadPermissions.sort();
-            normKey += "read:::" + JSON.stringify(entry.read);
+            normKey += util.format("read:::%s", JSON.stringify(entry.read));
         }
         if (attrWritePermissions) {
             entry.write = attrWritePermissions.sort();
-            normKey += "write:::" + JSON.stringify(entry.write);
+            normKey += util.format("write:::%s", JSON.stringify(entry.write));
         }
         if (attrReadPermissions || attrWritePermissions) {
             let attrsForPermissions = normalizedAPerms.get(normKey);

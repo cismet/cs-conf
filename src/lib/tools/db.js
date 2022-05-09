@@ -8,10 +8,13 @@ import fs from 'fs';
 
 export async function nestedFiller(client, stmnt, rows) {
     //make column arrays
-    let cols = _.transpose(rows);
-    return await client.query(stmnt, cols);
+    if (rows && rows.length > 0)  {
+        let cols = _.transpose(rows);
+        return await client.query(stmnt, cols);
+    } else {
+        return { rows: [] };
+    }
 }
-
 
 export async function singleRowFiller(client, stmnt, rows) {
     for (let row of rows) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import util from 'util';
-import glob from 'glob-promise';
+import { extname } from 'path';
 
 import importDomains from './import/domains';
 import importPolicyDefaults from './import/policyDefaults';
@@ -20,6 +20,9 @@ import * as csBackup from './backup';
 
 export async function worker(options) {
     let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, config } = options;
+    if (!fs.existsSync(folder)) {
+        throw util.format("%s does not exist", folder);
+    }
     if (execute) {
         let client;
         if (options.client) {
@@ -67,67 +70,59 @@ export async function worker(options) {
 
         // read the conf-files
 
-        const configfiles={};
-        configfiles.domains = JSON.parse(fs.readFileSync(folder+"/domains.json", {encoding: 'utf8'}));
-        configfiles.policy_rules = JSON.parse(fs.readFileSync(folder+"/policy_rules.json", {encoding: 'utf8'}));
-        configfiles.usergroups = JSON.parse(fs.readFileSync(folder+"/usergroups.json", {encoding: 'utf8'}));
-        configfiles.usermanagement = JSON.parse(fs.readFileSync(folder+"/usermanagement.json", {encoding: 'utf8'}));
-        configfiles.classes = JSON.parse(fs.readFileSync(folder+"/classes.json", {encoding: 'utf8'}));
-        configfiles.classPerms = JSON.parse(fs.readFileSync(folder+"/classPerms.json", {encoding: 'utf8'}));
-        configfiles.normalizedClassPerms = JSON.parse(fs.readFileSync(folder+"/normalizedClassPerms.json", {encoding: 'utf8'}));
-        configfiles.attrPerms = JSON.parse(fs.readFileSync(folder+"/attrPerms.json", {encoding: 'utf8'}));
-        configfiles.normalizedAttrPerms = JSON.parse(fs.readFileSync(folder+"/normalizedAttrPerms.json", {encoding: 'utf8'}));
-        configfiles.structure = JSON.parse(fs.readFileSync(folder+"/structure.json", {encoding: 'utf8'}));
-        configfiles.dynchildhelpers = JSON.parse(fs.readFileSync(folder+"/dynchildhelpers.json", {encoding: 'utf8'}));
+        const configfiles = {};
+        configfiles.domains = JSON.parse(fs.readFileSync(util.format("%s/domains.json", folder), {encoding: 'utf8'}));
+        configfiles.policy_rules = JSON.parse(fs.readFileSync(util.format("%s/policy_rules.json", folder), {encoding: 'utf8'}));
+        configfiles.usergroups = JSON.parse(fs.readFileSync(util.format("%s/usergroups.json", folder), {encoding: 'utf8'}));
+        configfiles.usermanagement = JSON.parse(fs.readFileSync(util.format("%s/usermanagement.json", folder), {encoding: 'utf8'}));
+        configfiles.classes = JSON.parse(fs.readFileSync(util.format("%s/classes.json", folder), {encoding: 'utf8'}));
+        configfiles.classPerms = JSON.parse(fs.readFileSync(util.format("%s/classPerms.json", folder), {encoding: 'utf8'}));
+        configfiles.normalizedClassPerms = JSON.parse(fs.readFileSync(util.format("%s/normalizedClassPerms.json", folder), {encoding: 'utf8'}));
+        configfiles.attrPerms = JSON.parse(fs.readFileSync(util.format("%s/attrPerms.json", folder), {encoding: 'utf8'}));
+        configfiles.normalizedAttrPerms = JSON.parse(fs.readFileSync(util.format("%s/normalizedAttrPerms.json", folder), {encoding: 'utf8'}));
+        configfiles.structure = JSON.parse(fs.readFileSync(util.format("%s/structure.json", folder), {encoding: 'utf8'}));
+        configfiles.dynchildhelpers = JSON.parse(fs.readFileSync(util.format("%s/dynchildhelpers.json", folder), {encoding: 'utf8'}));
 
-        let xmlFolderPart=folder+"/"+ constants.confAttrXmlSnippetsFolder +"/"
-        let xmlConfigs=await glob(xmlFolderPart+"*.xml");
-        configfiles.xmlFiles=new Map();
-        for (let xmlFile of xmlConfigs){
-            let xml=fs.readFileSync(xmlFile, {encoding: 'utf8'});
-            let onlyFileName=xmlFile.substr(xmlFolderPart.length);
-            configfiles.xmlFiles.set(onlyFileName,xml);
-        }
-
-        let structureDynamicChildrenFolderPart=folder+"/"+ constants.structureDynamicChildrenFolder +"/"
-        let structureHelperStatementsFolderPart=folder+"/"+ constants.structureHelperStatementsFolder +"/"
-
-        let structureSqlDocuments= await glob(structureDynamicChildrenFolderPart + "/*.sql");
-        let helperSqlDocuments= await glob(structureHelperStatementsFolderPart + "/*.sql");
+        configfiles.xmlFiles = new Map();
+        let confAttrXmlSnippetsFolder = util.format("%s/%s", folder, constants.confAttrXmlSnippetsFolder);
+        for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
+            if (extname(file) == ".xml") {
+                configfiles.xmlFiles.set(file, fs.readFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, file), {encoding: 'utf8'}));    
+            }
+        }    
 
         configfiles.structureSqlFiles=new Map();
-        for (let sqlFile of structureSqlDocuments){
-            let sql=fs.readFileSync(sqlFile, {encoding: 'utf8'});
-            let onlyFileName=sqlFile.substr(structureDynamicChildrenFolderPart.length);
+        let structureDynamicChildrenFolder = util.format("%s/%s", folder, constants.structureDynamicChildrenFolder);
+        for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
+            if (extname(file) == ".sql") {
+                configfiles.structureSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureDynamicChildrenFolder, file), {encoding: 'utf8'}));    
+            }
+        }    
 
-            configfiles.structureSqlFiles.set(onlyFileName,sql);
-        }
         configfiles.helperSqlFiles=new Map();
-        for (let sqlFile of helperSqlDocuments){
-            let sql=fs.readFileSync(sqlFile, {encoding: 'utf8'});
-            let onlyFileName=sqlFile.substr(structureHelperStatementsFolderPart.length);
-
-            configfiles.helperSqlFiles.set(onlyFileName,sql);
-        }
-
-        //fs.writeFileSync(folder+"/all.json", stringify(configfiles, {maxLength:80}), "utf8");
+        let structureHelperStatementsFolder = util.format("%s/%s", folder, constants.structureHelperStatementsFolder);
+        for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
+            if (extname(file) == ".sql") {
+                configfiles.helperSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureHelperStatementsFolder, file), {encoding: 'utf8'}));    
+            }
+        }    
 
         //Import =======================================================================================================
 
         //Domains -----------------------------------------------------------------------
-        console.log("importing domains ...");
+        console.log("importing domains");
         await importDomains(client, configfiles.domains);
 
         // Policy defaults -----------------------------------------------------------------------
-        console.log("importing policy_rules ...");
+        console.log("importing policy_rules");
         await importPolicyDefaults(client, configfiles.policy_rules);
 
         // Usergroups -----------------------------------------------------------------------
-        console.log("importing usergroups ...");
+        console.log("importing usergroups");
         await importUsergroups(client, configfiles.usergroups);
 
         // Usergroups -----------------------------------------------------------------------
-        console.log("importing usermanagement ...");
+        console.log("importing usermanagement");
         await importUsermanagement(client, configfiles.usermanagement);
 
         // ConfigAttrs -----------------------------------------------------------------------

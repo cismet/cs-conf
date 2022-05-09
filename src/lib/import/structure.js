@@ -1,147 +1,188 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
-import { symlinkSync } from 'fs';
-import { getSystemErrorMap } from 'util';
+import util from 'util';
 
-export function prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
-    // cs_domain
-    let csCatNodeEntries = [];
-    let flattenNodes = [];
-
-    addChildrenToArray(structure, csCatNodeEntries, flattenNodes, 0, structureSqlFiles);
-
+function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
     let csDynamicChildrenHelperEntries = [];
     for (let h of dynchildhelpers) {
         csDynamicChildrenHelperEntries.push([h.name, helperSqlFiles.get(h.code_file)]);
     }
-
-    return { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes };
+    return csDynamicChildrenHelperEntries;
 }
 
-function addChildrenToArray(children, csCatNodeEntries, flattenNodes, level, sqlFiles) {
-    let root;
-    if (level===0){
-        root=true;
+function prepareCatNodes(nodes, structureSqlFiles) {    
+    let csCatNodeEntries = [];
+    for (let node of nodes) {
+        if (!node.hasOwnProperty('link')) {
+            node.tmp_id = csCatNodeEntries.length;
+            let catNode = [
+                node.name,
+                node.descr,
+                node.table,
+                node.object_id,
+                node.node_type || 'N',
+                node.root,
+                node.org,
+                structureSqlFiles.get(node.dynamic_children_file),
+                node.sql_sort,
+                node.policy,
+                node.derive_permissions_from_class,
+                node.iconfactory,
+                node.icon,
+                node.artificial_id,
+                node.tmp_id          
+            ];
+            csCatNodeEntries.push(catNode);
+            delete node.root;
+
+            if (node.hasOwnProperty('copies')) {
+                for (let copy of node.copies) {
+                    copy.tmp_id = node.tmp_id;
+                }
+            }
+        }
     }
-    else {
-        root=false;
-    }
-    for (let n of children) { 
-        n.tmp_id = csCatNodeEntries.length;
-        csCatNodeEntries.push([
-            n.name,
-            n.descr,
-            n.table,
-            n.object_id,
-            n.node_type||'N',
-            root,
-            n.org,
-            sqlFiles.get(n.dynamic_children_file),
-            n.sql_sort,
-            n.policy,
-            n.derive_permissions_from_class,
-            n.iconfactory,
-            n.icon,
-            n.artificial_id,
-            n.tmp_id            
-        ]);
-        flattenNodes.push(n);
-        if (n.children) {
-            addChildrenToArray(n.children, csCatNodeEntries, flattenNodes, level+1, sqlFiles);
+
+    return csCatNodeEntries;
+}
+
+function flattenStructure(children, level = 0, originals = new Map(), copiesPerOriginal = new Map()) {
+    let flattenNodes = [];
+    for (let node of children) { 
+        node.root = level === 0;
+        flattenNodes.push(node);
+        if (node.hasOwnProperty('link')) {
+            let link = node.link;
+            let copies;
+            if (copiesPerOriginal.has(link)) {
+                copies = copiesPerOriginal.get(link);
+            } else {
+                copies = [];
+            }
+            copies.push(node);
+            copiesPerOriginal.set(link, copies);        
+        } else {
+            if (node.hasOwnProperty('key')) {
+                originals.set(node.key, node);
+            }
+            if (node.hasOwnProperty('children')) {
+                flattenNodes.push(... flattenStructure(node.children, level+1, originals, copiesPerOriginal));
+            }
         }
     } 
+
+    if (level == 0) {
+        for (let key of originals.keys()) {
+            let original = originals.get(key);
+            if (copiesPerOriginal.has(key)) {
+                original.copies = copiesPerOriginal.get(key);
+            }
+        }
+    }
+
+    return flattenNodes;
 }
 
-export function generateCsCatLinkEntries(parent, csCatLinkEntries) {
-    if (parent.hasOwnProperty('children')) {
-        let children = parent.children;
-        for (let i = 0; i < children.length; i++) {
-            let child = children[i];
-            csCatLinkEntries.push([
-                parent.dbid,
-                child.dbid
-            ]);    
-            generateCsCatLinkEntries(child, csCatLinkEntries);
+export function generateCsCatLinkEntries(node) {
+    let csCatLinkEntries = [];
+
+    if (node.hasOwnProperty('children')) {
+        for (let child of node.children) {
+            let catLink = [ node.dbid, child.dbid ];
+            csCatLinkEntries.push(catLink);    
+            csCatLinkEntries.push(... generateCsCatLinkEntries(child));
         }
     }    
+
+    return csCatLinkEntries;
 }
 
-export function prepareData2ndTime(structure, flattenNodes, dbids) {
+function remapDbids(nodes, dbids) {
+    let tmpidToDbid = []
+    for (let dbid of dbids) {
+        tmpidToDbid[dbid.tmp_id] = dbid.id;
+    }
+
     // map the internal ids to the db generated ids
-    for (let i = 0; i < flattenNodes.length; i++) {
-        if (i < dbids.length) {
-            let dbid = dbids[i].id;
-            flattenNodes.dbid = dbid;
+    for(let node of nodes) {
+        if (node.hasOwnProperty('tmp_id')) {
+            node.dbid = tmpidToDbid[node.tmp_id];
+        }
+        if (node.hasOwnProperty('copies')) {
+            for (let copy of node.copies) {
+                if (copy.hasOwnProperty('tmp_id')) {
+                    copy.dbid = tmpidToDbid[copy.tmp_id];
+                }
+            }
         }
     }
+}
 
-    //Links
-    let csCatLinkEntries=[];
+function prepareCatLinks(structure) {
+    let csCatLinkEntries = [];
     for (let parent of structure) { 
-        generateCsCatLinkEntries(parent, csCatLinkEntries)
+        csCatLinkEntries.push(... generateCsCatLinkEntries(parent));
     }
+    return csCatLinkEntries;
+}
 
-    //Permissions
+//Permissions
+function prepareCatNodePerms(nodes) {
     let csCatNodePermEntries=[];
 
-    for (let n of flattenNodes) {
-        if (n.readPerms) {
-            for (let groupkey of n.readPerms){
+    for (let node of nodes) {
+        if (node.hasOwnProperty('readPerms')) {
+            for (let groupkey of node.readPerms) {
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
                 csCatNodePermEntries.push([
                     group,
                     domain,
-                    n.dbid,
+                    node.dbid,
                     "read"
             ]);
             }
         }
-        if (n.writePerms) {
-            for (let groupkey of n.writePerms){
+        if (node.hasOwnProperty('writePerms')) {
+            for (let groupkey of node.writePerms){
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
                 csCatNodePermEntries.push([
                     group,
                     domain,
-                    n.dbid,
+                    node.dbid,
                     "write"
                 ]);
             }
         }
     }
-    return { csCatLinkEntries, csCatNodePermEntries };
+    return csCatNodePermEntries;
 }
 
-const importStructure = async (client, structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) => {
-    const { csCatNodeEntries, csDynamicChildrenHelperEntries, flattenNodes } = prepareData(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+async function importStructure(client, structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
+    let nodes = flattenStructure(structure);
 
-    console.log("importing cat nodes ("+csCatNodeEntries.length+")");
-    await client.query(stmnts.prepare_cs_cat_node);
-    const {rows: dbids} = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
+    let csCatNodeEntries = prepareCatNodes(nodes, structureSqlFiles);
+    console.log(util.format("importing cat nodes (%d)", csCatNodeEntries.length));
+    await client.query(stmnts.prepare_cs_cat_node);    
+    let { rows: dbids } = await dbtools.nestedFiller(client,stmnts.complex_cs_cat_node, csCatNodeEntries);
     await client.query(stmnts.clean_cs_cat_node);
 
-    let tmpidToDbid = []
-    for (let i = 0; i < dbids.length; i++) {
-        let dbid = dbids[i];
-        tmpidToDbid[dbid.tmp_id] = dbid.id;
-    }
-    for(let i = 0; i < csCatNodeEntries.length; i++) {
-        let n = flattenNodes[i];
-        n.dbid = tmpidToDbid[n.tmp_id];
-    }
-    const { csCatLinkEntries, csCatNodePermEntries } = prepareData2ndTime(structure, flattenNodes, dbids);
-    console.log("importing cat links ("+csCatLinkEntries.length+")");
+    remapDbids(nodes, dbids);
+
+    let csCatLinkEntries = prepareCatLinks(structure);
+    console.log(util.format("importing cat links (%d)", csCatLinkEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_cat_link, csCatLinkEntries);
 
-    console.log("importing cat node permissions ("+csCatNodePermEntries.length+")");
+    let csCatNodePermEntries = prepareCatNodePerms(nodes);
+    console.log(util.format("importing cat node permissions (%d)", csCatNodePermEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_ug_cat_node_permission, csCatNodePermEntries);
 
-    console.log("importing dynamic children helpers ("+dynchildhelpers.length+")");   
+    let csDynamicChildrenHelperEntries = prepareDataDynchilds(dynchildhelpers, helperSqlFiles);
+    console.log(util.format("importing dynamic children helpers (%d)", dynchildhelpers.length));
     await dbtools.singleRowFiller(client,stmnts.simple_cs_dynamic_children_helper, csDynamicChildrenHelperEntries);
 
     console.log("(re)creating dynamic children helper functions");   
     await client.query(stmnts.execute_cs_refresh_dynchilds_functions);
-
 }
 
 export default importStructure;

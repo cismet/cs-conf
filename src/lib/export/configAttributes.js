@@ -1,10 +1,9 @@
 import zeroFill from 'zero-fill';
 import xmlFormatter from 'xml-formatter';
-
+import util from 'util';
 import * as stmnts from './statements';
 
 const exportConfigAttributes = async (client, folder, schema) => {
-    console.log("loading Configuration Attributes");
     const {
         rows: configAttributes
     } = await client.query(stmnts.configAttr);
@@ -17,7 +16,7 @@ export function analyzeAndPreprocess(configAttributes) {
     const domainConfigAttrs = new Map();
     const xmlFiles = new Map();
 
-    console.log("analyze Configuration Attributes");
+    console.log("analyzing Configuration Attributes");
     let xmlDocCounter = new Map();
     for (let attr of configAttributes) {
         let attrInfo = {
@@ -41,11 +40,11 @@ export function analyzeAndPreprocess(configAttributes) {
                     xmlDocCounter.set(attr.key, counter);
                     let xmlToSave;
                     try {
-                        xmlToSave = xmlFormatter(attr.value);
+                        xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n' });
                     } catch (formatterProblem) {
                         xmlToSave = attr.value;
                     }
-                    let fileName = attr.key + "." + zeroFill(4, counter) + ".xml";
+                    let fileName = util.format("%s.%s.xml", attr.key, zeroFill(4, counter));
                     xmlFiles.set(fileName, xmlToSave);
                     attrInfo.xmlfile = fileName;
                 }

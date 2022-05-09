@@ -43,8 +43,6 @@ DROP TABLE IF EXISTS cs_changed CASCADE;
 DROP TABLE IF EXISTS cs_scheduled_serveractions CASCADE; DROP SEQUENCE IF EXISTS cs_scheduled_serveractions_sequence CASCADE;
 DROP TABLE IF EXISTS cs_cache CASCADE;
 DROP TABLE IF EXISTS cs_dynamic_children_helper CASCADE; DROP SEQUENCE IF EXISTS cs_dynamic_children_helper_sequence CASCADE;
-DROP TABLE IF EXISTS url_base CASCADE; DROP SEQUENCE IF EXISTS url_base_seq CASCADE;
-DROP TABLE IF EXISTS url CASCADE; DROP SEQUENCE IF EXISTS url_seq CASCADE;
 DROP FUNCTION IF EXISTS insert_cache_entry(classid integer, objectId integer) CASCADE;
 DROP FUNCTION IF EXISTS recreate_cache() CASCADE;
 DROP FUNCTION IF EXISTS recreate_cache(classid integer) CASCADE;

@@ -196,7 +196,7 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                         if (existingColumn.isNullable) {
                             statement.null = false;
                         }
-                        if(existingColumn.default != "nextval('" + cidsTableName + "_seq'::text)" && existingColumn.default != "nextval('" + cidsTableName + "_seq'::regclass)") {
+                        if(existingColumn.default != util.format("nextval('%s_seq'::text)", cidsTableName) && existingColumn.default != util.format("nextval('%s_seq'::regclass)", cidsTableName)) {
                             statement.default = util.format("nextval('%s_seq');", cidsTableName);
                         }
                         if (statement.type !== undefined || statement.null !== undefined || statement.default !== undefined || statement.update !== undefined) {
@@ -391,13 +391,13 @@ export async function worker(options) {
         }
     }
     
-    let classesJson = folder + "/classes.json";
+    let classesJson = util.format("%s/classes.json", folder);
     console.log(util.format("reading classes from %s", classesJson));
     let classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     try {
-        let sync = JSON.parse(fs.readFileSync(folder + "/sync.json", {encoding: 'utf8'}));        
+        let sync = JSON.parse(fs.readFileSync(util.format("%s/sync.json", folder), {encoding: 'utf8'}));        
         ignoreRules.push(... sync.tablesToIgnore);
     } catch (e) {
         console.log("no sync.json found");
@@ -454,7 +454,7 @@ export async function worker(options) {
     let ignoredSequences = [];
 
     for (let tablesResult of tablesResults) {
-        let tableKey = (tablesResult.table_schema !== "public" ? tablesResult.table_schema + "." + tablesResult.table_name : tablesResult.table_name).toLowerCase();
+        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name).toLowerCase();
 
         let ignoreTable = false;
         for (let ignoreRule of ignoreRules) {

@@ -1,6 +1,7 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
+import util from 'util';
 
 export function prepareData(attrPerms) {
     // cs_domain
@@ -37,7 +38,7 @@ export function prepareData(attrPerms) {
 
 const importAttrPermissions = async (client, attrPerms) => {
     const { csAttrPermEntries } = prepareData(attrPerms);
-    console.log("importing attribute permission ("+csAttrPermEntries.length+")");
+    console.log(util.format("importing attribute permission (%d)", csAttrPermEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_attr_permission, csAttrPermEntries);
 }
 

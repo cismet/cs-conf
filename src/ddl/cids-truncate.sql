@@ -26,13 +26,13 @@ DROP TABLE cs_history_before_import2;
 DELETE FROM cs_history;
 --ALTER SEQUENCE cs_history_sequence RESTART WITH 1;
 
---TRUNCATE TABLE cs_class CASCADE;
-DELETE FROM cs_class;
-ALTER SEQUENCE cs_class_sequence RESTART WITH 1;
-
 --TRUNCATE TABLE cs_class_attr CASCADE;
 DELETE FROM cs_class_attr;
 ALTER SEQUENCE cs_attr_sequence RESTART WITH 1;
+
+--TRUNCATE TABLE cs_class CASCADE;
+DELETE FROM cs_class;
+ALTER SEQUENCE cs_class_sequence RESTART WITH 1;
 
 --TRUNCATE TABLE cs_config_attr_jt CASCADE;
 DELETE FROM cs_config_attr_jt;
@@ -62,17 +62,17 @@ ALTER SEQUENCE cs_icon_sequence RESTART WITH 1;
 DELETE FROM cs_java_class;
 ALTER SEQUENCE cs_java_class_sequence RESTART WITH 1;
 
---TRUNCATE TABLE cs_policy CASCADE;
-DELETE FROM cs_permission;
-ALTER SEQUENCE cs_permission_sequence RESTART WITH 1;
+--TRUNCATE TABLE cs_policy_rule CASCADE;
+DELETE FROM cs_policy_rule;
+ALTER SEQUENCE cs_policy_rule_sequence RESTART WITH 1;
 
 --TRUNCATE TABLE cs_policy CASCADE;
 DELETE FROM cs_policy;
 ALTER SEQUENCE cs_policy_sequence RESTART WITH 1;
 
---TRUNCATE TABLE cs_policy_rule CASCADE;
-DELETE FROM cs_policy_rule;
-ALTER SEQUENCE cs_policy_rule_sequence RESTART WITH 1;
+--TRUNCATE TABLE cs_permission CASCADE;
+DELETE FROM cs_permission;
+ALTER SEQUENCE cs_permission_sequence RESTART WITH 1;
 
 --TRUNCATE TABLE cs_type CASCADE;
 DELETE FROM cs_type;
@@ -113,11 +113,3 @@ ALTER SEQUENCE cs_ug_attr_perm_sequence RESTART WITH 1;
 --TRUNCATE TABLE cs_ug_cat_node_perm CASCADE; 
 DELETE FROM cs_ug_cat_node_perm;
 ALTER SEQUENCE cs_ug_cat_node_perm_sequence RESTART WITH 1;
-
---TRUNCATE TABLE url CASCADE; 
-DELETE FROM url;
-ALTER SEQUENCE url_seq RESTART WITH 1;
-
---TRUNCATE TABLE url_base CASCADE; 
-DELETE FROM url_base;
-ALTER SEQUENCE url_base_seq RESTART WITH 1;

@@ -1,5 +1,6 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
+import util from 'util';
 
 export function prepareData(classes) {
 
@@ -33,9 +34,10 @@ export function prepareData(classes) {
 
         cEntry.indexed=c.indexed||false;
         if (c.toString) {
-            if (!javaClasses.has(c.toString.type+"."+c.toString.class)) {
+            let fullKey = util.format("%s.%s", c.toString.type, c.toString.class);
+            if (!javaClasses.has(fullKey)) {
                 if (c.toString.class && c.toString.type) {
-                    javaClasses.add(c.toString.type+"."+c.toString.class);
+                    javaClasses.add(fullKey);
                     csJavaClassEntries.push([c.toString.class,c.toString.type]);
                 }
             }
@@ -43,9 +45,10 @@ export function prepareData(classes) {
             cEntry.toStringType=c.toString.type;
         }
         if (c.editor) {
-            if (!javaClasses.has(c.editor.type+"."+c.editor.class)) {
+            let fullKey = util.format("%s.%s", c.editor.type, c.editor.class);
+            if (!javaClasses.has(fullKey)) {
                 if (c.editor.class && c.editor.type) {
-                    javaClasses.add(c.editor.type+"."+c.editor.class);
+                    javaClasses.add(fullKey);
                     csJavaClassEntries.push([c.editor.class,c.editor.type]);
                 }
             }
@@ -53,9 +56,10 @@ export function prepareData(classes) {
             cEntry.editorType=c.editor.type;
         }
         if (c.renderer) {
-            if (!javaClasses.has(c.renderer.type+"."+c.renderer.class)) {
+            let fullKey = util.format("%s.%s", c.renderer.type, c.renderer.class);
+            if (!javaClasses.has(fullKey)) {
                 if (c.renderer.class && c.renderer.type) {
-                    javaClasses.add(c.renderer.type+"."+c.renderer.class);
+                    javaClasses.add(fullKey);
                     csJavaClassEntries.push([c.renderer.class,c.renderer.type]);
                 }
             }
@@ -286,26 +290,26 @@ const importClasses = async (client, classes) => {
      } = prepareData(classes);
     
     
-    console.log("importing icons ("+csIconEntries.length+")");
+    console.log(util.format("importing icons (%d)", csIconEntries.length));
     await dbtools.singleRowFiller(client,stmnts.simple_cs_icon, csIconEntries);
     
-    console.log("importing java classes ("+csJavaClassEntries.length+")");
+    console.log(util.format("importing java classes (%d)", csJavaClassEntries.length));
     //console.log(csJavaClassEntries);
     await dbtools.singleRowFiller(client,stmnts.simple_cs_java_class, csJavaClassEntries);
     
-    console.log("importing classes ("+csClassEntries.length+")");
+    console.log(util.format("importing classes (%d)", csClassEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_class, csClassEntries);
     
-    console.log("importing types ("+csTypeEntries.length+")");
+    console.log(util.format("importing types (%d)", csTypeEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_type, csTypeEntries);
    
-    console.log("importing simple attributes ("+csAttrDbTypeEntries.length+")");
+    console.log(util.format("importing simple attributes (%d)", csAttrDbTypeEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_attr4dbTypes, csAttrDbTypeEntries);
     
-    console.log("importing complex attributes ("+csAttrCidsTypeEntries.length+")");
+    console.log(util.format("importing complex attributes (%d)", csAttrCidsTypeEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_attr4cidsTypes, csAttrCidsTypeEntries);
    
-    console.log("importing class attributes ("+csClassAttrEntries.length+")");
+    console.log(util.format("importing class attributes (%d)", csClassAttrEntries.length));
     await dbtools.nestedFiller(client,stmnts.complex_cs_class_attr, csClassAttrEntries);
 
 }

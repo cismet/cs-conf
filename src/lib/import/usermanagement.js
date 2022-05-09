@@ -1,6 +1,6 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
-
+import util from 'util';
 
 export function prepareData(usermanagement) {
     // cs_usr
@@ -40,15 +40,15 @@ export function prepareData(usermanagement) {
 
 const importUsermanagement = async (client, usermanagement) => {
     const { csUserEntries, csUserEntriesWithPasswords, csUgMembershipEntries } = prepareData(usermanagement);
-    console.log("importing users with pw_hashes ("+csUserEntries.length+")");
+    console.log(util.format("importing users with pw_hashes (%d)", csUserEntries.length));
     await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
     await dbtools.singleRowFiller(client,stmnts.simple_cs_usr, csUserEntries);
     await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");
     
-    console.log("importing users with new passwords ("+csUserEntriesWithPasswords.length+")");
+    console.log(util.format("importing users with new passwords (%d)", csUserEntriesWithPasswords.length));
     await dbtools.singleRowFiller(client,stmnts.simple_cs_usr_with_password, csUserEntriesWithPasswords);
 
-    console.log("importing memberships ("+csUgMembershipEntries.length+")");
+    console.log(util.format("importing memberships (%d)", csUgMembershipEntries.length));
     await dbtools.nestedFiller(client,stmnts.nested_cs_ug_membership, csUgMembershipEntries);
 }
 

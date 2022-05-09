@@ -1,4 +1,5 @@
 import * as stmnts from './statements';
+import util from 'util';
 
 const exportClassPermissions = async (client, cidsClasses) => {
     const {
@@ -10,7 +11,7 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
-        let ug =cp.group + "@" +  cp.domain;
+        let ug = util.format("%s@%s", cp.group, cp.domain);
         let tableReadPermissions = classReadPerms.get(cp.table);
         if (cp.permission === "read") {
             if (!tableReadPermissions) {

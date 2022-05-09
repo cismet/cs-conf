@@ -1,7 +1,6 @@
 #!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import util from 'util';
-import glob from 'glob-promise';
 
 import { getClientForConfig } from './tools/db';
 import * as csPurge from './purge';
@@ -12,11 +11,11 @@ export async function worker(options) {
 
     statements.push(util.format("SET SCHEMA '%s';", schema));        
     if (purge) {
-        statements.push(await csPurge.worker(false, true, config));
+        statements.push(await csPurge.worker({ execute: true, silent: true, config }));
     }
-    statements.push(fs.readFileSync('resources/cids-init/cids-create.sql', 'utf8'));        
+    statements.push(fs.readFileSync('build/ddl/cids-create.sql', 'utf8'));        
     if (init) {
-        statements.push(fs.readFileSync('resources/cids-init/cids-init.sql', 'utf8'));
+        statements.push(fs.readFileSync('build/ddl/cids-prepare.sql', 'utf8'));
     }
 
     if (execute) {

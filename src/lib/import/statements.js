@@ -349,7 +349,7 @@ INSERT INTO cs_ug_attr_perm (ug_id, attr_id, "permission", "domain")
 `;
 
 export const prepare_cs_cat_node = `
-ALTER TABLE cs_cat_node ADD COLUMN tmp_id INTEGER;
+ALTER TABLE cs_cat_node ADD COLUMN IF NOT EXISTS tmp_id INTEGER;
 `;
 export const clean_cs_cat_node = `
 ALTER TABLE cs_cat_node DROP COLUMN tmp_id;
@@ -357,12 +357,12 @@ ALTER TABLE cs_cat_node DROP COLUMN tmp_id;
 
 export const complex_cs_cat_node = `
 INSERT INTO cs_cat_node (
-    "name", descr, class_id, object_id, node_type, 
+    name, url, class_id, object_id, node_type, 
     is_root, org, dynamic_children, sql_sort, policy, 
     derive_permissions_from_class, iconfactory, icon, artificial_id, tmp_id
 ) 
     SELECT     
-        n, null, cs_class.id, oid, nt,
+        n, d, cs_class.id, oid, nt,
         ir, o, dc, ss, cs_policy.id, 
         dpc, null, i, aid, tid
     FROM (SELECT

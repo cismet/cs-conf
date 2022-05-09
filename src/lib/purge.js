@@ -8,7 +8,7 @@ export async function worker(options) {
     let { execute, silent, config } = options;
     let statements = [];
     
-    statements.push(fs.readFileSync('resources/cids-init/cids-drop.sql', 'utf8'));
+    statements.push(fs.readFileSync('build/ddl/cids-drop.sql', 'utf8'));
 
     if (execute) {
         let client;

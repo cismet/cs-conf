@@ -1,6 +1,8 @@
 import * as stmnts from './statements';
 import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
+import util from 'util';
+
 export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {    
     // cs_config_attr_key
     let csConfigAttrKeyEntries=[]
@@ -55,9 +57,10 @@ export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {
             type='A';
         }
         
-        if (!duplicateKeyFinder.has(ca.key+"."+ca.keygroup)) {
-            csConfigAttrKeyEntries.push([ca.key,ca.keygroup]);
-            duplicateKeyFinder.add(ca.key+"."+ca.keygroup);
+        let fullKey = util.format("%s.%s", ca.key, ca.keygroup);
+        if (!duplicateKeyFinder.has(fullKey)) {
+            csConfigAttrKeyEntries.push([ca.key, ca.keygroup]);
+            duplicateKeyFinder.add(fullKey);
         }
         let value;
         if (type==='X' ||type==='C'){
@@ -88,18 +91,18 @@ const importConfigAttrs = async (client, domains, usergroups, usermanagement, xm
         csConfigAttrValues4A, 
         csConfigAttrValues4CandX , 
         csConfigAttrValueEntriesArray} = prepareData(domains, usergroups, usermanagement, xmlConfigs);
-    console.log("importing config attribute keys ("+csConfigAttrKeyEntries.length+")");
+    console.log(util.format("importing config attribute keys (%d)", csConfigAttrKeyEntries.length));
     await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
 
-    console.log("importing config attributes values ("+csConfigAttrValueEntriesArray.length+")");
+    console.log(util.format("importing config attributes values (%d)", csConfigAttrValueEntriesArray.length));
     await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
 
     if (csConfigAttrValues4A.length>0){
-        console.log("importing action attributes  ("+csConfigAttrValues4A.length+")");
+        console.log(util.format("importing action attributes  (%d)", csConfigAttrValues4A.length));
         await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
     }
         
-     console.log("importing config attributes  ("+csConfigAttrValues4CandX.length+")");
+     console.log(util.format("importing config attributes  (%d)", csConfigAttrValues4CandX.length));
      await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
 }
 

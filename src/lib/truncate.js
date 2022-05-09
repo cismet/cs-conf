@@ -7,9 +7,9 @@ export async function worker(options) {
     let { execute, init, silent, config } = options;
     let statements = [];
     
-    statements.push(fs.readFileSync('resources/cids-init/cids-truncate.sql', 'utf8'));
+    statements.push(fs.readFileSync('build/ddl/cids-truncate.sql', 'utf8'));
     if (init) {
-        statements.push(fs.readFileSync('resources/cids-init/cids-init.sql', 'utf8'));
+        statements.push(fs.readFileSync('build/ddl/cids-prepare.sql', 'utf8'));
     }
 
     if (execute) {

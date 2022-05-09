@@ -32,8 +32,6 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
     // Users
 
     console.log("attaching groups");
-
-
     let userGroupMap = new Map();
     for (let entry of membership) {
         let user = userGroupMap.get(entry.login_name);
@@ -45,7 +43,7 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
         }
     }
 
-    console.log("analyzed the membership info");
+    console.log("analyzing the membership info");
 
     //now change the original user store
     // Usermanagement -----------------------------------------------------------------------

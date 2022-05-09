@@ -147,15 +147,11 @@ ORDER BY
 
 export const nodes = `
 SELECT 
-    n.id, n.name, ub.prot_prefix||ub."server"||ub.path||u.object_name as descr,
-    c.table_name as "table", derive_permissions_from_class, object_id, node_type, is_root, n.org, dynamic_children, sql_sort,
-    p.name "policy", 
-    iconfactory, icon, artificial_id
+    n.id, n.name, n.url as descr, c.table_name as table, 
+    n.derive_permissions_from_class, n.object_id, n.node_type, n.is_root, n.org, 
+    n.dynamic_children, n.sql_sort, p.name "policy", iconfactory, icon, artificial_id
 FROM
     cs_cat_node n
-    --LEFT OUTER JOIN cs_cat_link l ON (l.id_from=n.id)
-    LEFT OUTER JOIN url u ON (n.descr=u.id)
-    LEFT OUTER JOIN url_base ub ON (u.url_base_id=ub.id)
     LEFT OUTER JOIN cs_class "c" ON (n.class_id=c.id)
     LEFT OUTER JOIN cs_policy p ON (n.policy=p.id)
 ORDER BY
