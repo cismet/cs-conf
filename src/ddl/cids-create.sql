@@ -791,20 +791,20 @@ WITH (
 -- cs_history
 
 CREATE TABLE cs_history (
-    class_id    INTEGER     NOT NULL,
+    class_key   TEXT     NOT NULL,
     object_id   INTEGER     NOT NULL,
  -- because of anonymous usage null must be allowed
-    usr_id      INTEGER             ,
+    usr_key    TEXT             ,
  -- because of anonymous usage null must be allowed
-    ug_id       INTEGER             ,
+    ug_key     TEXT             ,
     valid_from  TIMESTAMP   NOT NULL,
     json_data   TEXT        NOT NULL,
 
-    FOREIGN KEY (class_id)  REFERENCES cs_class,
-    FOREIGN KEY (usr_id)    REFERENCES cs_usr,
-    FOREIGN KEY (ug_id)     REFERENCES cs_ug,
+    FOREIGN KEY (class_key)  REFERENCES cs_class,
+    FOREIGN KEY (usr_key)    REFERENCES cs_usr,
+    FOREIGN KEY (ug_key)     REFERENCES cs_ug,
 
-    PRIMARY KEY (class_id, object_id, valid_from)
+    PRIMARY KEY (class_key, object_id, valid_from)
 );
 
 -- cs_cache

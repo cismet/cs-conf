@@ -26,11 +26,11 @@ export function prepareData(usermanagement) {
             csUserEntries.push([u.login_name, admin, u.pw_hash, u.salt]);
         }
         if (u.groups) {
-            for (let g of u.groups) {
-                const groupComponents=g.split('@');
-                const gName=groupComponents[0];
-                const domain=groupComponents[1];
-                csUgMembershipEntries.push([gName,u.login_name,domain]);
+            for (let ug of u.groups) {
+                let groupComponents = ug.split('@');        
+                let gName = groupComponents[0];
+                let domain = groupComponents.length == 1 ? 'LOCAL' : groupComponents[1];
+                csUgMembershipEntries.push([gName, u.login_name, domain]);
             }
         }
     }

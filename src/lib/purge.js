@@ -1,4 +1,3 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import util from 'util';
 
@@ -8,7 +7,7 @@ export async function worker(options) {
     let { execute, silent, config } = options;
     let statements = [];
     
-    statements.push(fs.readFileSync('build/ddl/cids-drop.sql', 'utf8'));
+    statements.push(fs.readFileSync(util.format('%s/../ddl/cids-drop.sql', __dirname), 'utf8'));
 
     if (execute) {
         let client;

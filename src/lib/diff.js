@@ -1,4 +1,3 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import { extname } from 'path';
 import util from 'util';

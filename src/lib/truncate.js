@@ -1,4 +1,3 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import util from 'util';
 import { getClientForConfig } from './tools/db';
@@ -7,9 +6,9 @@ export async function worker(options) {
     let { execute, init, silent, config } = options;
     let statements = [];
     
-    statements.push(fs.readFileSync('build/ddl/cids-truncate.sql', 'utf8'));
+    statements.push(fs.readFileSync(util.format('%s/../ddl/cids-truncate.sql', __dirname), 'utf8'));
     if (init) {
-        statements.push(fs.readFileSync('build/ddl/cids-prepare.sql', 'utf8'));
+        statements.push(fs.readFileSync(util.format('%s/../ddl/cids-prepare.sql', __dirname), 'utf8'));
     }
 
     if (execute) {

@@ -18,7 +18,7 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
     let groups = [];
     for (let group of groupArray) {
         let g = {
-            key: group.name + '@' + group.domain
+            key: group.name + (group.domain.toUpperCase() == 'LOCAL' ? '' : '@' + group.domain)
         };
         if (group.descr){
             g.descr=group.descr;
@@ -35,7 +35,7 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
     let userGroupMap = new Map();
     for (let entry of membership) {
         let user = userGroupMap.get(entry.login_name);
-        let gkey = entry.groupname + '@' + entry.domainname
+        let gkey = entry.groupname + (entry.domainname.toUpperCase() == 'LOCAL' ? '' : '@' + entry.domainname)
         if (user) {
             user.push(gkey);
         } else {

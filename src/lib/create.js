@@ -1,4 +1,3 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
 import fs from 'fs';
 import util from 'util';
 
@@ -13,9 +12,9 @@ export async function worker(options) {
     if (purge) {
         statements.push(await csPurge.worker({ execute: true, silent: true, config }));
     }
-    statements.push(fs.readFileSync('build/ddl/cids-create.sql', 'utf8'));        
+    statements.push(fs.readFileSync(util.format('%s/../ddl/cids-create.sql', __dirname), 'utf8'));        
     if (init) {
-        statements.push(fs.readFileSync('build/ddl/cids-prepare.sql', 'utf8'));
+        statements.push(fs.readFileSync(util.format('%s/../ddl/cids-prepare.sql', __dirname), 'utf8'));
     }
 
     if (execute) {

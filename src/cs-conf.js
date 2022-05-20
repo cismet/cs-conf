@@ -1,4 +1,4 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
+#!/usr/local/bin/babel-node --
 
 import program from 'commander';
 import * as csExport from './lib/export';
@@ -32,7 +32,7 @@ program.command('import').alias('i').description('imports the meta information i
 			folder: cmd.folder, 
 			recreate: cmd.recreate, 
 			execute: cmd.import,
-			skipBackup: cmd.noBackup,
+			skipBackup: !cmd.backup,
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
@@ -235,13 +235,17 @@ program.command('create').alias('c').description('creates and initializes cs_tab
 			process.exit(1);
 		}	
 	});
-
+	
 program.command('password').alias('pw')
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
+	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
 	.description('... description ...')
 	.action(async (cmd) => {
 		let options = {
+			loginName: cmd.user,
+			password: cmd.password,
+			salt: cmd.salt,
 		};
 		console.log("starting password with following options:");
 		console.table(options);

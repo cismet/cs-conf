@@ -6,26 +6,6 @@ ALTER SEQUENCE cs_attr_sequence RESTART WITH 1;
 DELETE FROM cs_cat_link;
 ALTER SEQUENCE cs_cat_link_sequence RESTART WITH 1;
 
---TRUNCATE TABLE cs_history CASCADE;
-SELECT 
-    cs_usr.login_name AS usr_key,
-    cs_ug.name AS ug_key,
-    cs_class.table_name AS class_key,
-    cs_history.usr_id,
-    cs_history.ug_id,
-    cs_history.class_id,
-    cs_history.object_id,
-    cs_history.valid_from,
-    cs_history.json_data
-INTO cs_history_before_import2
-FROM cs_history 
-LEFT JOIN cs_usr ON cs_history.usr_id = cs_usr.id
-LEFT JOIN cs_ug ON cs_history.ug_id = cs_ug.id
-LEFT JOIN cs_class ON cs_history.class_id = cs_class.id;
-DROP TABLE cs_history_before_import2;
-DELETE FROM cs_history;
---ALTER SEQUENCE cs_history_sequence RESTART WITH 1;
-
 --TRUNCATE TABLE cs_class_attr CASCADE;
 DELETE FROM cs_class_attr;
 ALTER SEQUENCE cs_attr_sequence RESTART WITH 1;

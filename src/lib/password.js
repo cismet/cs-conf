@@ -1,20 +1,27 @@
-#!/usr/bin/env ./node_modules/.bin/babel-node
-import fs from 'fs';
-import { extname } from 'path';
+import cryptoRandomString from 'crypto-random-string';
+import md5 from 'md5';
 import util from 'util';
-import { diffString } from 'json-diff';
-import { getClientForConfig } from './tools/db';
-
-import * as csDiff from './diff';
 
 export async function worker(options) {
-    let { folder, user, password, noDiffs, schema, config } = options;
-    if (!noDiffs) {
-        let differences = await csDiff.worker( { folder: folder, comparisionFolder: null, config: config, schema: schema } );
-        if (differences > 0) {
-            throw util.format("%d differences found, aborting sync !", differences);
-        }
+    let { loginName, password, salt = cryptoRandomString({ length: 16 }) } = options;
+    if (loginName == null && password == null) {
+        throw "user and password are mandatory";
     }
+    if (loginName == null) {
+        throw "user is mandatory";
+    }
+    if (password == null) {
+        throw "password is mandatory";
+    }
+    let hash = md5(util.format("%s%s", salt, password));
+    let user = {
+        login_name: loginName,
+        pw_hash: hash,
+        salt
+    }
+    console.log("##########################################");
+    console.log(user);
+    console.log("##########################################");
 }   
 
     

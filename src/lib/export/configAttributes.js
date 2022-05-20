@@ -31,12 +31,7 @@ export function analyzeAndPreprocess(configAttributes) {
                 }
             case 'X':
                 {
-                    let counter = xmlDocCounter.get(attr.key);
-                    if (counter) {
-                        counter += 1;
-                    } else {
-                        counter = 1;
-                    }
+                    let counter = xmlDocCounter.has(attr.key) ? xmlDocCounter.get(attr.key) + 1 : 1;
                     xmlDocCounter.set(attr.key, counter);
                     let xmlToSave;
                     try {
