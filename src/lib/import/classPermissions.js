@@ -1,34 +1,29 @@
-import * as stmnts from './statements';
-import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
-import util from 'util';
 
-export function prepareData(classPerms) {
+export function prepareClassPermissions(classPerms) {
     // cs_domain
-    let csClassPermEntries=[];
+    let csClassPermEntries = [];
     for (let p of classPerms) {
         if (p.read) {
             for (let groupkey of p.read) {
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "read"
-                    ]);
+                csClassPermEntries.push([
+                    group,
+                    domain,
+                    p.table,
+                    "read"
+                ]);
             }
         }
         if (p.write) {
             for (let groupkey of p.write) {
                 const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "write"
-                    ]);
+                csClassPermEntries.push([
+                    group,
+                    domain,
+                    p.table,
+                    "write"
+                ]);
             }
         }  
     }
@@ -36,10 +31,4 @@ export function prepareData(classPerms) {
     return { csClassPermEntries };
 }
 
-const importClassPermissions = async (client, classPerms) => {
-    const { csClassPermEntries } = prepareData(classPerms);
-    console.log(util.format("importing class permission (%d)", csClassPermEntries.length));
-    await dbtools.nestedFiller(client,stmnts.complex_cs_class_permission, csClassPermEntries);
-}
-
-export default importClassPermissions;
+export default prepareClassPermissions;

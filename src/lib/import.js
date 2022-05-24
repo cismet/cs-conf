@@ -1,146 +1,275 @@
-import fs from 'fs';
 import util from 'util';
-import { extname } from 'path';
-
-import importDomains from './import/domains';
-import importPolicyDefaults from './import/policyDefaults';
-import importUsergroups from './import/usergroups';
-import importUsermanagement from './import/usermanagement';
-import importConfigAttrs from './import/configAttrs';
-import importClasses from './import/classes';
-import importClassPermissions from './import/classPermissions';
-import importStructure from './import/structure';
-import * as constants from './tools/constants.js';
+import * as stmnts from './import/statements';
+import prepareDomains from './import/domains';
+import preparePolicyDefaults from './import/policyDefaults';
+import prepareUsergroups from './import/usergroups';
+import prepareUsermanagement from './import/usermanagement';
+import prepareConfigAttrs from './import/configAttrs';
+import prepareClasses from './import/classes';
+import prepareClassPermissions from './import/classPermissions';
+import prepareAttributePermissions from './import/attrPermissions';
+import prepareStructure from './import/structure';
 import { getClientForConfig } from './tools/db';
-
-import * as csCreate from './create';
-import * as csTruncate from './truncate';
-import * as csBackup from './backup';
+import { readConfigFiles } from './tools/configFiles';
+import { singleRowFiller, nestedFiller } from './tools/db';
+import { worker as csCreate } from './create';
+import { worker as csTruncate } from './truncate';
+import { worker as csBackup } from './backup';
 
 export async function worker(options) {
-    let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, config } = options;
-    if (!fs.existsSync(folder)) {
-        throw util.format("%s does not exist", folder);
-    }
+    let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, configDir } = options;
+        
+    let {
+        domains, 
+        policyRules, 
+        usergroups, 
+        usermanagement, 
+        classes, 
+        classPerms, 
+        //normalizedClassPerms, 
+        attrPerms, 
+        //normalizedAttrPerms, 
+        structure, 
+        dynchildhelpers,
+        xmlFiles,
+        structureSqlFiles,
+        helperSqlFiles
+    } = readConfigFiles(folder);
+
+    // Prepare =======================================================================================================
+
+    console.log("preparing domains");
+    let { 
+        csDomainEntries 
+    } = prepareDomains(domains);
+
+    console.log("preparing policyRules");
+    let { 
+        csPolicyRulesEntries 
+    } = preparePolicyDefaults(policyRules);
+
+    console.log("preparing usergroups");
+    let { 
+        csUgEntries 
+    } = prepareUsergroups(usergroups);
+
+    console.log("preparing usermanagement");
+    let { 
+        csUserEntries, 
+        csUserEntriesWithPasswords, 
+        csUgMembershipEntries 
+    } = prepareUsermanagement(usermanagement);
+
+    console.log("preparing configuration attributes");
+    let { 
+        csConfigAttrKeyEntries, 
+        csConfigAttrValues4A, 
+        csConfigAttrValues4CandX , 
+        csConfigAttrValueEntriesArray
+    } = prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles);
+
+    console.log("preparing classes");
+    let { csTypeEntries, 
+        csJavaClassEntries, 
+        csIconEntries, 
+        csClassAttrEntries,
+        csClassEntries,
+        csAttrDbTypeEntries,
+        csAttrCidsTypeEntries
+    } = prepareClasses(classes);
+
+    console.log("preparing class permissions");
+    let { 
+        csClassPermEntries 
+    } = prepareClassPermissions(classPerms);             
+
+    console.log("preparing attribute permissions");
+    let { 
+        csAttrPermEntries 
+    } = prepareAttributePermissions(attrPerms);    
+
+    console.log("preparing structure");
+    let {
+        csCatNodeEntries,
+        csCatLinkEntries,
+        csCatNodePermEntries,
+        csDynamicChildrenHelperEntries
+    } = prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+
+    // Execution ---------------------------------
+
     if (execute) {
         let client;
         if (options.client) {
             client = options.client;
         } else {
-            console.log(util.format("loading config %s", config));
-            client = await getClientForConfig(config);
+            console.log(util.format("loading config %s", configDir));
+            client = await getClientForConfig(configDir);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
         }
 
         if (!skipBackup) {
-            let options = {
+            let backupFileName = await csBackup({
                 folder: backupFolder, 
                 prefix: backupPrefix, 
-                config: config,
-                client: client
-            };
-            let backupFileName = await csBackup.worker(options);
+                configDir,
+                client
+            });
             console.log(util.format(" ↳ %s", backupFileName));
         }
 
         if (recreate) {            
             console.log("purge and recreate cs_tables");
-            let options = {
+            await client.query(await csCreate({
                 purge: true, 
                 init: true, 
                 execute: false, 
                 silent: true, 
-                schema: schema, 
-                config: config
-            };
-            await client.query(await csCreate.worker(options));
+                schema, 
+                configDir
+            }));
         } else {
             console.log("truncate cs_tables");
-            let options = {
+            await client.query(await csTruncate({
                 execute: false, 
                 init: true, 
                 silent: true, 
-                config: config
-            };
-            await client.query(await csTruncate.worker(options));
+                configDir
+            }));
         }
 
-        // read the conf-files
+        // Import =======================================================================================================
 
-        const configfiles = {};
-        configfiles.domains = JSON.parse(fs.readFileSync(util.format("%s/domains.json", folder), {encoding: 'utf8'}));
-        configfiles.policy_rules = JSON.parse(fs.readFileSync(util.format("%s/policy_rules.json", folder), {encoding: 'utf8'}));
-        configfiles.usergroups = JSON.parse(fs.readFileSync(util.format("%s/usergroups.json", folder), {encoding: 'utf8'}));
-        configfiles.usermanagement = JSON.parse(fs.readFileSync(util.format("%s/usermanagement.json", folder), {encoding: 'utf8'}));
-        configfiles.classes = JSON.parse(fs.readFileSync(util.format("%s/classes.json", folder), {encoding: 'utf8'}));
-        configfiles.classPerms = JSON.parse(fs.readFileSync(util.format("%s/classPerms.json", folder), {encoding: 'utf8'}));
-        configfiles.normalizedClassPerms = JSON.parse(fs.readFileSync(util.format("%s/normalizedClassPerms.json", folder), {encoding: 'utf8'}));
-        configfiles.attrPerms = JSON.parse(fs.readFileSync(util.format("%s/attrPerms.json", folder), {encoding: 'utf8'}));
-        configfiles.normalizedAttrPerms = JSON.parse(fs.readFileSync(util.format("%s/normalizedAttrPerms.json", folder), {encoding: 'utf8'}));
-        configfiles.structure = JSON.parse(fs.readFileSync(util.format("%s/structure.json", folder), {encoding: 'utf8'}));
-        configfiles.dynchildhelpers = JSON.parse(fs.readFileSync(util.format("%s/dynchildhelpers.json", folder), {encoding: 'utf8'}));
-
-        configfiles.xmlFiles = new Map();
-        let confAttrXmlSnippetsFolder = util.format("%s/%s", folder, constants.confAttrXmlSnippetsFolder);
-        for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
-            if (extname(file) == ".xml") {
-                configfiles.xmlFiles.set(file, fs.readFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
-
-        configfiles.structureSqlFiles=new Map();
-        let structureDynamicChildrenFolder = util.format("%s/%s", folder, constants.structureDynamicChildrenFolder);
-        for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
-            if (extname(file) == ".sql") {
-                configfiles.structureSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureDynamicChildrenFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
-
-        configfiles.helperSqlFiles=new Map();
-        let structureHelperStatementsFolder = util.format("%s/%s", folder, constants.structureHelperStatementsFolder);
-        for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
-            if (extname(file) == ".sql") {
-                configfiles.helperSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureHelperStatementsFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
-
-        //Import =======================================================================================================
-
-        //Domains -----------------------------------------------------------------------
-        console.log("importing domains");
-        await importDomains(client, configfiles.domains);
-
-        // Policy defaults -----------------------------------------------------------------------
-        console.log("importing policy_rules");
-        await importPolicyDefaults(client, configfiles.policy_rules);
-
-        // Usergroups -----------------------------------------------------------------------
-        console.log("importing usergroups");
-        await importUsergroups(client, configfiles.usergroups);
-
-        // Usergroups -----------------------------------------------------------------------
-        console.log("importing usermanagement");
-        await importUsermanagement(client, configfiles.usermanagement);
-
-        // ConfigAttrs -----------------------------------------------------------------------
-        await importConfigAttrs(client, configfiles.domains, configfiles.usergroups, configfiles.usermanagement, configfiles.xmlFiles);
-        
-        // Classes -----------------------------------------------------------------------
-        await importClasses(client, configfiles.classes);
-
-        // Classpermissions -----------------------------------------------------------------------
-        await importClassPermissions(client, configfiles.classPerms);
-    
-    // await importAttrPermissions(client, configfiles.classPerms);
-        await importStructure(client, configfiles.structure, configfiles.structureSqlFiles, configfiles.dynchildhelpers, configfiles.helperSqlFiles);
+        if (csDomainEntries.length > 0) {
+            console.log(util.format("importing domains (%d)", csDomainEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
+        }
+        if (csPolicyRulesEntries.length > 0) {
+            console.log(util.format("importing policy rules (%d)", csPolicyRulesEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_policy_rules, csPolicyRulesEntries);
+        }
+        if (csUgEntries.length > 0) {
+            console.log(util.format("importing user groups (%d)", csUgEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_ug, csUgEntries);
+        }
+        if (csUserEntries.length > 0) {
+            console.log(util.format("importing users with pw_hashes (%d)", csUserEntries.length));
+            await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
+            await singleRowFiller(client, stmnts.simple_cs_usr, csUserEntries);
+            await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");        
+        }
+        if (csUserEntriesWithPasswords.length > 0) {
+            console.log(util.format("importing users with new passwords (%d)", csUserEntriesWithPasswords.length));
+            await singleRowFiller(client, stmnts.simple_cs_usr_with_password, csUserEntriesWithPasswords);
+        }
+        if (csUgMembershipEntries.length > 0) {
+            console.log(util.format("importing memberships (%d)", csUgMembershipEntries.length));
+            await nestedFiller(client, stmnts.nested_cs_ug_membership, csUgMembershipEntries);
+        }            
+        if (csConfigAttrKeyEntries.length > 0) {
+            console.log(util.format("importing config attribute keys (%d)", csConfigAttrKeyEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
+        }
+        if (csConfigAttrValueEntriesArray.length > 0) {
+            console.log(util.format("importing config attributes values (%d)", csConfigAttrValueEntriesArray.length));
+            await singleRowFiller(client, stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
+        }
+        if (csConfigAttrValues4A.length > 0) {
+            console.log(util.format("importing action attributes (%d)", csConfigAttrValues4A.length));
+            await nestedFiller(client, stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
+        }            
+        if (csConfigAttrValues4CandX.length > 0) {
+            console.log(util.format("importing config attributes (%d)", csConfigAttrValues4CandX.length));
+            await nestedFiller(client, stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
+        }
+        if (csIconEntries.length > 0) {
+            console.log(util.format("importing icons (%d)", csIconEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_icon, csIconEntries);
+        }
+        if (csJavaClassEntries.length > 0) {        
+            console.log(util.format("importing java classes (%d)", csJavaClassEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_java_class, csJavaClassEntries);
+        }
+        if (csClassEntries.length > 0) {                
+            console.log(util.format("importing classes (%d)", csClassEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
+        }
+        if (csTypeEntries.length > 0) {                
+            console.log(util.format("importing types (%d)", csTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_type, csTypeEntries);       
+        }
+        if (csAttrDbTypeEntries.length > 0) {        
+            console.log(util.format("importing simple attributes (%d)", csAttrDbTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_attr4dbTypes, csAttrDbTypeEntries);        
+        }
+        if (csAttrCidsTypeEntries.length > 0) {        
+            console.log(util.format("importing complex attributes (%d)", csAttrCidsTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_attr4cidsTypes, csAttrCidsTypeEntries);       
+        }
+        if (csClassAttrEntries.length > 0) {        
+            console.log(util.format("importing class attributes (%d)", csClassAttrEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class_attr, csClassAttrEntries);        
+        }
+        if (csClassPermEntries.length > 0) {
+            console.log(util.format("importing class permission (%d)", csClassPermEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class_permission, csClassPermEntries);
+        }           
+        if (csAttrPermEntries.length > 0) {
+            console.log(util.format("importing attribute permission (%d)", csAttrPermEntries.length));
+            await dbtools.nestedFiller(client, stmnts.complex_cs_attr_permission, csAttrPermEntries);
+        }               
+        if (csCatNodeEntries.length > 0) {
+            console.log(util.format("importing cat nodes (%d)", csCatNodeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_cat_node, csCatNodeEntries);
+        }                
+        if (csCatLinkEntries.length > 0) {
+            console.log(util.format("importing cat links (%d)", csCatLinkEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_cat_link, csCatLinkEntries);
+        }                
+        if (csCatNodePermEntries.length > 0) {
+            console.log(util.format("importing cat node permissions (%d)", csCatNodePermEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_ug_cat_node_permission, csCatNodePermEntries);
+        }                
+        if (csDynamicChildrenHelperEntries.length > 0) {
+            console.log(util.format("importing dynamic children helpers (%d)", csDynamicChildrenHelperEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_dynamic_children_helper, csDynamicChildrenHelperEntries);
+        }                
+        console.log("(re)creating dynamic children helper functions");   
+        await client.query(stmnts.execute_cs_refresh_dynchilds_functions);    
 
         if (!options.client) {
-            //close the connection -----------------------------------------------------------------------
             await client.end();
         }
     } else {
+        let cs = {
+            csDomainEntries, 
+            csPolicyRulesEntries, 
+            csUgEntries, 
+            csUserEntries, 
+            csUserEntriesWithPasswords, 
+            csUgMembershipEntries, 
+            csConfigAttrKeyEntries, 
+            csConfigAttrValues4A, 
+            csConfigAttrValues4CandX, 
+            csConfigAttrValueEntriesArray, 
+            csJavaClassEntries, 
+            csIconEntries, 
+            csClassAttrEntries, 
+            csClassEntries, 
+            csAttrDbTypeEntries, 
+            csAttrCidsTypeEntries, 
+            csClassPermEntries, 
+            csAttrPermEntries, 
+            csCatNodeEntries,
+            csCatLinkEntries,
+            csCatNodePermEntries,
+            csDynamicChildrenHelperEntries
+        }
+
+        //console.table(cs);
+
         console.log("!!!!!!!!!!!!!");
         console.log("!!! ERROR !!! import disabled for security reasons. Use -I to force import.");
         console.log("!!!!!!!!!!!!!");

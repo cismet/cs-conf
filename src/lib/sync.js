@@ -371,20 +371,20 @@ function queriesFromStatement(statement) {
 }
 
 export async function worker(options) {
-    let { folder, execute, purge, schema, noDiffs, config } = options;
+    let { folder, execute, purge, schema, noDiffs, configDir } = options;
     let client;
     if (options.client) {
         client = options.client;
     } else {
-        console.log(util.format("loading config %s", config));
-        client = await getClientForConfig(config);
+        console.log(util.format("loading config %s", configDir));
+        client = await getClientForConfig(configDir);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
     }
 
     if (!noDiffs) {
-        let differences = await csDiff.worker( { folder: folder, comparisionFolder: null, config: config, schema: schema, client: client } );
+        let differences = await csDiff.worker( { folder, comparisionFolder: null, configDir, schema, client } );
         if (differences > 0) {
             throw util.format("%d differences found, aborting sync !", differences);
         }

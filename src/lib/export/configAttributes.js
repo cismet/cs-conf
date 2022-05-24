@@ -16,7 +16,6 @@ export function analyzeAndPreprocess(configAttributes) {
     const domainConfigAttrs = new Map();
     const xmlFiles = new Map();
 
-    console.log("analyzing Configuration Attributes");
     let xmlDocCounter = new Map();
     for (let attr of configAttributes) {
         let attrInfo = {

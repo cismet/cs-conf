@@ -1,21 +1,21 @@
 import * as stmnts from './statements';
 
 const exportUserManagement = async (client, groupConfigAttrs, userConfigAttrs) => {
-    const {
+    let {
         rows: groupArray
     } = await client.query(stmnts.usergroups);
-    const {
+    let {
         rows: userArray
     } = await client.query(stmnts.users);
-    const {
+    let {
         rows: membership
     } = await client.query(stmnts.usergroupmembership);
 
     return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
 }
 
-export function analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs) {
-    let groups = [];
+export function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
+    let usergroups = [];
     for (let group of groupArray) {
         let g = {
             key: group.name + (group.domain.toUpperCase() == 'LOCAL' ? '' : '@' + group.domain)
@@ -27,7 +27,7 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
         if (attributes) {
             g.configurationAttributes = attributes;
         }
-        groups.push(g);
+        usergroups.push(g);
     }
     // Users
 
@@ -47,7 +47,7 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
 
     //now change the original user store
     // Usermanagement -----------------------------------------------------------------------
-    for (let user of userArray) {
+    for (let user of usermanagement) {
         //add the usergroups
         let groups = userGroupMap.get(user.login_name);
         if (groups) {
@@ -71,8 +71,8 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
 
     }
     return {
-        userArray,
-        groups
+        usermanagement,
+        usergroups
     }
 
 }

@@ -1,13 +1,14 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-const exportClassPermissions = async (client, cidsClasses) => {
-    const {
+export async function exportClassPermissions(client, classes) {
+    let {
         rows: classPermResult
     } = await client.query(stmnts.classPermissions);
-    return analyzeAndPreprocess(classPermResult, cidsClasses);
+    return analyzeAndPreprocess(classPermResult, classes);
 }
-export function analyzeAndPreprocess(classPermResult, cidsClasses) {
+
+export function analyzeAndPreprocess(classPermResult, classes) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
@@ -28,9 +29,9 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
             tableWritePermissions.push(ug);
         }
     }
-    let cPermByTable = [];
+    let classPerms = [];
     let normalizedCPerms = new Map();
-    for (let c of cidsClasses) {
+    for (let c of classes) {
         let t = c.table;
         let tableReadPermissions = classReadPerms.get(c.table);
         let tableWritePermissions = classWritePerms.get(c.table);
@@ -53,10 +54,10 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
                 normalizedCPerms.set(normKey, tablesForPermissions);
             }
             tablesForPermissions.push(t);
-            cPermByTable.push(entry);
+            classPerms.push(entry);
         }
     }
-    let normalizedClassPermResult = [];
+    /*let normalizedClassPerms = [];
     //normalized Permissions 
     normalizedCPerms.forEach((tables) => {
         let entry = {
@@ -70,11 +71,12 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
         if (wp) {
             entry.write = wp;
         }
-        normalizedClassPermResult.push(entry);
-    });
+        normalizedClassPerms.push(entry);
+    });*/
+
     return {
-        cPermByTable,
-        normalizedClassPermResult,
+        classPerms,
+        //normalizedClassPerms,
         classReadPerms,
         classWritePerms
     }

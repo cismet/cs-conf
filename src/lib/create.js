@@ -5,12 +5,12 @@ import { getClientForConfig } from './tools/db';
 import * as csPurge from './purge';
 
 export async function worker(options) {
-    let { purge, init, execute, silent, schema, config } = options
+    let { purge, init, execute, silent, schema, configDir } = options
     let statements = [];
 
     statements.push(util.format("SET SCHEMA '%s';", schema));        
     if (purge) {
-        statements.push(await csPurge.worker({ execute: true, silent: true, config }));
+        statements.push(await csPurge.worker({ execute: true, silent: true, config: configDir }));
     }
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-create.sql', __dirname), 'utf8'));        
     if (init) {
@@ -22,8 +22,8 @@ export async function worker(options) {
         if (options.client) {
             client = options.client;
         } else {    
-            console.log(util.format("loading config %s", config));
-            client = await getClientForConfig(config);
+            console.log(util.format("loading config %s", configDir));
+            client = await getClientForConfig(configDir);
     
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();

@@ -2,18 +2,18 @@ import * as stmnts from './statements';
 
 const exportDomains = async (client, domainConfigAttrs) => {
     const {
-        rows: domainArray
+        rows: domains
     } = await client.query(stmnts.domains);
-    return analyzeAndPreprocess(domainArray, domainConfigAttrs);
+    return analyzeAndPreprocess(domains, domainConfigAttrs);
 }
-export function analyzeAndPreprocess(domainArray, domainConfigAttrs) {
-    for (let domain of domainArray) {
+export function analyzeAndPreprocess(domains, domainConfigAttrs) {
+    for (let domain of domains) {
         //add the configuration attributes
         let attributes = domainConfigAttrs.get(domain.domainname);
         if (attributes) {
             domain.configurationAttributes = attributes;
         }
     }
-    return domainArray;
+    return domains;
 }
 export default exportDomains;

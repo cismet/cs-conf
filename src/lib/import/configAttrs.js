@@ -1,9 +1,7 @@
-import * as stmnts from './statements';
-import * as dbtools from '../tools/db';
 import * as cidstools from '../tools/cids';
 import util from 'util';
 
-export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {    
+export function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     // cs_config_attr_key
     let csConfigAttrKeyEntries=[]
     let csConfigAttrValueEntries=new Set();
@@ -66,7 +64,7 @@ export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {
         if (type==='X' ||type==='C'){
             if (type==='X') {
                 //hier xml file einladen
-                value=xmlConfigs.get(ca.xmlfile);
+                value=xmlFiles.get(ca.xmlfile);
 
             }
             else {
@@ -85,25 +83,4 @@ export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
 }
 
-const importConfigAttrs = async (client, domains, usergroups, usermanagement, xmlConfigs) => {
-    const { 
-        csConfigAttrKeyEntries, 
-        csConfigAttrValues4A, 
-        csConfigAttrValues4CandX , 
-        csConfigAttrValueEntriesArray} = prepareData(domains, usergroups, usermanagement, xmlConfigs);
-    console.log(util.format("importing config attribute keys (%d)", csConfigAttrKeyEntries.length));
-    await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
-
-    console.log(util.format("importing config attributes values (%d)", csConfigAttrValueEntriesArray.length));
-    await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
-
-    if (csConfigAttrValues4A.length>0){
-        console.log(util.format("importing action attributes  (%d)", csConfigAttrValues4A.length));
-        await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
-    }
-        
-     console.log(util.format("importing config attributes  (%d)", csConfigAttrValues4CandX.length));
-     await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
-}
-
-export default importConfigAttrs;
+export default prepareConfigAttrs;

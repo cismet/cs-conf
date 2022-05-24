@@ -31,7 +31,7 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
             attrWritePermissions.push(ug);
         }
     }
-    let aPermByTable = [];
+    let attrPerms = [];
     let normalizedAPerms = new Map();
     for (let a of attributes) {
         let key = util.format("%s.%s", a.table, a.field);
@@ -56,11 +56,11 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
                 normalizedAPerms.set(normKey, attrsForPermissions);
             }
             attrsForPermissions.push(t);
-            aPermByTable.push(entry);
+            attrPerms.push(entry);
         }
     }
 
-    let normalizedAttrPermResult = [];
+    /*let normalizedAttrPerms = [];
     //normalized Permissions 
     normalizedAPerms.forEach((attributes) => {
         let entry = {
@@ -74,12 +74,13 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
         if (wp) {
             entry.write = wp;
         }
-        normalizedAttrPermResult.push(entry);
-    });
+        normalizedAttrPerms.push(entry);
+    });*/
+    
 
     return {
-        aPermByTable,
-        normalizedAttrPermResult
+        attrPerms,
+        //normalizedAttrPerms
     };
 }
 export default exportAttrPermissions;

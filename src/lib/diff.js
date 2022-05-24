@@ -7,7 +7,7 @@ import { getClientForConfig } from './tools/db';
 import * as csExport from './export';
 
 export async function worker(options) {
-    let { folder, target, schema, config } = options;
+    let { folder, target, schema, configDir } = options;
 
     let folderFiles = [];
     for (let file of fs.readdirSync(folder)) {
@@ -20,8 +20,8 @@ export async function worker(options) {
     if (options.client) {
         client = options.client;
     } else {
-        console.log(util.format("loading config %s", config));
-        client = await getClientForConfig(config);
+        console.log(util.format("loading config %s", configDir));
+        client = await getClientForConfig(configDir);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
@@ -39,7 +39,7 @@ export async function worker(options) {
         console.log("#################");
         console.log(util.format("### exporting current config to %s for comparision.", current));
         console.log("#################");
-        await csExport.worker({ folder: current, schema: schema, config: config, client: client });
+        await csExport.worker({ folder: current, schema: schema, configDir, client: client });
         console.log("#################");
         console.log("### export done. starting comparision.");
         console.log("#################");    

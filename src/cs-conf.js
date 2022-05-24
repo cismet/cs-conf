@@ -36,7 +36,7 @@ program.command('import').alias('i').description('imports the meta information i
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		 }
 		console.log("starting import with following options:");
 		console.table(options);
@@ -53,16 +53,18 @@ program.command('import').alias('i').description('imports the meta information i
 program.command('export').alias('e').description('exports the meta information of a cids system')
 	.option('-f, --folder <folder>', 'the folder where the config will be written', 'config')
 	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
-	.option('-o, --only', 'Only export the following topics')
-	.option('-x, --skip', 'Skip the export of the following topics')
-	.option('-C, --classes', 'The classes with their attributes and permissions')
-	.option('-S, --structure', 'The structure information of the system')
-	.option('-U, --usermanagement', 'The users and their groups')
+	.option('-O, --overwrite', 'overwrite existing config')
+//	.option('-o, --only', 'Only export the following topics')
+//	.option('-x, --skip', 'Skip the export of the following topics')
+//	.option('-C, --classes', 'The classes with their attributes and permissions')
+//	.option('-S, --structure', 'The structure information of the system')
+//	.option('-U, --usermanagement', 'The users and their groups')
 	.action(async (cmd) => {
 		let options = {
 			folder: cmd.folder, 
 			schema: cmd.schema, 
-			config: cmd.parent.config
+			overwrite: cmd.overwrite,
+			configDir: cmd.parent.config
 		};
 		console.log("starting export with following options:");
 		console.table(options);
@@ -89,7 +91,7 @@ program.command('sync').alias('s').description('synchronizes the cids classes wi
 			purge: cmd.purge, 
 			noDiffs: cmd.noDiffs, 
 			schema: cmd.schema, 
-			config: cmd.parent.config 
+			configDir: cmd.parent.config 
 		};
 		console.log("starting sync with following options:");
 		console.table(options);
@@ -112,7 +114,7 @@ program.command('diff').alias('d').description('shows differences between meta-i
 			folder: cmd.folder, 
 			target: cmd.target, 
 			schema: cmd.schema, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		}
 		console.log("starting diff with following options:");
 		console.table(options);
@@ -133,7 +135,7 @@ program.command('backup').alias('b').description('backups the meta-information (
 		let options = {
 			folder: cmd.folder, 
 			prefix: cmd.prefix, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		};
 		console.log("starting backup with following options:");
 		console.table(options);
@@ -154,7 +156,7 @@ program.command('restore').alias('r').description('restores the meta-information
 		let options = {
 			file: cmd.file, 
 			execute: cmd.restore, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		};
 		console.log("starting restore with following options:");
 		console.table(options);
@@ -176,7 +178,7 @@ program.command('truncate').alias('t').description('truncates the cs_tables')
 			execute: cmd.truncate, 
 			init: cmd.init,
 			silent: false, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		};
 		console.log("starting truncate with following options:");
 		console.table(options);
@@ -196,7 +198,7 @@ program.command('purge').alias('p').description('purges the cs_tables')
 		let options = {
 			execute: cmd.purge, 
 			silent: false, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		};
 		console.log("starting purge with following options:");
 		console.table(options);
@@ -222,7 +224,7 @@ program.command('create').alias('c').description('creates and initializes cs_tab
 			execute: cmd.create, 
 			schema: cmd.schema, 
 			silent: false, 
-			config: cmd.parent.config
+			configDir: cmd.parent.config
 		};
 		console.log("starting create with following options:");
 		console.table(options);

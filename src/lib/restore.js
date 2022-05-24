@@ -5,11 +5,11 @@ import { getClientForConfig } from './tools/db';
 import * as csTruncate from './truncate';
 
 export async function worker(options) {
-    let { file, execute, config } = options;
+    let { file, execute, configDir } = options;
     console.log(util.format("reading statements from %s", file));
     
     let statements = [];
-    statements.push(await csTruncate.worker({ execute: false, init: true, silent: true, config: config }));
+    statements.push(await csTruncate.worker({ execute: false, init: true, silent: true, configDir }));
     if(file.endsWith(".gz")){
         statements.push(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
     } else {
@@ -21,8 +21,8 @@ export async function worker(options) {
         if (options.client) {
             client = options.client;
         } else {    
-            console.log(util.format("loading config %s", config));
-            client = await getClientForConfig(config);
+            console.log(util.format("loading config %s", configDir));
+            client = await getClientForConfig(configDir);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();

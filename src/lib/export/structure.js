@@ -6,16 +6,16 @@ import striptags from 'striptags';
 import util from 'util';
 
 const exportStructure = async (client) => {
-    const {
+    let {
         rows: nodesResult
     } = await client.query(stmnts.nodes);
-    const {
+    let {
         rows: linksResult
     } = await client.query(stmnts.links);
-    const {
+    let {
         rows: nodePermResult
     } = await client.query(stmnts.nodePermissions);
-    const {
+    let {
         rows: dynchildhelpersResult
     } = await client.query(stmnts.dynchildhelpers);
     return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
@@ -94,7 +94,7 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
     let structureSqlDocuments = new Map();
     let dynchildhelpers = [];
     let helperSqlDocuments = new Map();
-    let rootNodes = [];
+    let structure = [];
 
     let nodeReadPerms = [];
     let nodeWritePerms = [];
@@ -134,7 +134,7 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
         clean(node);
         allNodes.set(node.id, node);
         if (node.is_root === true && node.node_type !== 'C') {
-            rootNodes.push(node);
+            structure.push(node);
         }
         delete node.is_root;
 
@@ -169,13 +169,13 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
 
     // visiting all nodes
     /*let nodesIdsVisited = [];
-    for (let node of rootNodes) {
+    for (let node of structure) {
         if (node) {
             nodesIdsVisited.push(... visitingNodesByChildren(node, allNodes, links));
         }
     }*/
 
-    visitingNodesByChildren2(rootNodes, allNodes, links, []);
+    visitingNodesByChildren2(structure, allNodes, links, []);
 
     // removing all orphan nodes
     for (let node of allNodes.values()) {
@@ -215,7 +215,7 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
     }
 
     return {
-        rootNodes,
+        structure,
         structureSqlDocuments,
         dynchildhelpers,
         helperSqlDocuments

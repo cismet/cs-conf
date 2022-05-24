@@ -3,7 +3,7 @@ import clean from '../tools/deleteNullProperties.js';
 
 const exportClasses = async (client) => {
     const {
-        rows: cidsClasses
+        rows: classes
     } = await client.query(stmnts.classes);
     const {
         rows: attributes
@@ -11,10 +11,10 @@ const exportClasses = async (client) => {
     const {
         rows: classattributes
     } = await client.query(stmnts.classAttributes);
-    return analyzeAndPreprocess(cidsClasses, attributes, classattributes);
+    return analyzeAndPreprocess(classes, attributes, classattributes);
 }
 
-export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
+export function analyzeAndPreprocess(classes, attributes, classattributes) {
     let classAttrsPerTable = new Map(); {
         for (let ca of classattributes) {
             let currentCAs = classAttrsPerTable.get(ca.table);
@@ -121,7 +121,7 @@ export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
         tableAttributes.push(a);
     }
 
-    for (let c of cidsClasses) {
+    for (let c of classes) {
         //clean up
         if (c.table === c.name) {
             delete c.name;
@@ -192,7 +192,7 @@ export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
 
     }
     return {
-        cidsClasses,
+        classes,
         attributes
     };
 }
