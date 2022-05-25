@@ -75,7 +75,7 @@ async function csExport(options) {
             structureSqlDocuments,
             dynchildhelpers,
             helperSqlDocuments
-        } = await exportStructure(client);
+        } = await exportStructure(client, reorganize);
 
         Object.assign(config, {
             domains,

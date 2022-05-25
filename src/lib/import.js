@@ -9,12 +9,11 @@ import prepareClasses from './import/classes';
 import prepareClassPermissions from './import/classPermissions';
 import prepareAttributePermissions from './import/attrPermissions';
 import prepareStructure from './import/structure';
-import { getClientForConfig, setIdsFromOrder } from './tools/db';
-import { readConfigFiles } from './tools/configFiles';
-import { singleRowFiller, nestedFiller } from './tools/db';
 import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
+import { readConfigFiles } from './tools/configFiles';
+import { getClientForConfig, setIdsFromOrder, singleRowFiller, nestedFiller } from './tools/db';
 
 async function csImport(options) {
     let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, configDir } = options;

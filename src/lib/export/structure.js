@@ -5,7 +5,7 @@ import slug from 'slug';
 import striptags from 'striptags';
 import util from 'util';
 
-async function exportStructure(client) {
+async function exportStructure(client, reorganize = false) {
     let {
         rows: nodesResult
     } = await client.query(stmnts.nodes);
@@ -17,7 +17,7 @@ async function exportStructure(client) {
     } = await client.query(stmnts.nodePermissions);
     let {
         rows: dynchildhelpersResult
-    } = await client.query(stmnts.dynchildhelpers);
+    } = await client.query(reorganize ? stmnts.dynchildhelpersByKey : stmnts.dynchildhelpersById);
     return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
 }
 

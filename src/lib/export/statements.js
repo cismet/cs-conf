@@ -154,14 +154,14 @@ ORDER BY
     n.name;
 `;
 
-export const dynchildhelpers = `
+const _dynchildhelpers = `
 SELECT 
     id, name, code
 FROM
     cs_dynamic_children_helper
-ORDER BY
-    name;
 `;
+export const dynchildhelpersByKey = _dynchildhelpers + ' ORDER BY name;';
+export const dynchildhelpersById = _dynchildhelpers + ' ORDER BY id';
 
 export const links = `
 SELECT 

@@ -4,7 +4,7 @@ import zlib from 'zlib';
 import { getClientForConfig } from './tools/db';
 import csTruncate from './truncate';
 
-async function worker(options) {
+async function csRestore(options) {
     let { file, execute, configDir } = options;
     console.log(util.format("reading statements from %s", file));
     
