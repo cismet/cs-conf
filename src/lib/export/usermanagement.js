@@ -1,20 +1,21 @@
 import * as stmnts from './statements';
 
-async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs, reorganize = false) {
+async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs) {
     let {
         rows: groupArray
-    } = await client.query(reorganize ? stmnts.usergroupsByKey : stmnts.usergroupsById);
+    } = await client.query(stmnts.usergroups);
     let {
         rows: userArray
-    } = await client.query(reorganize ? stmnts.usersByKey : stmnts.usersById);
+    } = await client.query(stmnts.users);
     let {
         rows: membership
-    } = await client.query(reorganize ? stmnts.usergroupmembershipByKey : stmnts.usergroupmembershipById);
+    } = await client.query(stmnts.usergroupmembership);
 
-    return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs, reorganize);
+    let processed = analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
+    return processed;
 }
 
-function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs, reorganize = false) {
+function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
     let usergroups = [];
     for (let group of groupArray) {
         let g = {
@@ -25,11 +26,7 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         }
         let attributes = groupConfigAttrs.get(group.name + '@' + group.domain);
         if (attributes) {
-            g.configurationAttributes  = reorganize ? attributes.sort((a, b) => { 
-                let aKey = a.key;
-                let bKey = b.key;
-                return aKey.localeCompare(bKey);
-            }) : attributes;
+            g.configurationAttributes = attributes;
         }
         usergroups.push(g);
     }
@@ -55,18 +52,14 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         //add the usergroups
         let groups = userGroupMap.get(user.login_name);
         if (groups) {
-            user.groups = reorganize ? groups.sort() : groups;
+            user.groups = groups;
         }
 
         //add the configuration attributes
         let attributes = userConfigAttrs.get(user.login_name);
 
         if (attributes) {
-            user.configurationAttributes = reorganize ? attributes.sort((a, b) => { 
-                let aKey = a.key;
-                let bKey = b.key;
-                return aKey.localeCompare(bKey);
-            }) : attributes;
+            user.configurationAttributes = attributes;
         }
 
         //remove administrator-flag if it is false

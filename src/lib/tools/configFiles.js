@@ -70,9 +70,7 @@ export function readConfigFiles(folder) {
         usermanagement, 
         classes, 
         classPerms, 
-        //normalizedClassPerms, 
         attrPerms, 
-        //normalizedAttrPerms, 
         structure, 
         dynchildhelpers,
         xmlFiles,
@@ -95,12 +93,10 @@ export function writeConfigFiles(folder, config, overwrite = false) {
         usergroups,
         classes,
         classPerms,
-        //normalizedClassPerms,
         attrPerms,
-        //normalizedAttrPerms,
         structure,
-        structureSqlDocuments,
         dynchildhelpers,
+        structureSqlDocuments,
         helperSqlDocuments,
         xmlFiles
     } = config;
@@ -159,15 +155,9 @@ export function writeConfigFiles(folder, config, overwrite = false) {
     if (classPerms.length > 0) {
         fs.writeFileSync(util.format("%s/classPerms.json", folder), stringify(classPerms, { maxLength: 100 }), "utf8");
     }
-    //if (normalizedClassPerms.length > 0) {
-        //fs.writeFileSync(util.format("%s/normalizedClassPerms.json", folder), stringify(normalizedClassPerms, { maxLength: 100 }), "utf8");
-    //}
     if (attrPerms.length > 0) {
         fs.writeFileSync(util.format("%s/attrPerms.json", folder), stringify(attrPerms, { maxLength: 100 }), "utf8");
     }
-    //if (normalizedAttrPerms.length > 0) {
-        //fs.writeFileSync(util.format("%s/normalizedAttrPerms.json", folder), stringify(normalizedAttrPerms, { maxLength: 100 }), "utf8");
-    //}
     if (structure.length > 0) {
         fs.writeFileSync(util.format("%s/structure.json", folder), stringify(structure, { maxLength: 80 }), "utf8");
     }

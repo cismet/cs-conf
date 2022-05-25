@@ -1,7 +1,7 @@
 import util from 'util';
 import * as stmnts from './import/statements';
 import prepareDomains from './import/domains';
-import preparePolicyDefaults from './import/policyDefaults';
+import preparePolicyRules from './import/policyRules';
 import prepareUsergroups from './import/usergroups';
 import prepareUsermanagement from './import/usermanagement';
 import prepareConfigAttrs from './import/configAttrs';
@@ -45,7 +45,7 @@ async function csImport(options) {
     console.log("preparing policyRules");
     let { 
         csPolicyRulesEntries 
-    } = preparePolicyDefaults(policyRules);
+    } = preparePolicyRules(policyRules);
 
     console.log("preparing usergroups");
     let { 

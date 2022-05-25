@@ -1,10 +1,10 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-async function exportAttrPermissions(client, attributes, classReadPerms, classWritePerms, reorganize = false) {
+async function exportAttrPermissions(client, attributes, classReadPerms, classWritePerms) {
     const {
         rows: attrPermResult
-    } = await client.query(reorganize ? stmnts.attributePermissionsByKey : stmnts.attributePermissionsById);
+    } = await client.query(stmnts.attributePermissions);
 
     return analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms);
 }
@@ -33,30 +33,33 @@ function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classW
         }
     }
     let attrPerms = [];
-    let normalizedAPerms = new Map();
+    //let normalizedAPerms = new Map();
     for (let a of attributes) {
         let key = util.format("%s.%s", a.table, a.field);
-        let attrReadPermissions = classReadPerms.get(key);
-        let attrWritePermissions = classWritePerms.get(key);
         let entry = {
             attribute: key
         }
-        let normKey = "";
+
+        //let normKey = "";
+
+        let attrReadPermissions = classReadPerms.get(key);
         if (attrReadPermissions) {
-            entry.read = attrReadPermissions.sort();
-            normKey += util.format("read:::%s", JSON.stringify(entry.read));
+            entry.read = attrReadPermissions;
+            //normKey += util.format("read:::%s", JSON.stringify(entry.read));
         }
+
+        let attrWritePermissions = classWritePerms.get(key);
         if (attrWritePermissions) {
-            entry.write = attrWritePermissions.sort();
-            normKey += util.format("write:::%s", JSON.stringify(entry.write));
+            entry.write = attrWritePermissions;
+            //normKey += util.format("write:::%s", JSON.stringify(entry.write));
         }
         if (attrReadPermissions || attrWritePermissions) {
-            let attrsForPermissions = normalizedAPerms.get(normKey);
-            if (!attrsForPermissions) {
-                attrsForPermissions = [];
-                normalizedAPerms.set(normKey, attrsForPermissions);
-            }
-            attrsForPermissions.push(t);
+            //let attrsForPermissions = normalizedAPerms.get(normKey);
+            //if (!attrsForPermissions) {
+                //attrsForPermissions = [];
+                //normalizedAPerms.set(normKey, attrsForPermissions);
+            //}
+            //attrsForPermissions.push(t);
             attrPerms.push(entry);
         }
     }

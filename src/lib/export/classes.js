@@ -1,20 +1,20 @@
 import * as stmnts from './statements';
 import { clean } from '../tools/tools.js';
 
-async function exportClasses(client, reorganize = false) {
+async function exportClasses(client) {
     const {
         rows: classes
-    } = await client.query(reorganize ? stmnts.classesByKey : stmnts.classesById);
+    } = await client.query(stmnts.classes);
     const {
         rows: attributes
     } = await client.query(stmnts.attributes);
     const {
         rows: classattributes
-    } = await client.query(reorganize ? stmnts.classAttributesByKey : stmnts.classAttributesById);
-    return analyzeAndPreprocess(classes, attributes, classattributes, reorganize);
+    } = await client.query(stmnts.classAttributes);
+    return analyzeAndPreprocess(classes, attributes, classattributes);
 }
 
-function analyzeAndPreprocess(classes, attributes, classattributes, reorganize = false) {
+function analyzeAndPreprocess(classes, attributes, classattributes) {
     let classAttrsPerTable = new Map(); {
         for (let ca of classattributes) {
             let currentCAs = classAttrsPerTable.get(ca.table);
@@ -181,11 +181,7 @@ function analyzeAndPreprocess(classes, attributes, classattributes, reorganize =
         //add attributes
         let attrs = attrsPerTable.get(c.table);
         if (attrs) {
-            c.attributes = reorganize ? attrs.sort((a, b) => { 
-                let aField = a.field;
-                let bField = b.field;
-                return aField.localeCompare(bField);
-            }) : attrs;
+            c.attributes = attrs;
         }
 
         //add class attributes
@@ -195,10 +191,7 @@ function analyzeAndPreprocess(classes, attributes, classattributes, reorganize =
         }
 
     }
-    return {
-        classes,
-        attributes
-    };
+    return { classes, attributes };
 }
 
 export default exportClasses;

@@ -1,25 +1,21 @@
 import * as stmnts from './statements';
 
-async function exportDomains(client, domainConfigAttrs, reorganize = false) {
+async function exportDomains(client, domainConfigAttrs) {
     const {
         rows: domains
-    } = await client.query(reorganize ? stmnts.domainsByKey : stmnts.domainsById);
-    return analyzeAndPreprocess(domains, domainConfigAttrs, reorganize);
+    } = await client.query(stmnts.domains);
+    return analyzeAndPreprocess(domains, domainConfigAttrs);
 }
 
-function analyzeAndPreprocess(domains, domainConfigAttrs, reorganize = false) {
+function analyzeAndPreprocess(domains, domainConfigAttrs) {
     for (let domain of domains) {
         //add the configuration attributes
         let attributes = domainConfigAttrs.get(domain.domainname);
         if (attributes) {
-            domain.configurationAttributes = reorganize ? attributes.sort((a, b) => { 
-                let aKey = a.key;
-                let bKey = b.key;
-                return aKey.localeCompare(bKey);
-            }) : attributes;
+            domain.configurationAttributes = attributes;
         }
     }
-    return domains;
+    return { domains };
 }
 
 export default exportDomains;

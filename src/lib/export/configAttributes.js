@@ -3,10 +3,10 @@ import xmlFormatter from 'xml-formatter';
 import util from 'util';
 import * as stmnts from './statements';
 
-async function exportConfigAttributes(client, reorganize = false) {
+async function exportConfigAttributes(client) {
     const {
         rows: configAttributes
-    } = await client.query(reorganize ? stmnts.configAttrByKey : stmnts.configAttrById);
+    } = await client.query(stmnts.configAttr);
     return analyzeAndPreprocess(configAttributes);
 };
 

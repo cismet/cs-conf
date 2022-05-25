@@ -1,14 +1,14 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-async function exportClassPermissions(client, classes, reorganize = false) {
+async function exportClassPermissions(client, classes) {
     let {
         rows: classPermResult
-    } = await client.query(reorganize ? stmnts.classPermissionsByKey : stmnts.classPermissionsById);
-    return analyzeAndPreprocess(classPermResult, classes, reorganize);
+    } = await client.query(stmnts.classPermissions);
+    return analyzeAndPreprocess(classPermResult, classes);
 }
 
-function analyzeAndPreprocess(classPermResult, classes, reorganize = false) {
+function analyzeAndPreprocess(classPermResult, classes) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
@@ -32,28 +32,28 @@ function analyzeAndPreprocess(classPermResult, classes, reorganize = false) {
     let classPerms = [];
     let normalizedCPerms = new Map();
     for (let c of classes) {
-        let t = c.table;
-        let tableReadPermissions = classReadPerms.get(c.table);
-        let tableWritePermissions = classWritePerms.get(c.table);
+        let table = c.table;
         let entry = {
-            table: t
+            table: table
         }
-        let normKey = "";
+        //let normKey = "";
+        let tableReadPermissions = classReadPerms.get(table);
         if (tableReadPermissions) {
-            entry.read = reorganize ? tableReadPermissions.sort() : tableReadPermissions;
-            normKey += "read:::" + JSON.stringify(entry.read);
+            entry.read = tableReadPermissions;
+            //normKey += "read:::" + JSON.stringify(entry.read);
         }
+        let tableWritePermissions = classWritePerms.get(table);
         if (tableWritePermissions) {
-            entry.write = reorganize ? tableWritePermissions.sort() : tableWritePermissions;
-            normKey += "write:::" + JSON.stringify(entry.write);
+            entry.write = tableWritePermissions;
+            //normKey += "write:::" + JSON.stringify(entry.write);
         }
         if (tableReadPermissions || tableWritePermissions) {
-            let tablesForPermissions = normalizedCPerms.get(normKey);
-            if (!tablesForPermissions) {
-                tablesForPermissions = [];
-                normalizedCPerms.set(normKey, tablesForPermissions);
-            }
-            tablesForPermissions.push(t);
+            //let tablesForPermissions = normalizedCPerms.get(normKey);
+            //if (!tablesForPermissions) {
+                //tablesForPermissions = [];
+                //normalizedCPerms.set(normKey, tablesForPermissions);
+            //}
+            //tablesForPermissions.push(table);
             classPerms.push(entry);
         }
     }

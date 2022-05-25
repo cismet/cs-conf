@@ -1,4 +1,4 @@
-function preparePolicyDefaults(policyRules) {
+function preparePolicyRules(policyRules) {
     let csPolicyRulesEntries = [];    
     for (let r of policyRules) {
         csPolicyRulesEntries.push([r.policy,r.permission,r.default_value]);
@@ -6,4 +6,4 @@ function preparePolicyDefaults(policyRules) {
     return { csPolicyRulesEntries };
 }
 
-export default preparePolicyDefaults;
+export default preparePolicyRules;

@@ -1,4 +1,4 @@
-const _configAttr = `
+export const configAttr = `
 SELECT 
     u.login_name,
     md.name domainname,
@@ -16,43 +16,37 @@ FROM
     LEFT OUTER JOIN cs_domain md ON (jt.dom_id=md.id)
     LEFT OUTER JOIN cs_usr u ON (jt.usr_id=u.id) 
     LEFT OUTER JOIN cs_ug ug ON (jt.ug_id=ug.id) LEFT OUTER JOIN cs_domain ugd ON (ug."domain"=ugd.id)
+ORDER BY id;
 `;
-export const configAttrByKey = _configAttr + ' ORDER BY 4,3,1,5,6,7;';
-export const configAttrById = _configAttr + ' ORDER BY id;';
 
-const _domains = 'SELECT name AS domainname FROM cs_domain';
-export const domainsByKey = _domains + ' ORDER BY name;';
-export const domainsById = _domains + ' ORDER BY id;';
+export const domains = 'SELECT name AS domainname FROM cs_domain ORDER BY id;';
 
-const _policyDefaults = `
+export const policyRules = `
 SELECT cs_policy.name AS policy, cs_permission.key AS permission, default_value AS default_value
 FROM cs_policy_rule, cs_policy, cs_permission 
 WHERE 
     cs_policy_rule.policy = cs_policy.id 
     and cs_policy_rule.permission = cs_permission.id
+ORDER BY cs_policy_rule.id;
 `;
-export const policyDefaultsByKey = _policyDefaults + ' ORDER BY cs_policy.name, cs_permission.key;';
-export const policyDefaultsById = _policyDefaults + ' ORDER BY cs_policy_rule.id;';
 
-const _users = ` 
+export const users = ` 
 SELECT login_name, last_pwd_change, administrator, trim(pw_hash) AS pw_hash, trim(salt) AS salt
 FROM cs_usr
+ORDER BY id;
 `;
-export const usersByKey = _users + ' ORDER BY login_name;';
-export const usersById = _users + ' ORDER BY id;';
 
-const _usergroups = `
+export const usergroups = `
 SELECT 
     cs_domain.name AS domain,
     cs_ug.name AS name, 
     cs_ug.descr AS descr
 FROM cs_ug, cs_domain 
 WHERE cs_ug.domain = cs_domain.id
+ORDER BY cs_ug.id;
 `;
-export const usergroupsByKey = _usergroups + ' ORDER BY cs_domain.name, cs_ug.name;';
-export const usergroupsById = _usergroups + ' ORDER BY cs_ug.id;';
 
-const _usergroupmembership = ` 
+export const usergroupmembership = ` 
 SELECT distinct
     cs_ug_membership.id AS id, cs_usr.login_name AS login_name, cs_domain.name AS domainname, cs_ug.name AS groupname
 FROM 
@@ -60,11 +54,10 @@ FROM
     INNER JOIN cs_usr ON (cs_ug_membership.usr_id = cs_usr.id)
     INNER JOIN cs_ug ON (cs_ug_membership.ug_id = cs_ug.id) 
     INNER JOIN cs_domain ON (cs_domain.id = cs_ug.domain)
+ORDER BY cs_ug_membership.id;    
 `;
-export const usergroupmembershipByKey = _usergroupmembership + ' ORDER BY cs_usr.login_name, cs_domain.name, cs_ug.name;';
-export const usergroupmembershipById = _usergroupmembership + ' ORDER BY cs_ug_membership.id;';
 
-const _classes = `
+export const classes = `
 SELECT 
     c.table_name "table", c.name,c.descr,c.primary_key_field pk,c.indexed,
     ci.file_name "classIcon", oi.file_name "objectIcon", null as icon,
@@ -82,9 +75,8 @@ FROM
     LEFT OUTER JOIN cs_java_class jcr on (c.renderer=jcr.id)
     LEFT OUTER JOIN cs_policy cp on (c.policy=cp.id)
     LEFT OUTER JOIN cs_policy ap on (c.attribute_policy=ap.id)
+ORDER BY c.id;
 `;
-export const classesByKey = _classes + ' ORDER BY c.table_name;';
-export const classesById = _classes + ' ORDER BY c.id;';
 
 export const attributes = `
 SELECT 
@@ -109,15 +101,14 @@ ORDER BY
     c.table_name, a.pos;
 `;
 
-const _classAttributes = `
+export const classAttributes = `
 SELECT cs_class.table_name AS table, attr_key AS key, attr_value AS value 
 FROM cs_class_attr
 JOIN cs_class ON (cs_class.id = cs_class_attr.class_id)
+ORDER BY cs_class_attr.id;
 `;
-export const classAttributesByKey = _classAttributes + ' ORDER BY cs_class.table_name, attr_key;';
-export const classAttributesById = _classAttributes + ' ORDER BY cs_class_attr.id;';
 
-const _classPermissions = `
+export const classPermissions = `
 SELECT
     cs_domain.name AS domain, cs_ug.name AS group, cs_class.table_name AS table, cs_permission.key AS permission
 FROM
@@ -126,11 +117,10 @@ FROM
     JOIN cs_class ON (cs_ug_class_perm.class_id = cs_class.id)
     JOIN cs_ug ON (cs_ug_class_perm.ug_id = cs_ug.id)
     JOIN cs_domain ON (cs_ug.domain = cs_domain.id)
+ORDER BY cs_ug_class_perm.id;
 `;
-export const classPermissionsByKey = _classPermissions + ' ORDER BY cs_class.table_name, cs_domain.name, cs_ug.name;';
-export const classPermissionsById = _classPermissions + ' ORDER BY cs_ug_class_perm.id;';
 
-const _attributePermissions = `
+export const attributePermissions = `
 SELECT
     cs_domain.name AS domain, cs_ug.name AS group, cs_class.table_name AS table, cs_attr.field_name AS field, cs_permission.key AS permission
 FROM
@@ -140,11 +130,10 @@ FROM
     JOIN cs_class ON (cs_attr.class_id = cs_class.id)
     JOIN cs_ug ON (cs_ug_attr_perm.ug_id = cs_ug.id)
     JOIN cs_domain ON (cs_ug.domain = cs_domain.id)
+ORDER BY cs_ug_attr_perm.id
 `;
-export const attributePermissionsByKey = _attributePermissions + ' ORDER BY cs_class.table_name, cs_domain.name, cs_ug.name;';
-export const attributePermissionsById = _attributePermissions + ' ORDER BY cs_ug_attr_perm.id';
 
-export const _nodes = `
+export const nodes = `
 SELECT 
     n.id, n.name, n.url as descr, c.table_name as table, 
     n.derive_permissions_from_class, n.object_id, n.node_type, n.is_root, n.org, 
@@ -153,18 +142,16 @@ FROM
     cs_cat_node n
     LEFT OUTER JOIN cs_class "c" ON (n.class_id=c.id)
     LEFT OUTER JOIN cs_policy p ON (n.policy=p.id)
+ORDER BY n.id
 `;
-export const nodesByKey = _nodes + ' ORDER BY n.name;';
-export const nodesById = _nodes + ' ORDER BY n.id';
 
-const _dynchildhelpers = `
+export const dynchildhelpers = `
 SELECT 
     id, name, code
 FROM
     cs_dynamic_children_helper
+ORDER BY id    
 `;
-export const dynchildhelpersByKey = _dynchildhelpers + ' ORDER BY name;';
-export const dynchildhelpersById = _dynchildhelpers + ' ORDER BY id';
 
 export const links = `
 SELECT 

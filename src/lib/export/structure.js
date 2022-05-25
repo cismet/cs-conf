@@ -5,10 +5,10 @@ import slug from 'slug';
 import striptags from 'striptags';
 import util from 'util';
 
-async function exportStructure(client, reorganize = false) {
+async function exportStructure(client) {
     let {
         rows: nodesResult
-    } = await client.query(reorganize ? stmnts.nodesByKey : stmnts.nodesById);
+    } = await client.query(stmnts.nodes);
     let {
         rows: linksResult
     } = await client.query(stmnts.links);
@@ -17,8 +17,8 @@ async function exportStructure(client, reorganize = false) {
     } = await client.query(stmnts.nodePermissions);
     let {
         rows: dynchildhelpersResult
-    } = await client.query(reorganize ? stmnts.dynchildhelpersByKey : stmnts.dynchildhelpersById);
-    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult, reorganize);
+    } = await client.query(stmnts.dynchildhelpers);
+    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
 }
 
 function visitingNodesByChildren(node, nodes, links) {
@@ -90,7 +90,7 @@ function visitingNodesByChildren2(nodes, allNodes, links, duplicates) {
     return childrenIdsVisited;
 }
 
-function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult, reorganize = false) {
+function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
     let structureSqlDocuments = new Map();
     let dynchildhelpers = [];
     let helperSqlDocuments = new Map();
@@ -186,7 +186,7 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
         }
     }
 
-    let sortedNodes = reorganize ? Array.from(allNodes.values()).sort((a, b) => { 
+    let sortedNodes = false ? Array.from(allNodes.values()).sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + (a.dynamic_children ? a.dynamic_children : "");
         let bSimple = slug(striptags(b.name)).toLowerCase() + (b.dynamic_children ? b.dynamic_children : "");
         return aSimple.localeCompare(bSimple);
@@ -200,7 +200,7 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
         }
     }
 
-    let sortedDynchildhelpers = reorganize ? dynchildhelpersResult.sort((a, b) => { 
+    let sortedDynchildhelpers = false ? dynchildhelpersResult.sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + a.code;
         let bSimple = slug(striptags(b.name)).toLowerCase() + b.code;
         return aSimple.localeCompare(bSimple);
