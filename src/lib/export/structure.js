@@ -18,7 +18,7 @@ async function exportStructure(client, reorganize = false) {
     let {
         rows: dynchildhelpersResult
     } = await client.query(reorganize ? stmnts.dynchildhelpersByKey : stmnts.dynchildhelpersById);
-    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
+    return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult, reorganize);
 }
 
 function visitingNodesByChildren(node, nodes, links) {
@@ -90,7 +90,7 @@ function visitingNodesByChildren2(nodes, allNodes, links, duplicates) {
     return childrenIdsVisited;
 }
 
-function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
+function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult, reorganize = false) {
     let structureSqlDocuments = new Map();
     let dynchildhelpers = [];
     let helperSqlDocuments = new Map();
@@ -200,11 +200,11 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
         }
     }
 
-    let sortedDynchildhelpers = dynchildhelpersResult.sort((a, b) => { 
+    let sortedDynchildhelpers = reorganize ? dynchildhelpersResult.sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + a.code;
         let bSimple = slug(striptags(b.name)).toLowerCase() + b.code;
         return aSimple.localeCompare(bSimple);
-    });
+    }) : dynchildhelpersResult;
     for (let dynchildhelper of sortedDynchildhelpers) {
         let fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
         helperSqlDocuments.set(fileName, dynchildhelper.code);

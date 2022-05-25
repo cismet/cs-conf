@@ -122,7 +122,7 @@ INSERT INTO cs_java_class (qualifier, notice, "type") VALUES ($1, NULL, $2);
 `;
 
 export const simple_cs_dynamic_children_helper = `
-INSERT INTO cs_dynamic_children_helper (name, code) VALUES ($1, $2);
+INSERT INTO cs_dynamic_children_helper (name, code, id) VALUES ($1, $2, $3);
 `;
 
 export const execute_cs_refresh_dynchilds_functions = `
