@@ -148,6 +148,7 @@ async function csImport(options) {
         setIdsFromOrder(csClassAttrEntries);
         setIdsFromOrder(csClassPermEntries);
         setIdsFromOrder(csAttrPermEntries);
+        setIdsFromOrder(csDynamicChildrenHelperEntries);
         //setIdsFromOrder(csCatNodeEntries);
 
         // Import =======================================================================================================

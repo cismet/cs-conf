@@ -8,7 +8,7 @@ import util from 'util';
 async function exportStructure(client, reorganize = false) {
     let {
         rows: nodesResult
-    } = await client.query(stmnts.nodes);
+    } = await client.query(reorganize ? stmnts.nodesByKey : stmnts.nodesById);
     let {
         rows: linksResult
     } = await client.query(stmnts.links);
@@ -186,11 +186,11 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
         }
     }
 
-    let sortedNodes = Array.from(allNodes.values()).sort((a, b) => { 
+    let sortedNodes = reorganize ? Array.from(allNodes.values()).sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + (a.dynamic_children ? a.dynamic_children : "");
         let bSimple = slug(striptags(b.name)).toLowerCase() + (b.dynamic_children ? b.dynamic_children : "");
         return aSimple.localeCompare(bSimple);
-    });
+    }): Array.from(allNodes.values());
     for (let node of sortedNodes) {        
         if (node.dynamic_children) {
             let fileName = util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());

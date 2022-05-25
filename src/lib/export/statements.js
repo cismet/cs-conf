@@ -141,7 +141,7 @@ FROM
 export const attributePermissionsByKey = _attributePermissions + ' ORDER BY cs_class.table_name, cs_domain.name, cs_ug.name;';
 export const attributePermissionsById = _attributePermissions + ' ORDER BY cs_ug_attr_perm.id';
 
-export const nodes = `
+export const _nodes = `
 SELECT 
     n.id, n.name, n.url as descr, c.table_name as table, 
     n.derive_permissions_from_class, n.object_id, n.node_type, n.is_root, n.org, 
@@ -150,9 +150,9 @@ FROM
     cs_cat_node n
     LEFT OUTER JOIN cs_class "c" ON (n.class_id=c.id)
     LEFT OUTER JOIN cs_policy p ON (n.policy=p.id)
-ORDER BY
-    n.name;
 `;
+export const nodesByKey = _nodes + ' ORDER BY n.name;';
+export const nodesById = _nodes + ' ORDER BY n.id';
 
 const _dynchildhelpers = `
 SELECT 
