@@ -5,10 +5,10 @@ async function exportClassPermissions(client, classes, reorganize = false) {
     let {
         rows: classPermResult
     } = await client.query(reorganize ? stmnts.classPermissionsByKey : stmnts.classPermissionsById);
-    return analyzeAndPreprocess(classPermResult, classes);
+    return analyzeAndPreprocess(classPermResult, classes, reorganize);
 }
 
-function analyzeAndPreprocess(classPermResult, classes) {
+function analyzeAndPreprocess(classPermResult, classes, reorganize = false) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
@@ -40,11 +40,11 @@ function analyzeAndPreprocess(classPermResult, classes) {
         }
         let normKey = "";
         if (tableReadPermissions) {
-            entry.read = tableReadPermissions.sort();
+            entry.read = reorganize ? tableReadPermissions.sort() : tableReadPermissions;
             normKey += "read:::" + JSON.stringify(entry.read);
         }
         if (tableWritePermissions) {
-            entry.write = tableWritePermissions.sort();
+            entry.write = reorganize ? tableWritePermissions.sort() : tableWritePermissions;
             normKey += "write:::" + JSON.stringify(entry.write);
         }
         if (tableReadPermissions || tableWritePermissions) {
