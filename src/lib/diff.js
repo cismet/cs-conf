@@ -6,7 +6,7 @@ import { getClientForConfig } from './tools/db';
 
 import * as csExport from './export';
 
-export async function worker(options) {
+async function csDiff(options) {
     let { folder, target, schema, configDir } = options;
 
     let folderFiles = [];
@@ -21,7 +21,7 @@ export async function worker(options) {
         client = options.client;
     } else {
         console.log(util.format("loading config %s", configDir));
-        client = await getClientForConfig(configDir);
+        client = getClientForConfig(configDir);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
@@ -97,3 +97,5 @@ export async function worker(options) {
 
     return diffsFound;
 }
+
+export default csDiff;

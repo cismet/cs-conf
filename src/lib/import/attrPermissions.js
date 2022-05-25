@@ -1,6 +1,6 @@
 import * as cidstools from '../tools/cids';
 
-export function prepareAttributePermissions(attrPerms) {
+function prepareAttributePermissions(attrPerms) {
     let csAttrPermEntries = [];
     for (let p of attrPerms) {
         if (p.read) {

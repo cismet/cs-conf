@@ -1,16 +1,16 @@
 #!/usr/local/bin/babel-node --
 
 import program from 'commander';
-import * as csExport from './lib/export';
-import * as csImport from './lib/import';
-import * as csSync from './lib/sync';
-import * as csDiff from './lib/diff';
-import * as csBackup from './lib/backup';
-import * as csRestore from './lib/restore';
-import * as csPurge from './lib/purge';
-import * as csCreate from './lib/create';
-import * as csTruncate from './lib/truncate';
-import * as csPassword from './lib/password';
+import csExport from './lib/export';
+import csImport from './lib/import';
+import csSync from './lib/sync';
+import csDiff from './lib/diff';
+import csBackup from './lib/backup';
+import csRestore from './lib/restore';
+import csPurge from './lib/purge';
+import csCreate from './lib/create';
+import csTruncate from './lib/truncate';
+import csPassword from './lib/password';
 
 program.version('0.9.9').option('-c, --config <path>', 'set config path. ', './runtime.properties');
 
@@ -36,13 +36,13 @@ program.command('import').alias('i').description('imports the meta information i
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
-			configDir: cmd.parent.config
+			configDir: cmd.parent.config,
 		 }
 		console.log("starting import with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csImport.worker(options);
+			await csImport(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -54,6 +54,7 @@ program.command('export').alias('e').description('exports the meta information o
 	.option('-f, --folder <folder>', 'the folder where the config will be written', 'config')
 	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
 	.option('-O, --overwrite', 'overwrite existing config')
+	.option('-R, --reorganize', 'reorganize config')
 //	.option('-o, --only', 'Only export the following topics')
 //	.option('-x, --skip', 'Skip the export of the following topics')
 //	.option('-C, --classes', 'The classes with their attributes and permissions')
@@ -64,13 +65,14 @@ program.command('export').alias('e').description('exports the meta information o
 			folder: cmd.folder, 
 			schema: cmd.schema, 
 			overwrite: cmd.overwrite,
-			configDir: cmd.parent.config
+			configDir: cmd.parent.config,
+			reorganize: cmd.reorganize,
 		};
 		console.log("starting export with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csExport.worker(options);
+			await csExport(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -86,18 +88,18 @@ program.command('sync').alias('s').description('synchronizes the cids classes wi
 	.option('-S, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.action(async (cmd) => {		
 		let options = { 
-			folder: cmd.folder, 
-			execute: cmd.sync, 
-			purge: cmd.purge, 
-			noDiffs: cmd.noDiffs, 
-			schema: cmd.schema, 
-			configDir: cmd.parent.config 
+			folder: cmd.folder,
+			execute: cmd.sync,
+			purge: cmd.purge,
+			noDiffs: cmd.noDiffs,
+			schema: cmd.schema,
+			configDir: cmd.parent.config,
 		};
 		console.log("starting sync with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csSync.worker(options);
+			await csSync(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -114,13 +116,13 @@ program.command('diff').alias('d').description('shows differences between meta-i
 			folder: cmd.folder, 
 			target: cmd.target, 
 			schema: cmd.schema, 
-			configDir: cmd.parent.config
+			configDir: cmd.parent.config,
 		}
 		console.log("starting diff with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csDiff.worker(options);
+			await csDiff(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -135,13 +137,13 @@ program.command('backup').alias('b').description('backups the meta-information (
 		let options = {
 			folder: cmd.folder, 
 			prefix: cmd.prefix, 
-			configDir: cmd.parent.config
+			configDir: cmd.parent.config,
 		};
 		console.log("starting backup with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csBackup.worker(options);
+			await csBackup(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -154,15 +156,15 @@ program.command('restore').alias('r').description('restores the meta-information
 	.option('-R, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
 	.action(async (cmd) => {
 		let options = {
-			file: cmd.file, 
-			execute: cmd.restore, 
-			configDir: cmd.parent.config
+			file: cmd.file,
+			execute: cmd.restore,
+			configDir: cmd.parent.config,
 		};
 		console.log("starting restore with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csRestore.worker(options);
+			await csRestore(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -175,16 +177,16 @@ program.command('truncate').alias('t').description('truncates the cs_tables')
 	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
 		let options = {
-			execute: cmd.truncate, 
+			execute: cmd.truncate,
 			init: cmd.init,
-			silent: false, 
-			configDir: cmd.parent.config
+			silent: false,
+			configDir: cmd.parent.config,
 		};
 		console.log("starting truncate with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csTruncate.worker(options);
+			await csTruncate(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -196,15 +198,15 @@ program.command('purge').alias('p').description('purges the cs_tables')
 	.option('-P, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.action(async (cmd) => {
 		let options = {
-			execute: cmd.purge, 
-			silent: false, 
-			configDir: cmd.parent.config
+			execute: cmd.purge,
+			silent: false,
+			configDir: cmd.parent.config,
 		};
 		console.log("starting purge with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csPurge.worker(options);
+			await csPurge(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -219,18 +221,18 @@ program.command('create').alias('c').description('creates and initializes cs_tab
 	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')	
 	.action(async (cmd) => {
 		let options = {
-			purge: cmd.purge, 
-			init: cmd.init, 
-			execute: cmd.create, 
-			schema: cmd.schema, 
-			silent: false, 
-			configDir: cmd.parent.config
+			purge: cmd.purge,
+			init: cmd.init,
+			execute: cmd.create,
+			schema: cmd.schema,
+			silent: false,
+			configDir: cmd.parent.config,
 		};
 		console.log("starting create with following options:");
 		console.table(options);
 		console.log();
 		try {
-			await csCreate.worker(options);
+			await csCreate(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩
@@ -253,7 +255,7 @@ program.command('password').alias('pw')
 		console.table(options);
 		console.log();
 		try {
-			await csPassword.worker(options);		
+			await csPassword(options);		
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩

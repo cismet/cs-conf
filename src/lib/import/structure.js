@@ -128,7 +128,7 @@ function prepareCatNodePerms(nodes) {
     return csCatNodePermEntries;
 }
 
-export function prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
+function prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
     let nodes = flattenStructure(structure);
     let csCatNodeEntries = prepareCatNodes(nodes, structureSqlFiles);
     let csCatLinkEntries = prepareCatLinks(structure);

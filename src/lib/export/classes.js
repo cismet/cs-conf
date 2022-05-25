@@ -1,20 +1,20 @@
 import * as stmnts from './statements';
-import clean from '../tools/deleteNullProperties.js';
+import { clean } from '../tools/tools.js';
 
-const exportClasses = async (client) => {
+async function exportClasses(client, reorganize = false) {
     const {
         rows: classes
-    } = await client.query(stmnts.classes);
+    } = await client.query(reorganize ? stmnts.classesByKey : stmnts.classesById);
     const {
         rows: attributes
     } = await client.query(stmnts.attributes);
     const {
         rows: classattributes
-    } = await client.query(stmnts.classAttributes);
+    } = await client.query(reorganize ? stmnts.classAttributesByKey : stmnts.classAttributesById);
     return analyzeAndPreprocess(classes, attributes, classattributes);
 }
 
-export function analyzeAndPreprocess(classes, attributes, classattributes) {
+function analyzeAndPreprocess(classes, attributes, classattributes) {
     let classAttrsPerTable = new Map(); {
         for (let ca of classattributes) {
             let currentCAs = classAttrsPerTable.get(ca.table);

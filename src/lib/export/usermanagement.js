@@ -1,12 +1,12 @@
 import * as stmnts from './statements';
 
-const exportUserManagement = async (client, groupConfigAttrs, userConfigAttrs) => {
+async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs, reorganize = false) {
     let {
         rows: groupArray
-    } = await client.query(stmnts.usergroups);
+    } = await client.query(reorganize ? stmnts.usergroupsByKey : stmnts.usergroupsById);
     let {
         rows: userArray
-    } = await client.query(stmnts.users);
+    } = await client.query(reorganize ? stmnts.usersByKey : stmnts.usersById);
     let {
         rows: membership
     } = await client.query(stmnts.usergroupmembership);
@@ -14,7 +14,7 @@ const exportUserManagement = async (client, groupConfigAttrs, userConfigAttrs) =
     return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
 }
 
-export function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
+function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
     let usergroups = [];
     for (let group of groupArray) {
         let g = {
@@ -76,4 +76,5 @@ export function analyzeAndPreprocess(groupArray, usermanagement, membership, gro
     }
 
 }
+
 export default exportUserManagement;

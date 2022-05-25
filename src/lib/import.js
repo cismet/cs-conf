@@ -9,14 +9,14 @@ import prepareClasses from './import/classes';
 import prepareClassPermissions from './import/classPermissions';
 import prepareAttributePermissions from './import/attrPermissions';
 import prepareStructure from './import/structure';
-import { getClientForConfig } from './tools/db';
+import { getClientForConfig, setIdsFromOrder } from './tools/db';
 import { readConfigFiles } from './tools/configFiles';
 import { singleRowFiller, nestedFiller } from './tools/db';
-import { worker as csCreate } from './create';
-import { worker as csTruncate } from './truncate';
-import { worker as csBackup } from './backup';
+import csCreate from './create';
+import csTruncate from './truncate';
+import csBackup from './backup';
 
-export async function worker(options) {
+async function csImport(options) {
     let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, configDir } = options;
         
     let {
@@ -56,7 +56,6 @@ export async function worker(options) {
     console.log("preparing usermanagement");
     let { 
         csUserEntries, 
-        csUserEntriesWithPasswords, 
         csUgMembershipEntries 
     } = prepareUsermanagement(usermanagement);
 
@@ -104,7 +103,7 @@ export async function worker(options) {
             client = options.client;
         } else {
             console.log(util.format("loading config %s", configDir));
-            client = await getClientForConfig(configDir);
+            client = getClientForConfig(configDir);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
@@ -140,10 +139,21 @@ export async function worker(options) {
             }));
         }
 
+        // Normalize ====================================================================================================
+
+        setIdsFromOrder(csDomainEntries);
+        setIdsFromOrder(csPolicyRulesEntries);
+        setIdsFromOrder(csUgEntries);
+        setIdsFromOrder(csUserEntries);
+        setIdsFromOrder(csClassEntries);
+        setIdsFromOrder(csClassAttrEntries);
+        setIdsFromOrder(csClassPermEntries);
+        setIdsFromOrder(csAttrPermEntries);
+        //setIdsFromOrder(csCatNodeEntries);
+
         // Import =======================================================================================================
 
         if (csDomainEntries.length > 0) {
-            console.log(util.format("importing domains (%d)", csDomainEntries.length));
             await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
         }
         if (csPolicyRulesEntries.length > 0) {
@@ -159,10 +169,6 @@ export async function worker(options) {
             await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
             await singleRowFiller(client, stmnts.simple_cs_usr, csUserEntries);
             await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");        
-        }
-        if (csUserEntriesWithPasswords.length > 0) {
-            console.log(util.format("importing users with new passwords (%d)", csUserEntriesWithPasswords.length));
-            await singleRowFiller(client, stmnts.simple_cs_usr_with_password, csUserEntriesWithPasswords);
         }
         if (csUgMembershipEntries.length > 0) {
             console.log(util.format("importing memberships (%d)", csUgMembershipEntries.length));
@@ -248,7 +254,6 @@ export async function worker(options) {
             csPolicyRulesEntries, 
             csUgEntries, 
             csUserEntries, 
-            csUserEntriesWithPasswords, 
             csUgMembershipEntries, 
             csConfigAttrKeyEntries, 
             csConfigAttrValues4A, 
@@ -276,9 +281,4 @@ export async function worker(options) {
     }
 }   
 
-
-
-    
-
-
-
+export default csImport;

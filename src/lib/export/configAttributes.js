@@ -3,14 +3,14 @@ import xmlFormatter from 'xml-formatter';
 import util from 'util';
 import * as stmnts from './statements';
 
-const exportConfigAttributes = async (client, folder, schema) => {
+async function exportConfigAttributes(client, folder, schema) {
     const {
         rows: configAttributes
     } = await client.query(stmnts.configAttr);
     return analyzeAndPreprocess(configAttributes);
 };
 
-export function analyzeAndPreprocess(configAttributes) {
+function analyzeAndPreprocess(configAttributes) {
     const userConfigAttrs = new Map();
     const groupConfigAttrs = new Map();
     const domainConfigAttrs = new Map();

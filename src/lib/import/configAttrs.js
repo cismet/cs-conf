@@ -1,7 +1,7 @@
 import * as cidstools from '../tools/cids';
 import util from 'util';
 
-export function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
+function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     // cs_config_attr_key
     let csConfigAttrKeyEntries=[]
     let csConfigAttrValueEntries=new Set();

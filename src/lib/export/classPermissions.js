@@ -1,14 +1,14 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-export async function exportClassPermissions(client, classes) {
+async function exportClassPermissions(client, classes, reorganize = false) {
     let {
         rows: classPermResult
-    } = await client.query(stmnts.classPermissions);
+    } = await client.query(reorganize ? stmnts.classPermissionsByKey : stmnts.classPermissionsById);
     return analyzeAndPreprocess(classPermResult, classes);
 }
 
-export function analyzeAndPreprocess(classPermResult, classes) {
+function analyzeAndPreprocess(classPermResult, classes) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
@@ -82,4 +82,5 @@ export function analyzeAndPreprocess(classPermResult, classes) {
     }
 
 }
+
 export default exportClassPermissions;

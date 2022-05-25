@@ -2,15 +2,15 @@ import fs from 'fs';
 import util from 'util';
 
 import { getClientForConfig } from './tools/db';
-import * as csPurge from './purge';
+import csPurge from './purge';
 
-export async function worker(options) {
+async function csCreate(options) {
     let { purge, init, execute, silent, schema, configDir } = options
     let statements = [];
 
     statements.push(util.format("SET SCHEMA '%s';", schema));        
     if (purge) {
-        statements.push(await csPurge.worker({ execute: true, silent: true, config: configDir }));
+        statements.push(await csPurge({ execute: true, silent: true, config: configDir }));
     }
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-create.sql', __dirname), 'utf8'));        
     if (init) {
@@ -23,7 +23,7 @@ export async function worker(options) {
             client = options.client;
         } else {    
             console.log(util.format("loading config %s", configDir));
-            client = await getClientForConfig(configDir);
+            client = getClientForConfig(configDir);
     
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
@@ -51,7 +51,4 @@ export async function worker(options) {
     }
 }   
 
-    
-
-
-
+export default csCreate;

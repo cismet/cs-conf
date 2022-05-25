@@ -1,6 +1,6 @@
 import * as cidstools from '../tools/cids';
 
-export function prepareClassPermissions(classPerms) {
+function prepareClassPermissions(classPerms) {
     // cs_domain
     let csClassPermEntries = [];
     for (let p of classPerms) {

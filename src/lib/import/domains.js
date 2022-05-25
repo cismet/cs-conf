@@ -1,4 +1,4 @@
-export function prepareDomains(domains) {
+function prepareDomains(domains) {
     let csDomainEntries = [];
     for (let d of domains) {
         csDomainEntries.push([d.domainname]);

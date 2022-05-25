@@ -1,9 +1,9 @@
 import * as stmnts from './statements';
 
-const exportPolicyDefaults = async (client) => {
+async function exportPolicyDefaults(client, reorganize = false) {
     const {
         rows: policyDefaults
-    } = await client.query(stmnts.policyDefaults);
+    } = await client.query(reorganize ? stmnts.policyDefaultsByKey : stmnts.policyDefaultsById);
     return policyDefaults;
 }
 

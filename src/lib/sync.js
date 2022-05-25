@@ -2,9 +2,9 @@ import fs from 'fs';
 import util from 'util';
 import { getClientForConfig } from './tools/db';
 import wcmatch from 'wildcard-match';
-import * as csDiff from './diff';
+import csDiff from './diff';
 
-const createSyncStatements = async (client, existingData, allCidsClassesByTableName, tablesDone, cidsClass) => {
+async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass) {
     let statements = [];
     let cidsTableName = cidsClass.table.toLowerCase();
 
@@ -370,21 +370,21 @@ function queriesFromStatement(statement) {
     return queries;
 }
 
-export async function worker(options) {
+async function csSync(options) {
     let { folder, execute, purge, schema, noDiffs, configDir } = options;
     let client;
     if (options.client) {
         client = options.client;
     } else {
         console.log(util.format("loading config %s", configDir));
-        client = await getClientForConfig(configDir);
+        client = getClientForConfig(configDir);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
     }
 
     if (!noDiffs) {
-        let differences = await csDiff.worker( { folder, comparisionFolder: null, configDir, schema, client } );
+        let differences = await csDiff( { folder, comparisionFolder: null, configDir, schema, client } );
         if (differences > 0) {
             throw util.format("%d differences found, aborting sync !", differences);
         }
@@ -599,7 +599,4 @@ export async function worker(options) {
     }
 }   
 
-    
-
-
-
+export default csSync;

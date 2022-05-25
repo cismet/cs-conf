@@ -1,11 +1,11 @@
 import * as stmnts from './statements';
-import clean from '../tools/deleteNullProperties.js';
+import { clean } from '../tools/tools.js';
 import zeroFill from 'zero-fill';
 import slug from 'slug';
 import striptags from 'striptags';
 import util from 'util';
 
-const exportStructure = async (client) => {
+async function exportStructure(client) {
     let {
         rows: nodesResult
     } = await client.query(stmnts.nodes);
@@ -90,7 +90,7 @@ function visitingNodesByChildren2(nodes, allNodes, links, duplicates) {
     return childrenIdsVisited;
 }
 
-export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
+function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
     let structureSqlDocuments = new Map();
     let dynchildhelpers = [];
     let helperSqlDocuments = new Map();
@@ -221,4 +221,5 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
         helperSqlDocuments
     };
 }
+
 export default exportStructure;

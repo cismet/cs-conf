@@ -11,8 +11,8 @@ import exportStructure from './export/structure.js';
 import { getClientForConfig } from './tools/db';
 import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
 
-export async function worker(options) {
-    let  { folder, schema, overwrite = false, configDir } = options;
+async function csExport(options) {
+    let  { folder, schema, overwrite = false, configDir, reorganize = false } = options;
 
     checkConfigFolders(folder, overwrite);
 
@@ -23,7 +23,7 @@ export async function worker(options) {
             client = options.client;
         } else {
             console.log(util.format("loading config %s", configDir));
-            client = await getClientForConfig(configDir);
+            client = getClientForConfig(configDir);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
@@ -38,22 +38,22 @@ export async function worker(options) {
         } = await exportConfigAttributes(client, folder, schema);
 
         console.log("analyzing domains");
-        let domains = await exportDomains(client, domainConfigAttrs);
+        let domains = await exportDomains(client, domainConfigAttrs, reorganize);
 
         console.log("analyzing policy defaults");
-        let policyRules = await exportPolicyDefaults(client);
+        let policyRules = await exportPolicyDefaults(client, reorganize);
 
         console.log("analyzing users and groups");
         let {
             usermanagement,
             usergroups
-        } = await exportUserManagement(client, groupConfigAttrs, userConfigAttrs);
+        } = await exportUserManagement(client, groupConfigAttrs, userConfigAttrs, reorganize);
 
         console.log("analyzing classes and attributes");
         let {
             classes,
             attributes
-        } = await exportClasses(client);
+        } = await exportClasses(client, reorganize);
 
         console.log("analyzing class permissions");
         let {
@@ -61,13 +61,13 @@ export async function worker(options) {
             //normalizedClassPerms,
             classReadPerms,
             classWritePerms
-        } = await exportClassPermissions(client, classes);
+        } = await exportClassPermissions(client, classes, reorganize);
 
         console.log("analyzing atrributes permissions");
         let {
             attrPerms,
             //normalizedAttrPerms
-        } = await exportAttrPermissions(client, attributes, classReadPerms, classWritePerms);
+        } = await exportAttrPermissions(client, attributes, classReadPerms, classWritePerms, reorganize);
 
         console.log("analyzing structure");
         let {
@@ -105,3 +105,5 @@ export async function worker(options) {
     console.log("writing config Files");
     writeConfigFiles(folder, config, overwrite);
 }
+
+export default csExport;

@@ -1,14 +1,15 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-const exportAttrPermissions = async (client, attributes, classReadPerms, classWritePerms) => {
+async function exportAttrPermissions(client, attributes, classReadPerms, classWritePerms, reorganize = false) {
     const {
         rows: attrPermResult
-    } = await client.query(stmnts.attributePermissions);
+    } = await client.query(reorganize ? stmnts.attributePermissionsByKey : stmnts.attributePermissionsById);
 
     return analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms);
 }
-export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms) {
+
+function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms) {
     let attrReadPerms = new Map();
     let attrWritePerms = new Map();
 
@@ -83,4 +84,5 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
         //normalizedAttrPerms
     };
 }
+
 export default exportAttrPermissions;

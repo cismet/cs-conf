@@ -18,39 +18,37 @@ FROM
 ORDER BY 4,3,1,5,6,7;
 `;
 
-export const domains = `
-SELECT name domainname FROM cs_domain ORDER BY name;
-`;
+const _domains = 'SELECT name AS domainname FROM cs_domain';
+export const domainsByKey = _domains + ' ORDER BY name;';
+export const domainsById = _domains + ' ORDER BY id;';
 
-export const policyDefaults = `
-select 
-    po."name" "policy", per."key" permission, default_value  
-from 
-    cs_policy_rule r, cs_policy po, cs_permission per 
-where 
-    r.policy=po.id 
-    and r.permission=per.id
-order by 1,2;
+const _policyDefaults = `
+SELECT cs_policy.name AS policy, cs_permission.key AS permission, default_value AS default_value
+FROM cs_policy_rule, cs_policy, cs_permission 
+WHERE 
+    cs_policy_rule.policy = cs_policy.id 
+    and cs_policy_rule.permission = cs_permission.id
 `;
+export const policyDefaultsByKey = _policyDefaults + ' ORDER BY cs_policy.name, cs_permission.key;';
+export const policyDefaultsById = _policyDefaults + ' ORDER BY cs_policy_rule.id;';
 
-export const users = ` 
-select 
-    login_name, last_pwd_change,administrator,trim(pw_hash) pw_hash,trim(salt) salt
-from 
-    cs_usr u 
-order by 
-    u.login_name;
+const _users = ` 
+SELECT login_name, last_pwd_change, administrator, trim(pw_hash) AS pw_hash, trim(salt) AS salt
+FROM cs_usr
 `;
+export const usersByKey = _users + ' ORDER BY login_name;';
+export const usersById = _users + ' ORDER BY id;';
 
-export const usergroups = `
-select 
-    cs_domain.name as domain,cs_ug.name, cs_ug.descr
-from 
-    cs_ug, cs_domain 
-where 
-    cs_ug.domain=cs_domain.id 
-order by prio,1,2;
+const _usergroups = `
+SELECT 
+    cs_domain.name AS domain,
+    cs_ug.name AS name, 
+    cs_ug.descr AS descr
+FROM cs_ug, cs_domain 
+WHERE cs_ug.domain = cs_domain.id
 `;
+export const usergroupsByKey = _usergroups + ' ORDER BY cs_domain.name, cs_ug.name;';
+export const usergroupsById = _usergroups + ' ORDER BY cs_ug.id;';
 
 export const usergroupmembership = ` 
 select distinct
@@ -63,7 +61,7 @@ from
 order by 1,2,3;
 `;
 
-export const classes = `
+const _classes = `
 SELECT 
     c.table_name "table", c.name,c.descr,c.primary_key_field pk,c.indexed,
     ci.file_name "classIcon", oi.file_name "objectIcon", null as icon,
@@ -81,9 +79,9 @@ FROM
     LEFT OUTER JOIN cs_java_class jcr on (c.renderer=jcr.id)
     LEFT OUTER JOIN cs_policy cp on (c.policy=cp.id)
     LEFT OUTER JOIN cs_policy ap on (c.attribute_policy=ap.id)
-
-ORDER BY c.table_name;
 `;
+export const classesByKey = _classes + ' ORDER BY c.table_name;';
+export const classesById = _classes + ' ORDER BY c.id;';
 
 export const attributes = `
 SELECT 
@@ -108,42 +106,40 @@ ORDER BY
     c.table_name, a.pos;
 `;
 
-export const classAttributes = `
-SELECT 
-    c.table_name "table", attr_key "key", attr_value "value" 
-FROM 
-    cs_class_attr ca
-    JOIN cs_class c ON (c.id=ca.class_id)
-ORDER BY 
-    c.table_name, attr_key;
+const _classAttributes = `
+SELECT cs_class.table_name AS table, attr_key AS key, attr_value AS value 
+FROM cs_class_attr
+JOIN cs_class ON (cs_class.id = cs_class_attr.class_id)
 `;
+export const classAttributesByKey = _classAttributes + ' ORDER BY cs_class.table_name, attr_key;';
+export const classAttributesById = _classAttributes + ' ORDER BY cs_class_attr.id;';
 
-export const classPermissions = `
+const _classPermissions = `
 SELECT
-    d.name "domain", g.name "group", c.table_name "table", p."key" "permission"
+    cs_domain.name AS domain, cs_ug.name AS group, cs_class.table_name AS table, cs_permission.key AS permission
 FROM
-    cs_ug_class_perm ugp
-    JOIN cs_permission p ON (p.id=ugp.permission)
-    JOIN cs_class c ON (ugp.class_id=c.id)
-    JOIN cs_ug g ON (ugp.ug_id=g.id)
-    JOIN cs_domain d ON  (g.domain=d.id)
-ORDER BY 
-    3,1,2;
+    cs_ug_class_perm
+    JOIN cs_permission ON (cs_permission.id = cs_ug_class_perm.permission)
+    JOIN cs_class ON (cs_ug_class_perm.class_id = cs_class.id)
+    JOIN cs_ug ON (cs_ug_class_perm.ug_id = cs_ug.id)
+    JOIN cs_domain ON (cs_ug.domain = cs_domain.id)
 `;
+export const classPermissionsByKey = _classPermissions + ' ORDER BY cs_class.table_name, cs_domain.name, cs_ug.name;';
+export const classPermissionsById = _classPermissions + ' ORDER BY cs_ug_class_perm.id;';
 
-export const attributePermissions = `
+const _attributePermissions = `
 SELECT
-    d.name "domain", g.name "group", c.table_name "table",attr.field_name "field", p."key" "permission"
+    cs_domain.name AS domain, cs_ug.name AS group, cs_class.table_name AS table, cs_attr.field_name AS field, cs_permission.key AS permission
 FROM
-    cs_ug_attr_perm ugap
-    JOIN cs_permission p ON (p.id=ugap.permission)
-    JOIN cs_attr attr ON (ugap.attr_id=attr.id)
-    JOIN cs_class c ON (attr.class_id=c.id)
-    JOIN cs_ug g ON (ugap.ug_id=g.id)
-    JOIN cs_domain d ON  (g.domain=d.id)
-ORDER BY 
-    3,1,2;
+    cs_ug_attr_perm 
+    JOIN cs_permission ON (cs_permission.id = cs_ug_attr_perm.permission)
+    JOIN cs_attr ON (cs_ug_attr_perm.attr_id = cs_attr.id)
+    JOIN cs_class ON (cs_attr.class_id = cs_class.id)
+    JOIN cs_ug ON (cs_ug_attr_perm.ug_id = cs_ug.id)
+    JOIN cs_domain ON (cs_ug.domain = cs_domain.id)
 `;
+export const attributePermissionsByKey = _attributePermissions + ' ORDER BY cs_class.table_name, cs_domain.name, cs_ug.name;';
+export const attributePermissionsById = _attributePermissions + ' ORDER BY cs_ug_attr_perm.id';
 
 export const nodes = `
 SELECT 
