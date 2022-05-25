@@ -35,7 +35,7 @@ async function csExport(options) {
             groupConfigAttrs,
             domainConfigAttrs,
             xmlFiles
-        } = await exportConfigAttributes(client, folder, schema);
+        } = await exportConfigAttributes(client,reorganize);
 
         console.log("analyzing domains");
         let domains = await exportDomains(client, domainConfigAttrs, reorganize);

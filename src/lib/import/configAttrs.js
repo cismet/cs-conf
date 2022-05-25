@@ -10,20 +10,20 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
     
     let allConfigurationAttributes=[];
     for (let d of domains) {
-        if (d.configurationAttributes){
+        if (d.configurationAttributes) {
             for (let ca of d.configurationAttributes){
-                ca.domain=d.domainname;
+                ca.domain = d.domainname;
                 allConfigurationAttributes.push(ca);
             } 
         }
     }
 
     for (let g of usergroups) {
-        if (g.configurationAttributes){
-            const {group, domain} = cidstools.extractGroupAndDomain(g.key);
-            for (let ca of g.configurationAttributes){
-                ca.group=group;
-                ca.domain=domain;
+        if (g.configurationAttributes) {
+            let { group, domain } = cidstools.extractGroupAndDomain(g.key);
+            for (let ca of g.configurationAttributes) {
+                ca.group = group;
+                ca.domain = domain;
                 allConfigurationAttributes.push(ca);
             }
         }
@@ -31,27 +31,25 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
     }
 
     for (let u of usermanagement) {
-        if (u.configurationAttributes){
-            const {group, domain} = cidstools.extractGroupAndDomain(u.groups[0]);
-            for (let ca of u.configurationAttributes){
-                ca.user=u.login_name;
-                ca.group=group;
-                ca.domain=domain;
+        if (u.configurationAttributes) {
+            let { group, domain } = cidstools.extractGroupAndDomain(u.groups[0]);
+            for (let ca of u.configurationAttributes) {
+                ca.user = u.login_name;
+                ca.group = group;
+                ca.domain = domain;
                 allConfigurationAttributes.push(ca);
             }
         }
     }
 
-    let duplicateKeyFinder=new Set();
-    for (let ca of allConfigurationAttributes){
+    let duplicateKeyFinder = new Set();
+    for (let ca of allConfigurationAttributes) {
         let type;
         if (ca.value != null) {
             type='C';
-        }
-        else if (ca.xmlfile != null) {
+        } else if (ca.xmlfile != null) {
             type='X';
-        }
-        else {
+        } else {
             type='A';
         }
         
@@ -61,23 +59,20 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
             duplicateKeyFinder.add(fullKey);
         }
         let value;
-        if (type==='X' ||type==='C'){
-            if (type==='X') {
+        if (type === 'X' || type === 'C') {
+            if (type === 'X') {
                 //hier xml file einladen
-                value=xmlFiles.get(ca.xmlfile);
-
-            }
-            else {
+                value = xmlFiles.get(ca.xmlfile);
+            } else {
                 value=ca.value;
             }
             csConfigAttrValueEntries.add(value);
             csConfigAttrValues4CandX.push([ca.domain, ca.group, ca.user, ca.key, type, value ]);
-        }
-        else {
+        } else {
             csConfigAttrValues4A.push([ca.domain, ca.group, ca.user, ca.key]);
         }   
     }
-    var csConfigAttrValueEntriesArray = [];
+    let csConfigAttrValueEntriesArray = [];
     csConfigAttrValueEntries.forEach( x => csConfigAttrValueEntriesArray.push([x]) );
 
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};

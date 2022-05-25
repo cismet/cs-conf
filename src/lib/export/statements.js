@@ -1,4 +1,4 @@
-export const configAttr = `
+const _configAttr = `
 SELECT 
     u.login_name,
     md.name domainname,
@@ -6,7 +6,8 @@ SELECT
     k.key,
     k.group_name keygroup,
     t.type,
-    v.value
+    v.value,
+    jt.id AS id
 FROM 
     cs_config_attr_jt jt
     INNER JOIN cs_config_attr_key k ON (jt.key_id=k.id)
@@ -15,8 +16,9 @@ FROM
     LEFT OUTER JOIN cs_domain md ON (jt.dom_id=md.id)
     LEFT OUTER JOIN cs_usr u ON (jt.usr_id=u.id) 
     LEFT OUTER JOIN cs_ug ug ON (jt.ug_id=ug.id) LEFT OUTER JOIN cs_domain ugd ON (ug."domain"=ugd.id)
-ORDER BY 4,3,1,5,6,7;
 `;
+export const configAttrByKey = _configAttr + ' ORDER BY 4,3,1,5,6,7;';
+export const configAttrById = _configAttr + ' ORDER BY id;';
 
 const _domains = 'SELECT name AS domainname FROM cs_domain';
 export const domainsByKey = _domains + ' ORDER BY name;';
@@ -50,16 +52,17 @@ WHERE cs_ug.domain = cs_domain.id
 export const usergroupsByKey = _usergroups + ' ORDER BY cs_domain.name, cs_ug.name;';
 export const usergroupsById = _usergroups + ' ORDER BY cs_ug.id;';
 
-export const usergroupmembership = ` 
-select distinct
-    login_name, d.name domainname, g.name groupname
-from 
-    cs_ug_membership m 
-    INNER JOIN cs_usr u ON (m.usr_id=u.id)
-    INNER JOIN cs_ug g ON (m.ug_id=g.id) 
-    INNER JOIN cs_domain d ON (d.id=g.domain)
-order by 1,2,3;
+const _usergroupmembership = ` 
+SELECT distinct
+    cs_ug_membership.id AS id, cs_usr.login_name AS login_name, cs_domain.name AS domainname, cs_ug.name AS groupname
+FROM 
+    cs_ug_membership cs_ug_membership 
+    INNER JOIN cs_usr ON (cs_ug_membership.usr_id = cs_usr.id)
+    INNER JOIN cs_ug ON (cs_ug_membership.ug_id = cs_ug.id) 
+    INNER JOIN cs_domain ON (cs_domain.id = cs_ug.domain)
 `;
+export const usergroupmembershipByKey = _usergroupmembership + ' ORDER BY cs_usr.login_name, cs_domain.name, cs_ug.name;';
+export const usergroupmembershipById = _usergroupmembership + ' ORDER BY cs_ug_membership.id;';
 
 const _classes = `
 SELECT 

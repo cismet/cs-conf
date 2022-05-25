@@ -9,12 +9,12 @@ async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs, r
     } = await client.query(reorganize ? stmnts.usersByKey : stmnts.usersById);
     let {
         rows: membership
-    } = await client.query(stmnts.usergroupmembership);
+    } = await client.query(reorganize ? stmnts.usergroupmembershipByKey : stmnts.usergroupmembershipById);
 
-    return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
+    return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs, reorganize);
 }
 
-function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
+function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs, reorganize = false) {
     let usergroups = [];
     for (let group of groupArray) {
         let g = {
@@ -25,7 +25,11 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         }
         let attributes = groupConfigAttrs.get(group.name + '@' + group.domain);
         if (attributes) {
-            g.configurationAttributes = attributes;
+            g.configurationAttributes  = reorganize ? attributes.sort((a, b) => { 
+                let aKey = a.key;
+                let bKey = b.key;
+                return aKey.localeCompare(bKey);
+            }) : attributes;
         }
         usergroups.push(g);
     }
@@ -51,14 +55,18 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         //add the usergroups
         let groups = userGroupMap.get(user.login_name);
         if (groups) {
-            user.groups = groups;
+            user.groups = reorganize ? groups.sort() : groups;
         }
 
         //add the configuration attributes
         let attributes = userConfigAttrs.get(user.login_name);
 
         if (attributes) {
-            user.configurationAttributes = attributes;
+            user.configurationAttributes = reorganize ? attributes.sort((a, b) => { 
+                let aKey = a.key;
+                let bKey = b.key;
+                return aKey.localeCompare(bKey);
+            }) : attributes;
         }
 
         //remove administrator-flag if it is false
