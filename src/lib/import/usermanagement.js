@@ -2,15 +2,21 @@ function prepareUsermanagement(usermanagement) {
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
-    for (let u of usermanagement) {
-        let admin = u.administrator === true;
-        csUserEntries.push([u.login_name, admin, u.pw_hash, u.salt]);
-        if (u.groups) {
-            for (let ug of u.groups) {
-                let groupComponents = ug.split('@');        
-                let gName = groupComponents[0];
-                let domain = groupComponents.length == 1 ? 'LOCAL' : groupComponents[1];
-                csUgMembershipEntries.push([gName, u.login_name, domain]);
+    for (let user of usermanagement) {
+        csUserEntries.push([ 
+            user.login_name, 
+            user.administrator === true, 
+            user.pw_hash, 
+            user.salt 
+        ]);
+        if (user.groups) {
+            for (let group of user.groups) {
+                let groupAndDomain = group.split('@');        
+                csUgMembershipEntries.push([
+                    groupAndDomain[0], 
+                    user.login_name, 
+                    groupAndDomain[1]
+                ]);
             }
         }
     }

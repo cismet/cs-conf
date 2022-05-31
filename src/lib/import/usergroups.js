@@ -1,12 +1,15 @@
 function prepareUsergroups(usergroups) {
     let csUgEntries = [];
     let prioCounter = 0;
-    for (let ug of usergroups) {
-        let keyComponents = ug.key.split('@');        
-        let name = keyComponents[0];
-        let domain = keyComponents.length == 1 ? 'LOCAL' : keyComponents[1];
-        let descr = ug.descr;
-        csUgEntries.push([ name, descr, domain, prioCounter ]);
+    for (let group of usergroups) {
+        let groupAndDomain = group.key.split('@');        
+        let descr = group.descr;
+        csUgEntries.push([ 
+            groupAndDomain[0], 
+            descr, 
+            groupAndDomain[1], 
+            prioCounter 
+        ]);
         prioCounter += 10;
     }
     return { csUgEntries };

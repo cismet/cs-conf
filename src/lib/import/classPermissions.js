@@ -1,33 +1,19 @@
-import * as cidstools from '../tools/cids';
+import createPermsEntry from './perms';
 
 function prepareClassPermissions(classPerms) {
-    // cs_domain
     let csClassPermEntries = [];
-    for (let p of classPerms) {
-        if (p.read) {
-            for (let groupkey of p.read) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push([
-                    group,
-                    domain,
-                    p.table,
-                    "read"
-                ]);
+    for (let classPerm of classPerms) {
+        if (classPerm.read) {
+            for (let groupkey of classPerm.read) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "read"));
             }
         }
-        if (p.write) {
-            for (let groupkey of p.write) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push([
-                    group,
-                    domain,
-                    p.table,
-                    "write"
-                ]);
+        if (classPerm.write) {
+            for (let groupkey of classPerm.write) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "write"));
             }
         }  
     }
-
     return { csClassPermEntries };
 }
 

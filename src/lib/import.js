@@ -14,87 +14,43 @@ import csTruncate from './truncate';
 import csBackup from './backup';
 import { readConfigFiles } from './tools/configFiles';
 import { getClientForConfig, setIdsFromOrder, singleRowFiller, nestedFiller } from './tools/db';
+import { normalizeConfig } from './normalize';
 
 async function csImport(options) {
     let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, configDir } = options;
         
-    let {
-        domains, 
-        policyRules, 
-        usergroups, 
-        usermanagement, 
-        classes, 
-        classPerms, 
-        attrPerms, 
-        structure, 
-        dynchildhelpers,
-        xmlFiles,
-        structureSqlFiles,
-        helperSqlFiles
-    } = readConfigFiles(folder);
-
-    // Prepare =======================================================================================================
-
-    console.log("preparing domains");
-    let { 
-        csDomainEntries 
-    } = prepareDomains(domains);
-
-    console.log("preparing policyRules");
-    let { 
-        csPolicyRulesEntries 
-    } = preparePolicyRules(policyRules);
-
-    console.log("preparing usergroups");
-    let { 
-        csUgEntries 
-    } = prepareUsergroups(usergroups);
-
-    console.log("preparing usermanagement");
-    let { 
-        csUserEntries, 
-        csUgMembershipEntries 
-    } = prepareUsermanagement(usermanagement);
-
-    console.log("preparing configuration attributes");
-    let { 
-        csConfigAttrKeyEntries, 
-        csConfigAttrValues4A, 
-        csConfigAttrValues4CandX , 
-        csConfigAttrValueEntriesArray
-    } = prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles);
-
-    console.log("preparing classes");
-    let { csTypeEntries, 
-        csJavaClassEntries, 
-        csIconEntries, 
-        csClassAttrEntries,
-        csClassEntries,
-        csAttrDbTypeEntries,
-        csAttrCidsTypeEntries
-    } = prepareClasses(classes);
-
-    console.log("preparing class permissions");
-    let { 
-        csClassPermEntries 
-    } = prepareClassPermissions(classPerms);             
-
-    console.log("preparing attribute permissions");
-    let { 
-        csAttrPermEntries 
-    } = prepareAttributePermissions(attrPerms);    
-
-    console.log("preparing structure");
-    let {
-        csCatNodeEntries,
-        csCatLinkEntries,
-        csCatNodePermEntries,
-        csDynamicChildrenHelperEntries
-    } = prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+    let config = readConfigFiles(folder);
+    let normalized = normalizeConfig(config);
+    let prepared = prepareImport(normalized);
 
     // Execution ---------------------------------
 
     if (execute) {
+        let {
+            csDomainEntries, 
+            csPolicyRulesEntries, 
+            csUgEntries, 
+            csUserEntries, 
+            csUgMembershipEntries, 
+            csConfigAttrKeyEntries, 
+            csConfigAttrValues4A, 
+            csConfigAttrValues4CandX, 
+            csConfigAttrValueEntriesArray, 
+            csJavaClassEntries, 
+            csIconEntries, 
+            csClassAttrEntries, 
+            csClassEntries, 
+            csTypeEntries,
+            csAttrDbTypeEntries, 
+            csAttrCidsTypeEntries, 
+            csClassPermEntries, 
+            csAttrPermEntries, 
+            csCatNodeEntries,
+            csCatLinkEntries,
+            csCatNodePermEntries,
+            csDynamicChildrenHelperEntries
+        } = prepared;
+    
         let client;
         if (options.client) {
             client = options.client;
@@ -135,19 +91,6 @@ async function csImport(options) {
                 configDir
             }));
         }
-
-        // Normalize ====================================================================================================
-
-        setIdsFromOrder(csDomainEntries);
-        setIdsFromOrder(csPolicyRulesEntries);
-        setIdsFromOrder(csUgEntries);
-        setIdsFromOrder(csUserEntries);
-        setIdsFromOrder(csClassEntries);
-        setIdsFromOrder(csClassAttrEntries);
-        setIdsFromOrder(csClassPermEntries);
-        setIdsFromOrder(csAttrPermEntries);
-        setIdsFromOrder(csDynamicChildrenHelperEntries);
-        //setIdsFromOrder(csCatNodeEntries);
 
         // Import =======================================================================================================
 
@@ -247,36 +190,120 @@ async function csImport(options) {
             await client.end();
         }
     } else {
-        let cs = {
-            csDomainEntries, 
-            csPolicyRulesEntries, 
-            csUgEntries, 
-            csUserEntries, 
-            csUgMembershipEntries, 
-            csConfigAttrKeyEntries, 
-            csConfigAttrValues4A, 
-            csConfigAttrValues4CandX, 
-            csConfigAttrValueEntriesArray, 
-            csJavaClassEntries, 
-            csIconEntries, 
-            csClassAttrEntries, 
-            csClassEntries, 
-            csAttrDbTypeEntries, 
-            csAttrCidsTypeEntries, 
-            csClassPermEntries, 
-            csAttrPermEntries, 
-            csCatNodeEntries,
-            csCatLinkEntries,
-            csCatNodePermEntries,
-            csDynamicChildrenHelperEntries
-        }
-
-        //console.table(cs);
+        //console.table(prepared);
 
         console.log("!!!!!!!!!!!!!");
         console.log("!!! ERROR !!! import disabled for security reasons. Use -I to force import.");
         console.log("!!!!!!!!!!!!!");
     }
 }   
+
+export function prepareImport({
+    domains, 
+    policyRules, 
+    usergroups, 
+    usermanagement, 
+    classes, 
+    classPerms, 
+    attrPerms, 
+    structure, 
+    dynchildhelpers,
+    xmlFiles,
+    structureSqlFiles,
+    helperSqlFiles
+}) {
+    console.log("preparing domains");
+    let { 
+        csDomainEntries 
+    } = prepareDomains(domains);
+
+    console.log("preparing policyRules");
+    let { 
+        csPolicyRulesEntries 
+    } = preparePolicyRules(policyRules);
+
+    console.log("preparing usergroups");
+    let { 
+        csUgEntries 
+    } = prepareUsergroups(usergroups);
+
+    console.log("preparing usermanagement");
+    let { 
+        csUserEntries, 
+        csUgMembershipEntries 
+    } = prepareUsermanagement(usermanagement);
+
+    console.log("preparing configuration attributes");
+    let { 
+        csConfigAttrKeyEntries, 
+        csConfigAttrValues4A, 
+        csConfigAttrValues4CandX , 
+        csConfigAttrValueEntriesArray
+    } = prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles);
+
+    console.log("preparing classes");
+    let { csTypeEntries, 
+        csJavaClassEntries, 
+        csIconEntries, 
+        csClassAttrEntries,
+        csClassEntries,
+        csAttrDbTypeEntries,
+        csAttrCidsTypeEntries
+    } = prepareClasses(classes);
+
+    console.log("preparing class permissions");
+    let { 
+        csClassPermEntries 
+    } = prepareClassPermissions(classPerms);             
+
+    console.log("preparing attribute permissions");
+    let { 
+        csAttrPermEntries 
+    } = prepareAttributePermissions(attrPerms);    
+
+    console.log("preparing structure");
+    let {
+        csCatNodeEntries,
+        csCatLinkEntries,
+        csCatNodePermEntries,
+        csDynamicChildrenHelperEntries
+    } = prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
+        
+    setIdsFromOrder(csDomainEntries);
+    setIdsFromOrder(csPolicyRulesEntries);
+    setIdsFromOrder(csUgEntries);
+    setIdsFromOrder(csUserEntries);
+    setIdsFromOrder(csClassEntries);
+    setIdsFromOrder(csClassAttrEntries);
+    setIdsFromOrder(csClassPermEntries);
+    setIdsFromOrder(csAttrPermEntries);
+    setIdsFromOrder(csDynamicChildrenHelperEntries);
+    //setIdsFromOrder(csCatNodeEntries);
+
+    return {
+        csDomainEntries, 
+        csPolicyRulesEntries, 
+        csUgEntries, 
+        csUserEntries, 
+        csUgMembershipEntries, 
+        csConfigAttrKeyEntries, 
+        csConfigAttrValues4A, 
+        csConfigAttrValues4CandX, 
+        csConfigAttrValueEntriesArray, 
+        csJavaClassEntries, 
+        csIconEntries, 
+        csClassAttrEntries, 
+        csClassEntries, 
+        csTypeEntries,
+        csAttrDbTypeEntries, 
+        csAttrCidsTypeEntries, 
+        csClassPermEntries, 
+        csAttrPermEntries, 
+        csCatNodeEntries,
+        csCatLinkEntries,
+        csCatNodePermEntries,
+        csDynamicChildrenHelperEntries
+    };
+}
 
 export default csImport;

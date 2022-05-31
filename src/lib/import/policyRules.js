@@ -1,7 +1,11 @@
 function preparePolicyRules(policyRules) {
     let csPolicyRulesEntries = [];    
-    for (let r of policyRules) {
-        csPolicyRulesEntries.push([r.policy,r.permission,r.default_value]);
+    for (let policyRule of policyRules) {
+        csPolicyRulesEntries.push([ 
+            policyRule.policy, 
+            policyRule.permission, 
+            policyRule.default_value 
+        ]);
     }
     return { csPolicyRulesEntries };
 }

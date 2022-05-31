@@ -9,211 +9,216 @@ function prepareClasses(classes) {
     let csAttrDbTypeEntries = [];
     let csAttrCidsTypeEntries = [];        
     let javaClasses = new Set();
-    let defaulValueWarning = false;
 
-    for (let c of classes) {
-        let cEntry = {};
-        cEntry.name = c.name || c.table;
-        cEntry.descr = c.descr;
-        cEntry.classIcon = c.classIcon || c.icon;
-        cEntry.objectIcon = c.objectIcon || c.icon;
-        if (icons.indexOf(cEntry.classIcon) === -1){
-            icons.push(cEntry.classIcon);
-        }
-        if (icons.indexOf(cEntry.objectIcon) === -1){
-            icons.push(cEntry.objectIcon);
-        }
-        cEntry.table = c.table;
-        cEntry.pk = c.pk;
+    for (let clazz of classes) {
+        let name = clazz.name;
+        let table = clazz.table;
+        let descr = clazz.descr;
+        let pk = clazz.pk;
+        let array_link = clazz.array_link;
+        let indexed = clazz.indexed;
+        let policy = clazz.policy;
+        let attributePolicy = clazz.attribute_policy;
+        let classIcon = clazz.classIcon;
+        let objectIcon = clazz.objectIcon;
+        let toStringClass = clazz.toString != null ? clazz.toString.class : null;
+        let toStringType = clazz.toString != null ? clazz.toString.type : null;
+        let editorClass = clazz.editor != null ? clazz.editor.class : null;
+        let editorType = clazz.editor != null ? clazz.editor.type : null;
+        let rendererClass = clazz.renderer != null ? clazz.renderer.class : null;
+        let rendererType = clazz.renderer != null ? clazz.renderer.type : null;
 
-        cEntry.indexed = c.indexed || false;
-        if (c.toString) {
-            let fullKey = util.format("%s.%s", c.toString.type, c.toString.class);
+        if (classIcon != null && !icons.includes(classIcon)) {
+            icons.push(classIcon);
+        }
+
+        if (objectIcon != null && !icons.includes(objectIcon)) {
+            icons.push(objectIcon);
+        }
+
+        if (clazz.toString != null) {
+            let fullKey = util.format("%s.%s", clazz.toString.type, clazz.toString.class);
             if (!javaClasses.has(fullKey)) {
-                if (c.toString.class && c.toString.type) {
+                if (clazz.toString.class != null && clazz.toString.type != null) {
                     javaClasses.add(fullKey);
-                    csJavaClassEntries.push([c.toString.class,c.toString.type]);
+                    csJavaClassEntries.push([
+                        clazz.toString.class,
+                        clazz.toString.type
+                    ]);
                 }
             }
-            cEntry.toStringClass = c.toString.class;
-            cEntry.toStringType = c.toString.type;
         }
-        if (c.editor) {
-            let fullKey = util.format("%s.%s", c.editor.type, c.editor.class);
+
+        if (clazz.editor != null) {
+            let fullKey = util.format("%s.%s", clazz.editor.type, clazz.editor.class);
             if (!javaClasses.has(fullKey)) {
-                if (c.editor.class && c.editor.type) {
+                if (clazz.editor.class != null && clazz.editor.type != null) {
                     javaClasses.add(fullKey);
-                    csJavaClassEntries.push([c.editor.class,c.editor.type]);
+                    csJavaClassEntries.push([
+                        clazz.editor.class,
+                        clazz.editor.type
+                    ]);
                 }
             }
-            cEntry.editorClass = c.editor.class;
-            cEntry.editorType = c.editor.type;
         }
-        if (c.renderer) {
-            let fullKey = util.format("%s.%s", c.renderer.type, c.renderer.class);
+
+        if (clazz.renderer != null) {
+            let fullKey = util.format("%s.%s", clazz.renderer.type, clazz.renderer.class);
             if (!javaClasses.has(fullKey)) {
-                if (c.renderer.class && c.renderer.type) {
+                if (clazz.renderer.class != null && clazz.renderer.type != null) {
                     javaClasses.add(fullKey);
-                    csJavaClassEntries.push([c.renderer.class,c.renderer.type]);
+                    csJavaClassEntries.push([
+                        clazz.renderer.class,
+                        clazz.renderer.type
+                    ]);
                 }
             }
-            cEntry.rendererClass = c.renderer.class;
-            cEntry.rendererType = c.renderer.type;
         }
-        cEntry.array_link = c.array_link || false;
-        cEntry.policy = c.policy;
-        cEntry.attributePolicy = c.attribute_policy;
+
         csClassEntries.push([
-            cEntry.name, 
-            cEntry.descr, 
-            cEntry.classIcon, 
-            cEntry.objectIcon, 
-            cEntry.table,
-            cEntry.pk,
-            cEntry.indexed,
-            cEntry.toStringClass,
-            cEntry.toStringType,
-            cEntry.editorClass,
-            cEntry.editorType,
-            cEntry.rendererClass,
-            cEntry.rendererType,
-            cEntry.array_link,
-            cEntry.policy,
-            cEntry.attributePolicy
+            name, 
+            descr, 
+            classIcon, 
+            objectIcon, 
+            table,
+            pk,
+            indexed,
+            toStringClass,
+            toStringType,
+            editorClass,
+            editorType,
+            rendererClass,
+            rendererType,
+            array_link,
+            policy,
+            attributePolicy
         ]);
 
         //For Types
-        csTypeEntries.push([cEntry.name, cEntry.table]);
+        csTypeEntries.push([
+            name, 
+            table
+        ]);
 
         let posCounter = 0;
-        for (let a of c.attributes) {
-            let aEntry = {};
-            aEntry.table = cEntry.table;
-            aEntry.isArray = false;
-            aEntry.xx = 1;
-            if (a.dbType) { //1:1
-                aEntry.foreign_key = false;    
-                aEntry.type_name = a.dbType;
-            } else if (a.cidsType) {
-                aEntry.foreign_key = true;
-                aEntry.type_name = a.cidsType;
+        for (let attribute of clazz.attributes) {
+            let isArray = false;
+            let xx = 1;
+            let name = attribute.name;
+            let fieldname = attribute.field;
+            let substitute = attribute.substitute;
+            let descr = attribute.descr;
+            let visible = !attribute.hidden;
+            let indexed = attribute.indexed;
+            let arrayKey = attribute.arrayKey;
+            let optional = !attribute.mandatory;
+            let editorClass = attribute.editor != null ? attribute.editor.class : null;
+            let editorType = attribute.editor != null ? attribute.editor.type : null;
+            let toStringClass =attribute.toString != null ? attribute.toString.class : null;
+            let toStringType = attribute.toString != null ? attribute.toString.type : null;
+            let complexEditorClass = attribute.complexEditor != null ? attribute.complexEditor.class : null;
+            let complexEditortype = attribute.complexEditor != null ? attribute.complexEditor.type : null;
+            let fromStringClass = attribute.fromString != null ? attribute.fromString.class : null;
+            let fromStringType = attribute.fromString != null ? attribute.fromString.type : null;
+            let defaultValue = attribute.defaultValue;
+            let pos = posCounter;
+            let precision = attribute.precision;
+            let scale = attribute.scale;
+            let extensionAttribute = attribute.extension_attr; 
+
+            let foreign_key;
+            let foreign_key_references_to_table_name;
+            let type_name;
+            if (attribute.dbType) {
+                foreign_key = false;    
+                type_name = attribute.dbType;
+            } else if (attribute.cidsType) {
+                foreign_key = true;
+                type_name = attribute.cidsType;
                 // Takes the info out of the type
                 // not needed
-                aEntry.foreign_key_references_to_table_name = a.cidsType; //TODO
-            } else if (a.manyToMany) {
-                aEntry.foreign_key = true;
-                aEntry.isArray = true;
-                aEntry.type_name = a.manyToMany;
-                aEntry.foreign_key_references_to_table_name = a.manyToMany;
-            } else if (a.oneToMany) {
-                aEntry.foreign_key = true;
-                aEntry.type_name = a.oneToMany;
-                aEntry.xx = -1;
-                aEntry.isArray = false;
+                foreign_key_references_to_table_name = attribute.cidsType; //TODO
+            } else if (attribute.manyToMany) {
+                foreign_key = true;
+                isArray = true;
+                type_name = attribute.manyToMany;
+                foreign_key_references_to_table_name = attribute.manyToMany;
+            } else if (attribute.oneToMany) {
+                foreign_key = true;
+                type_name = attribute.oneToMany;
+                xx = -1;
+                isArray = false;
             }              
-            aEntry.name = a.name || a.field;
-            aEntry.fieldname = a.field;
-            aEntry.substitute = a.substitute || false;
-            aEntry.descr = a.descr;
-            aEntry.visible = a.hidden === undefined || a.hidden !== true;    
-            aEntry.indexed = a.indexed || false;
-            aEntry.arrayKey = a.arrayKey;
-            aEntry.optional = a.mandatory === undefined || a.mandatory !== true;
-            if (a.editor) {
-                aEntry.editorClass = a.editor.class;
-                aEntry.editorType = a.editor.type;
-            }
-            if (a.toString) {
-                aEntry.toStringClass = a.toString.class;
-                aEntry.toStringType = a.toString.type
-            }
-            if (a.complexEditor) {
-                aEntry.complexEditorClass = a.complexEditor.class;
-                aEntry.complexEditortype = a.complexEditor.type;
-            }
-            if (a.fromString) {
-                aEntry.fromStringClass = a.fromString.class;
-                aEntry.fromStringType = a.fromString.type;
-            }
-            if (a.defaulValue) {
-                defaulValueWarning = true;
-                aEntry.defaultValue = a.defaulValue;
-            } else if (a.defaultValue) {
-                aEntry.defaultValue = a.defaultValue;
-            }
-            aEntry.pos = posCounter;
+
             posCounter += 10;
-            aEntry.precision = a.precision;
-            aEntry.scale = a.scale;
-            aEntry.extensionAttribute = a.extension_attr !== undefined && a.extension_attr === true; 
             
-            if (a.dbType) {
+            if (attribute.dbType) {
                 csAttrDbTypeEntries.push([
-                    aEntry.table,
-                    aEntry.type_name,
-                    aEntry.name,
-                    aEntry.fieldname,
-                    aEntry.foreign_key,
-                    aEntry.substitute,
-                    aEntry.foreign_key_references_to_table_name,
-                    aEntry.descr,
-                    aEntry.visible,
-                    aEntry.indexed,
-                    aEntry.isArray,
-                    aEntry.arrayKey,
-                    aEntry.editorClass,
-                    aEntry.editorType,
-                    aEntry.toStringClass,
-                    aEntry.toStringType,
-                    aEntry.complexEditorClass,
-                    aEntry.complexEditortype,
-                    aEntry.optional,
-                    aEntry.defaultValue,
-                    aEntry.fromStringClass,
-                    aEntry.fromStringType,
-                    aEntry.pos,
-                    aEntry.precision,
-                    aEntry.scale,
-                    aEntry.extensionAttribute
+                    table,
+                    type_name,
+                    name,
+                    fieldname,
+                    foreign_key,
+                    substitute,
+                    foreign_key_references_to_table_name,
+                    descr,
+                    visible,
+                    indexed,
+                    isArray,
+                    arrayKey,
+                    editorClass,
+                    editorType,
+                    toStringClass,
+                    toStringType,
+                    complexEditorClass,
+                    complexEditortype,
+                    optional,
+                    defaultValue,
+                    fromStringClass,
+                    fromStringType,
+                    pos,
+                    precision,
+                    scale,
+                    extensionAttribute
                 ]);
             } else {                
                 csAttrCidsTypeEntries.push([
-                    aEntry.table,
-                    aEntry.type_name,
-                    aEntry.name,
-                    aEntry.fieldname,
-                    aEntry.foreign_key,
-                    aEntry.substitute,
-                    aEntry.foreign_key_references_to_table_name,
-                    aEntry.descr,
-                    aEntry.visible,
-                    aEntry.indexed,
-                    aEntry.isArray,
-                    aEntry.arrayKey,
-                    aEntry.editorClass,
-                    aEntry.editorType,
-                    aEntry.toStringClass,
-                    aEntry.toStringType,
-                    aEntry.complexEditorClass,
-                    aEntry.complexEditortype,
-                    aEntry.optional,
-                    aEntry.defaultValue,
-                    aEntry.fromStringClass,
-                    aEntry.fromStringType,
-                    aEntry.pos,
-                    aEntry.precision,
-                    aEntry.scale,
-                    aEntry.extensionAttribute,
-                    aEntry.xx
+                    table,
+                    type_name,
+                    name,
+                    fieldname,
+                    foreign_key,
+                    substitute,
+                    foreign_key_references_to_table_name,
+                    descr,
+                    visible,
+                    indexed,
+                    isArray,
+                    arrayKey,
+                    editorClass,
+                    editorType,
+                    toStringClass,
+                    toStringType,
+                    complexEditorClass,
+                    complexEditortype,
+                    optional,
+                    defaultValue,
+                    fromStringClass,
+                    fromStringType,
+                    pos,
+                    precision,
+                    scale,
+                    extensionAttribute,
+                    xx
                 ]);            
             }
         }
-        if (c.additionalAttributes){
-            for (let ca in c.additionalAttributes) {
+        if (clazz.additionalAttributes){
+            for (let additionalAttributes in clazz.additionalAttributes) {
                 csClassAttrEntries.push([
-                    cEntry.table,
-                    ca,
-                    c.additionalAttributes[ca]
+                    table,
+                    additionalAttributes,
+                    clazz.additionalAttributes[additionalAttributes]
                 ]);
             }
         }
@@ -222,14 +227,8 @@ function prepareClasses(classes) {
     const csIconEntries = []
     for (let i of icons){
         if (i) {
-            csIconEntries.push([ i.substr(0,i.indexOf('.')), i ]);
+            csIconEntries.push([ i.substr(0, i.indexOf('.')), i ]);
         }
-    }
-
-    if (defaulValueWarning) {
-        console.log(" !!!!!!!!!!!!!!!");
-        console.log(" !!! WARNING !!! usage of typo 'defaulValue' in classes.js. This should by changed to the correct spelling 'defaultValue'. The typo is still interpreted though.");
-        console.log(" !!!!!!!!!!!!!!!");
     }
 
     return { 

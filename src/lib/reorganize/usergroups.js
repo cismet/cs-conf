@@ -17,8 +17,8 @@ function reorganizeUsergroups(usergroups) {
             let bSplit = bKey.split('@');
             let aGroup = aSplit[0];
             let bGroup = bSplit[0];
-            let aDomain = aSplit.length > 1 ? aSplit[1].toUpperCase() : 'LOCAL'
-            let bDomain = bSplit.length > 1 ? bSplit[1].toUpperCase() : 'LOCAL'
+            let aDomain = aSplit[1];
+            let bDomain = bSplit[1];
             return aDomain != 'LOCAL' || aDomain.localeCompare(bDomain) || aGroup.localeCompare(bGroup);
         });
     }

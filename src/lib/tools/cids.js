@@ -1,16 +1,5 @@
 import util from "util";
 
-export function extractGroupAndDomain(key) {
-    if (key != null) {
-        let keyComponents = key.split('@');
-        let group = keyComponents[0];
-        let domain = keyComponents.length == 1 ? 'LOCAL' : keyComponents[1];
-        return { group, domain };
-    } else {
-        return null;
-    }
-}
-
 export function extendLocalDomain(key) {
     let parts = key.split('@');     
     let group = parts[0];
@@ -19,12 +8,19 @@ export function extendLocalDomain(key) {
 
 }
 
+export function extractGroupAndDomain(key) {
+    if (key != null) {
+        let keyComponents = key.split('@');
+        return { group: keyComponents[0], domain: keyComponents[1] };
+    } else {
+        return null;
+    }
+}
+
 export function extractTableAndField(key) {
     if (key != null) {
         let keyComponents = key.split('.');
-        let table = keyComponents[0];
-        let field = keyComponents[1];
-        return { table, field } ;
+        return { table: keyComponents[0], field: keyComponents[1] } ;
     } else {
         return null;
     }

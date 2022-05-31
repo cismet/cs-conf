@@ -54,7 +54,7 @@ function prepareCatNodes(nodes, structureSqlFiles) {
                 node.descr,
                 node.table,
                 node.object_id,
-                node.node_type || 'N',
+                node.node_type,
                 node.root,
                 node.org,
                 structureSqlFiles.get(node.dynamic_children_file),

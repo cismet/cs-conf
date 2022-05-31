@@ -1,28 +1,16 @@
-import * as cidstools from '../tools/cids';
+import createPermsEntry from './perms';
 
 function prepareAttributePermissions(attrPerms) {
     let csAttrPermEntries = [];
-    for (let p of attrPerms) {
-        if (p.read) {
-            for (let groupkey of p.read) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csAttrPermEntries.push([
-                    group,
-                    domain,
-                    p.table,
-                    "read"
-                ]);
+    for (let attrPerm of attrPerms) {
+        if (attrPerm.read) {
+            for (let groupkey of attrPerm.read) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "read"));
             }
         }
-        if (p.write) {
-            for (let groupkey of p.write) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csAttrPermEntries.push([
-                    group,
-                    domain,
-                    p.table,
-                    "write"
-                ]);
+        if (attrPerm.write) {
+            for (let groupkey of attrPerm.write) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "write"));
             }
         }  
     }
