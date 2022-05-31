@@ -3,18 +3,16 @@ import util from 'util';
 import { getClientForConfig } from './tools/db';
 import wcmatch from 'wildcard-match';
 import csDiff from './diff';
+import normalizeClasses from './normalize/classes';
 
-async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass) {
+async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
     let statements = [];
-    let cidsTableName = cidsClass.table.toLowerCase();
+    let cidsTableName = clazz.table.toLowerCase();
 
     if (!tablesDone.includes(cidsTableName) && !existingData.ignoredTables.includes(cidsTableName)) {
         tablesDone.push(cidsTableName);
 
-        let pk = "id";
-        if (cidsClass.pk) {
-            pk = cidsClass.pk.toLowerCase();
-        }
+        let pk = clazz.pk;
 
         if (!existingData.tables.hasOwnProperty(cidsTableName)) {
 
@@ -23,9 +21,9 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
             let sequenceName = util.format("%s_seq", cidsTableName);
             let columns = [];
 
-            if (cidsClass.attributes) {
-                for (let cidsAttribute of cidsClass.attributes) {
-                    let fieldName = cidsAttribute.field.toLowerCase();
+            if (clazz.attributes) {
+                for (let cidsAttribute of clazz.attributes) {
+                    let fieldName = cidsAttribute.field;
                     if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
 
                         // skipping extension- and 1-n- attributes
@@ -33,7 +31,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                             
                             // foreign key => recursion 
 
-                            let subCidsTableName = cidsAttribute.cidsType.toLowerCase();
+                            let subCidsTableName = cidsAttribute.cidsType;
                             let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                             // directly adding recursive results to statements-array for assuring
                             // that the most bottom table is created first
@@ -71,13 +69,13 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
             // table already existing => altering
             let existingTable = existingData.tables[cidsTableName];
 
-            if (existingTable.tableType.toLowerCase() == 'base table') {
+            if (existingTable.tableType.toUpperCase() === 'BASE TABLE') {
 
                 // skipping views (f.e.)
 
                 let columnsDone = [];
-                if (cidsClass.attributes) {
-                    for (let cidsAttribute of cidsClass.attributes) {
+                if (clazz.attributes) {
+                    for (let cidsAttribute of clazz.attributes) {
                         if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
                             let fieldName = cidsAttribute.field.toLowerCase();
                             columnsDone.push(fieldName);
@@ -87,7 +85,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
                                 // foreign key => recursion 
 
-                                let subCidsTableName = cidsAttribute.cidsType.toLowerCase();
+                                let subCidsTableName = cidsAttribute.cidsType;
                                 let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                                 // directly adding recursive results to statements-array for assuring
                                 // that the most bottom table is created first
@@ -108,7 +106,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                     } else {
                                         let type = fullTypeFromAttribute(cidsAttribute);
                                         
-                                        let defaultValue = (type && cidsAttribute.defaultValue && (type.toLowerCase() == "text" || type.toLowerCase().startsWith("char") || type.toLowerCase().startsWith("varchar"))) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                        let defaultValue = (type && cidsAttribute.defaultValue && isTextType(type)) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
                                         statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: fullTypeFromAttribute(cidsAttribute), null: !cidsAttribute.mandatory, default: defaultValue});
                                     }
 
@@ -130,8 +128,8 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                     // primitive column existing => altering if needed
 
                                     let typeIdentical = (
-                                            (cidsAttribute.manyToMany && existingColumn.dataType.toLowerCase() == 'int4')
-                                            || cidsTypeToDb(cidsAttribute.dbType).toLowerCase() == existingColumn.dataType.toLowerCase()
+                                            (cidsAttribute.manyToMany && existingColumn.dataType.toUpperCase() === 'INT4')
+                                            || cidsTypeToDb(cidsAttribute.dbType).toUpperCase() == existingColumn.dataType.toUpperCase()
                                         )                            
                                         && (cidsAttribute.precision == existingColumn.precision)
                                         && (cidsAttribute.scale == existingColumn.scale);
@@ -140,7 +138,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                         // type changes detected => altering
                                         statement.type = fullTypeFromAttribute(cidsAttribute);
                                         statement.null = !cidsAttribute.mandatory;
-                                        statement.default = (statement.type && cidsAttribute.defaultValue && (statement.type.toLowerCase() == "text" || statement.type.toLowerCase().startsWith("char") || statement.type.toLowerCase().startsWith("varchar"))) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                        statement.default = (statement.type && cidsAttribute.defaultValue && isTextType(statement.type)) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
                                     } else {
                                         // attribute modifications if needed
 
@@ -152,9 +150,10 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                             statement.null = !mandatory;
                                         }
 
-                                        let escapedExisting = cidsAttribute.defaultValue && (existingColumn.dataType.toLowerCase() == "text" || existingColumn.dataType.toLowerCase().startsWith("char") || existingColumn.dataType.toLowerCase().startsWith("varchar")) ? existingColumn.default : util.format("'%s'", existingColumn.default);
+                                        let isText = isTextType(existingColumn.dataType);
+                                        let escapedExisting = cidsAttribute.defaultValue && isText ? existingColumn.default : util.format("'%s'", existingColumn.default);
                                         if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
-                                            statement.default = existingColumn.dataType && cidsAttribute.defaultValue && (existingColumn.dataType.toLowerCase() == "text" || existingColumn.dataType.toLowerCase().startsWith("char") || existingColumn.dataType.toLowerCase().startsWith("varchar")) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                            statement.default = existingColumn.dataType && cidsAttribute.defaultValue && isText ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
                                         }
 
                                         // special treatment if mandatory and default value is set => update data
@@ -219,28 +218,34 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
     return statements;
 }
 
+function isTextType(type) {
+    return type.toLowerCase() === "text" || type.toLowerCase().startsWith("char") || type.toLowerCase().startsWith("varchar");
+}
+
 function cidsTypeToDb(type) {
-    if (type) {
+    if (type != null) {
         switch(type.toUpperCase()) {
             case "CHAR": return "bpchar";
             case "INTEGER": return "int4";
             case "CIDS_GEOMETRY": return "geometry";
             default: return type.toLowerCase();
         }
+    } else {
+        return null;
     }
 }
 
 function fullTypeFromAttribute(cidsAttribute) {
     let fullType = cidsTypeToDb(cidsAttribute.dbType);
-    if (fullType == "numeric" && cidsAttribute.precision) {
+    if (fullType === "numeric" && cidsAttribute.precision) {
         fullType += util.format("(%s", cidsAttribute.precision);
         if (cidsAttribute.scale) {
             fullType += util.format(", %s", cidsAttribute.scale);
         }
         fullType += ")";
-    } else if (fullType == "bpchar" && cidsAttribute.precision) {
+    } else if (fullType === "bpchar" && cidsAttribute.precision) {
         fullType += util.format("(%s)", cidsAttribute.precision);
-    } else if (fullType == "varchar" && cidsAttribute.precision) {
+    } else if (fullType === "varchar" && cidsAttribute.precision) {
         fullType += util.format("(%s)", cidsAttribute.precision);
     }    
     return fullType;
@@ -276,7 +281,7 @@ function queriesFromStatement(statement) {
                     }
                 }
                 if (column.default !== undefined) {
-                    if (column.type.toLowerCase() == "text" || column.type.toLowerCase().startsWith("char") || column.type.toLowerCase().startsWith("varchar")) {
+                    if (isTextType(column.type)) {
                         snippet += util.format(" DEFAULT '%s'", column.default);
                     } else {
                         snippet += util.format(" DEFAULT %s", column.default);
@@ -393,6 +398,7 @@ async function csSync(options) {
     let classesJson = util.format("%s/classes.json", folder);
     console.log(util.format("reading classes from %s", classesJson));
     let classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));
+    let normalized = normalizeClasses(classes);
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     try {
@@ -402,34 +408,19 @@ async function csSync(options) {
         console.log("no sync.json found");
     }
 
-    let allCidsClasses = [...classes];
+    let allCidsClasses = [...normalized];
     let allCidsClassesByTableName = {};
 
     let attributesCount = 0;
-    let defaulValueDetected = false;
     for (let singleCidsClass of allCidsClasses) {
         if (singleCidsClass.table) {
-            allCidsClassesByTableName[singleCidsClass.table.toLowerCase()] = singleCidsClass;
+            allCidsClassesByTableName[singleCidsClass.table] = singleCidsClass;
         }
         if (singleCidsClass.attributes) {
-            for (let attribute of singleCidsClass.attributes) {
-                if(attribute.defaulValue) {
-                    attribute.defaultValue = attribute.defaulValue;
-                    defaulValueDetected = true;
-                    delete attribute.defaulValue;                    
-                }
-                attributesCount++;
-            }
+            attributesCount += singleCidsClass.attributes.length;
         }
     }
-    console.log(util.format(" ↳ %d attributes found in %d classes.", attributesCount, classes.length));
-
-    if (defaulValueDetected) {
-        console.log("!!!!!!!!!!!!!!!");
-        console.log("!!! WARNING !!! Typo 'defaulValue' detected. Continuing by fixing it in memory. This should by changed to the correct spelling 'defaultValue'.");
-        console.log("!!!!!!!!!!!!!!!");
-        console.log("");
-    }
+    console.log(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.length));
 
     let existingData = {
         tables : {},
@@ -453,7 +444,7 @@ async function csSync(options) {
     let ignoredSequences = [];
 
     for (let tablesResult of tablesResults) {
-        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name).toLowerCase();
+        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
 
         let ignoreTable = false;
         for (let ignoreRule of ignoreRules) {
@@ -487,7 +478,7 @@ async function csSync(options) {
                 columns: {}
             };
         }
-        let columnKey = tablesResult.column_name.toLowerCase();
+        let columnKey = tablesResult.column_name;
         existingData.tables[tableKey].columns[columnKey] = {
             name: tablesResult.column_name,
             default: tablesResult.column_default,
@@ -531,7 +522,7 @@ async function csSync(options) {
     Object.keys(existingData.tables).forEach(function(key) {
         if (!ignoredTables.includes(key)) {
             var tableData = existingData.tables[key];
-            if (tableData.tableType.toLowerCase() == "base table" && tableData.schema.toLowerCase() == "public") {
+            if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === "public") {
                 let sequenceKey = util.format("%s_seq", key);
                 statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
             }

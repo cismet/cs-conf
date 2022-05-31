@@ -196,7 +196,7 @@ function testClasses() {
                 "table": "table1",
                 "name": "Table 1",
                 "descr": null,
-                "pk": null,
+                "pk": "id",
                 "substitute": false,
                 "extension_attr": false,
                 "indexed": false,

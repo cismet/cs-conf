@@ -35,7 +35,7 @@ export const defaultClass = {
     table: null,
     name: null,
     descr: null,
-    pk: null,
+    pk: 'id',
     substitute: false,
     extension_attr: false,
     indexed: false,

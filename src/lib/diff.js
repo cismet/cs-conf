@@ -1,10 +1,9 @@
 import fs from 'fs';
-import { extname } from 'path';
 import util from 'util';
+import csExport from './export';
+import { extname } from 'path';
 import { diffString } from 'json-diff';
 import { getClientForConfig } from './tools/db';
-
-import * as csExport from './export';
 
 async function csDiff(options) {
     let { folder, target, schema, configDir } = options;
@@ -34,12 +33,11 @@ async function csDiff(options) {
         let prefix = util.format("%s[%s:%d]", client.database, client.host, client.port);
         let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
         current = util.format("diffs/%s.%s", prefix, formattedDate);
-        fs.mkdirSync(current);
 
         console.log("#################");
         console.log(util.format("### exporting current config to %s for comparision.", current));
         console.log("#################");
-        await csExport.worker({ folder: current, schema: schema, configDir, client: client });
+        await csExport({ folder: current, schema: schema, configDir, client: client });
         console.log("#################");
         console.log("### export done. starting comparision.");
         console.log("#################");    

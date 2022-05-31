@@ -1,3 +1,4 @@
+import util from 'util';
 import { defaultAttribute } from "./_defaultObjects";
 
 function normalizeAttributes(attributes) {
@@ -7,6 +8,7 @@ function normalizeAttributes(attributes) {
     if (attributes !== undefined) {
         for (let attribute of attributes) {
             if (attribute.field == null) throw "missing field";
+            //if (attribute.field !== attribute.field.toUpperCase()) throw util.format("field '%s' has to be uppercase", attribute.field);
             
             let defaultValue = attribute.defaultValue;
             if (attribute.defaulValue != null) {
