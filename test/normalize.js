@@ -77,14 +77,14 @@ function testAttrPerms() {
     let attrPerms = JSON.parse(`[
         {
             "key": "class1.attr1",
-            "write": ["group1", "group2", "group3"],
-            "read": ["group1", "group2", "group3"]
+            "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+            "read": ["group1@DOMAIN", "group2@DOMAIN", "group3"]
         }, {
             "key": "class1.attr2",
-            "read": ["group1", "group2", "group3"]
+            "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
         }, {
             "key": "class2.attr1",
-            "write": ["group1", "group2", "group3"]
+            "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
         }, {
             "key": "class2.attr2"
         }          
@@ -98,16 +98,16 @@ function testAttrPerms() {
         let expected = JSON.parse(`[
             {
                 "key": "class1.attr1",
-                "read": ["group1", "group2", "group3"],
-                "write": ["group1", "group2", "group3"]
-            }, {
+                "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@LOCAL"],
+                "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+                }, {
                 "key": "class1.attr2",
-                "read": ["group1", "group2", "group3"],
+                "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
                 "write": []
             }, {
                 "key": "class2.attr1",
                 "read": [],
-                "write": ["group1", "group2", "group3"]
+                "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
             }, {
                 "key": "class2.attr2",
                 "read": [],
@@ -126,14 +126,14 @@ function testClassPerms() {
     let classPerms = JSON.parse(`[
         {
             "table": "table1",
-            "read": ["group1", "group2", "group3"],
-            "write": ["group1", "group2", "group3"]
+            "read": ["group1@DOMAIN", "group2@DOMAIN", "group3"],
+            "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
         }, {
             "table": "table2",
-            "read": ["group1", "group2", "group3"]
+            "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
         }, {
             "table": "table3",
-            "write": ["group1", "group2", "group3"]
+            "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
         }, {
             "table": "table4"
         }          
@@ -147,16 +147,16 @@ function testClassPerms() {
         let expected = JSON.parse(`[
             {
                 "table": "table1",
-                "read": ["group1", "group2", "group3"],
-                "write": ["group1", "group2", "group3"]
+                "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@LOCAL"],
+                "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
             }, {
                 "table": "table2",
-                "read": ["group1", "group2", "group3"],
+                "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
                 "write": []
             }, {
                 "table": "table3",
                 "read": [],
-                "write": ["group1", "group2", "group3"]
+                "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
             }, {
                 "table": "table4",
                 "read": [],

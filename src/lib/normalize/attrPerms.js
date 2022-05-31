@@ -1,3 +1,4 @@
+import normalizePerms from "./perms";
 import { defaultAttrPerm } from "./_defaultObjects";
 
 function normalizeAttrPerms(attrPerms) {
@@ -7,7 +8,10 @@ function normalizeAttrPerms(attrPerms) {
         for (let attrPerm of attrPerms) {
             if (attrPerm.key == null) throw "missing key";
 
-            normalized.push(Object.assign({}, defaultAttrPerm, attrPerm));
+            normalized.push(Object.assign({}, defaultAttrPerm, attrPerm, {
+                read: normalizePerms(attrPerm.read),
+                write: normalizePerms(attrPerm.write),
+            }));
         }
     }
     
