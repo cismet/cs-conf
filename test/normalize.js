@@ -61,9 +61,9 @@ function testConfigurationAttributes() {
 
     it('normal', (done) => {
         let expected = JSON.parse(`[
-            { "key": "inTestGroup", "keygroup": "testGroup", "value": null, "xmlfile": null },
-            { "key": "withoutGroupNorValue", "keygroup": "__no_group__", "value": null, "xmlfile": null },
-            { "key": "InNoGroupWithValue", "keygroup": "__no_group__", "value": "test", "xmlfile": null }
+            { "key": "inTestGroup@LOCAL", "keygroup": "testGroup", "value": null, "xmlfile": null },
+            { "key": "withoutGroupNorValue@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null },
+            { "key": "InNoGroupWithValue@LOCAL", "keygroup": "__no_group__", "value": "test", "xmlfile": null }
         ]`);   
         let normalized = normalizeConfigurationAttributes(domains);            
         expectEqualJson(normalized, expected, done);
@@ -249,7 +249,7 @@ function testDomains() {
         let expected = JSON.parse(`[
             {
                 "domainname": "LOCAL",
-                "configurationAttributes": [{ "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null }]
+                "configurationAttributes": [{ "key": "test@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null }]
             }, { 
                 "domainname": "TEST",
                 "configurationAttributes": []
@@ -458,7 +458,7 @@ function testUserGroups() {
             {
                 "key": "Group1",
                 "descr": "Descr1",
-                "configurationAttributes": [{ "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null }]
+                "configurationAttributes": [{ "key": "test@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null }]
             }, { 
                 "key": "Group2",
                 "descr": null,
@@ -511,7 +511,7 @@ function testUsermanagement() {
                 "pw_hash": "HashyHash1",
                 "salt": "saltySalt1",
                 "groups": ["Group1", "Group2"],
-                "configurationAttributes": [ { "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null } ]
+                "configurationAttributes": [ { "key": "test@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null } ]
             }, {
                 "login_name": "User2",
                 "administrator": false,

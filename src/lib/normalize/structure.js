@@ -1,3 +1,4 @@
+import normalizePerms from "./perms";
 import { defaultNode } from "./_defaultObjects";
 
 function normalizeStructure(structure) {
@@ -13,6 +14,8 @@ function normalizeStructure(structure) {
 
             normalized.push(Object.assign({}, defaultNode, node, {
                 children: normalizeStructure(node.children),
+                readPerms: normalizePerms(node.readPerms),
+                writePerms: normalizePerms(node.writePerms),
             }));
         }
     }
