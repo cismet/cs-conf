@@ -1,3 +1,4 @@
+import { extendLocalDomain } from "../tools/cids";
 import normalizeConfigurationAttributes from "./configurationAttributes";
 import { defaultUser as defaultUser } from "./_defaultObjects";
 
@@ -12,8 +13,21 @@ function normalizeUsermanagement(usermanagement) {
             if (user.password != null) throw "password not allowed";
 
             normalized.push(Object.assign({}, defaultUser, user, {
+                groups: normalizeGroups(user.groups),
                 configurationAttributes: normalizeConfigurationAttributes(user.configurationAttributes),
             }));
+        }
+    }
+
+    return normalized;
+}
+
+function normalizeGroups(groups) {
+    let normalized = [];
+
+    if (groups != null) {
+        for (let group of groups) {
+            normalized.push(extendLocalDomain(group));
         }
     }
 

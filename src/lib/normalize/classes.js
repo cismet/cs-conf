@@ -1,4 +1,5 @@
-import { defaultAttribute, defaultClass } from "./_defaultObjects";
+import normalizeAttributes from "./attributes";
+import { defaultClass } from "./_defaultObjects";
 
 function normalizeClasses(classes) {
     let normalized = [];
@@ -13,34 +14,12 @@ function normalizeClasses(classes) {
                 editor: normalizeSpecial(clazz.editor),
                 renderer: normalizeSpecial(clazz.renderer),
                 attributes: normalizeAttributes(clazz.attributes),
+                classIcon: clazz.classIcon || clazz.icon || null,
+                objectIcon: clazz.objectIcon || clazz.icon || null,
             }));
         }
     }
     
-    return normalized;
-}
-
-function normalizeAttributes(attributes) {
-    let normalized = [];
-
-    if (attributes !== undefined) {
-        for (let attribute of attributes) {
-            if (attribute.field == null) throw "missing field";
-
-            if (
-                attribute.dbType == null &&
-                attribute.cidsType == null &&
-                attribute.oneToMany == null &&
-                attribute.manyToMany == null                
-            ) throw "either dbType or cidsType or oneToMany or manyToMany missing";
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw "precision and scale can only be set if dbType is set";
-
-            normalized.push(Object.assign({}, defaultAttribute, attribute, {
-                name: attribute.name != null ? attribute.name : attribute.field,
-            }));
-        }
-    }
-
     return normalized;
 }
 

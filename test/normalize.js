@@ -197,9 +197,12 @@ function testClasses() {
                 "name": "Table 1",
                 "descr": null,
                 "pk": null,
+                "substitute": false,
+                "extension_attr": false,
                 "indexed": false,
                 "classIcon": null,
                 "objectIcon": null,
+                "array_link": false,
                 "policy": null,
                 "toString": null,
                 "editor": null,
@@ -210,9 +213,11 @@ function testClasses() {
                         "name": "Field 1",
                         "descr": null,
                         "dbType": "TEXT",
+                        "extension_attr": false,
                         "precision": null,
                         "scale": null,
                         "cidsType": null,
+                        "substitute": false,
                         "oneToMany": null,
                         "manyToMany": null,
                         "indexed": false,
@@ -456,11 +461,11 @@ function testUserGroups() {
     it('normal', (done) => {
         let expected = JSON.parse(`[
             {
-                "key": "Group1",
+                "key": "Group1@LOCAL",
                 "descr": "Descr1",
                 "configurationAttributes": [{ "key": "test@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null }]
             }, { 
-                "key": "Group2",
+                "key": "Group2@LOCAL",
                 "descr": null,
                 "configurationAttributes": []
             }
@@ -510,14 +515,14 @@ function testUsermanagement() {
                 "administrator": true,
                 "pw_hash": "HashyHash1",
                 "salt": "saltySalt1",
-                "groups": ["Group1", "Group2"],
+                "groups": ["Group1@LOCAL", "Group2@LOCAL"],
                 "configurationAttributes": [ { "key": "test@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null } ]
             }, {
                 "login_name": "User2",
                 "administrator": false,
                 "pw_hash": "HashyHash2",
                 "salt": "saltySalt2",
-                "groups": ["Group3"],
+                "groups": ["Group3@LOCAL"],
                 "configurationAttributes": []
             }, {
                 "login_name": "User3",

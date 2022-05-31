@@ -1,3 +1,4 @@
+import { extendLocalDomain } from "../tools/cids";
 import normalizeConfigurationAttributes from "./configurationAttributes";
 import { defaultUserGroup } from "./_defaultObjects";
 
@@ -9,6 +10,7 @@ function normalizeUsergroups(usergroups) {
             if (usergroup.key == null) throw "missing key";
 
             normalized.push(Object.assign({}, defaultUserGroup, usergroup, {
+                key: extendLocalDomain(usergroup.key),
                 configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
             }));
         }
