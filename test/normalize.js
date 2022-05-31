@@ -477,6 +477,7 @@ function testUsermanagement() {
     let usermanagement = JSON.parse(`[
         {
             "login_name": "User1",
+            "administrator": true,
             "pw_hash": "HashyHash1",
             "salt": "saltySalt1",
             "groups": ["Group1", "Group2"],
@@ -506,24 +507,28 @@ function testUsermanagement() {
         let expected = JSON.parse(`[
             {
                 "login_name": "User1",
+                "administrator": true,
                 "pw_hash": "HashyHash1",
                 "salt": "saltySalt1",
                 "groups": ["Group1", "Group2"],
                 "configurationAttributes": [ { "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null } ]
             }, {
                 "login_name": "User2",
+                "administrator": false,
                 "pw_hash": "HashyHash2",
                 "salt": "saltySalt2",
                 "groups": ["Group3"],
                 "configurationAttributes": []
             }, {
                 "login_name": "User3",
+                "administrator": false,
                 "pw_hash": "HashyHash3",
                 "salt": "saltySalt3",
                 "groups": [],
                 "configurationAttributes": []
             }, {
                 "login_name": "User4",
+                "administrator": false,
                 "pw_hash": "HashyHash4",
                 "salt": "saltySalt4",
                 "groups": [],

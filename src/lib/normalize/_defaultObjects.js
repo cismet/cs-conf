@@ -98,6 +98,7 @@ export const defaultUserGroup = {
 // usermanagement
 export const defaultUser = {
     login_name: null,
+    administrator: false,
     pw_hash: null,
     salt: null,
     groups: [],

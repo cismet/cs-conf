@@ -12,23 +12,29 @@ import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 async function csNormalize(options) {
     let { folder, target } = options;
 
-    let {
-        attrPerms, 
-        classes, 
-        classPerms, 
-        domains, 
-        dynchildhelpers,
-        helperSqlFiles,
-        policyRules, 
-        structure, 
-        structureSqlFiles,
-        usergroups, 
-        usermanagement, 
-        xmlFiles,
-    } = readConfigFiles(folder);
+    let config = readConfigFiles(folder);    
+    let normalized = normalizeConfig(config);
+    if (target != null) {
+        writeConfigFiles(target, normalized, true);
+    }
+    return normalized;
+}
 
-    
-    let normalized = {
+export function normalizeConfig({
+    attrPerms, 
+    classes, 
+    classPerms, 
+    domains, 
+    dynchildhelpers,
+    helperSqlFiles,
+    policyRules, 
+    structure, 
+    structureSqlFiles,
+    usergroups, 
+    usermanagement, 
+    xmlFiles,
+}) {
+    return {
         attrPerms: normalizeAttrPerms(attrPerms), 
         classes: normalizeClasses(classes), 
         classPerms: normalizeClassPerms(classPerms), 
@@ -41,12 +47,7 @@ async function csNormalize(options) {
         usergroups: normalizeUsergroups(usergroups), 
         usermanagement: normalizeUsermanagement(usermanagement), 
         xmlFiles,
-    }
-
-    if (target != null) {
-        writeConfigFiles(target, normalized, true);
-    }
-    return normalized;
+    };
 }
 
 export default csNormalize;
