@@ -11,6 +11,7 @@ import csPurge from './lib/purge';
 import csCreate from './lib/create';
 import csTruncate from './lib/truncate';
 import csPassword from './lib/password';
+import csNormalize from './lib/normalize';
 
 program.version('0.9.9').option('-c, --config <path>', 'set config path. ', './runtime.properties');
 
@@ -107,7 +108,27 @@ program.command('sync').alias('s').description('synchronizes the cids classes wi
 		}	
 	});
 
-program.command('diff').alias('d').description('shows differences between meta-information (cs_*) and the given classes configuration')
+	program.command('normalize').alias('n').description('TODO')
+	.option('-f, --folder <folder1>', 'the folder containing the classes configuration', 'config')
+	.option('-t, --target <folder2>', 'the folder to normalize the config into', null)
+	.action(async (cmd) => {		
+		let options = { 
+			folder: cmd.folder,
+			target: cmd.target,
+		};
+		console.log("starting normalize with following options:");
+		console.table(options);
+		console.log();
+		try {
+			await csNormalize(options);
+			process.exit(0);
+		} catch (e) {
+			console.error(e); // 💩
+			process.exit(1);
+		}	
+	});
+
+	program.command('diff').alias('d').description('shows differences between meta-information (cs_*) and the given classes configuration')
 	.option('-f, --folder <folder1>', 'the folder where the config is', 'config')
 	.option('-t, --target <folder2>', 'the folder to compare the config with. if null, the current configs are exported', null)
 	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
