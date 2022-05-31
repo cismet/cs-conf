@@ -61,9 +61,9 @@ async function createConfig(client) {
     console.log("analyzing structure");
     let {
         structure,
-        structureSqlDocuments,
+        structureSqlFiles,
         dynchildhelpers,
-        helperSqlDocuments
+        helperSqlFiles
     } = await exportStructure(client);
 
     return {
@@ -75,9 +75,9 @@ async function createConfig(client) {
         classPerms,
         attrPerms,
         structure,
-        structureSqlDocuments,
+        structureSqlFiles,
         dynchildhelpers,
-        helperSqlDocuments,
+        helperSqlFiles,
         xmlFiles
     }
 }
@@ -92,8 +92,8 @@ function reorganizeConfig({
     attrPerms,
     structure,
     dynchildhelpers,
-    structureSqlDocuments,
-    helperSqlDocuments,
+    structureSqlFiles,
+    helperSqlFiles,
     xmlFiles
 }) {
     return {
@@ -106,8 +106,8 @@ function reorganizeConfig({
         attrPerms: reorganizeAttrPerms(attrPerms),
         dynchildhelpers: reorganizeDynchildhelpers(dynchildhelpers),
         structure: structure,
-        structureSqlDocuments,
-        helperSqlDocuments,
+        structureSqlFiles,
+        helperSqlFiles,
         xmlFiles
     };
 }

@@ -81,34 +81,6 @@ function analyzeAndPreprocess(classes, attributes, classattributes) {
             delete a.extension_attr;
         }
 
-        //toString
-        if (a.tostringtype !== null && a.tostringclass != null) {
-            a.toString = {
-                type: a.tostringtype,
-                class: a.tostringclass
-            };
-        }
-        delete a.tostringtype;
-        delete a.tostringclass;
-        //editor
-        if (a.editortype !== null && a.editorclass != null) {
-            a.editor = {
-                type: a.editortype,
-                class: a.editorclass
-            };
-        }
-        delete a.editortype;
-        delete a.editorclass;
-        //renderer
-        if (a.complexeditortype !== null && a.complexeditorclass != null) {
-            a.complexEditor = {
-                type: a.complexeditortype,
-                class: a.complexeditorclass
-            };
-        }
-        delete a.complexeditortype;
-        delete a.complexeditorclass;
-
         //remove all fields that are not needed anymore
         delete a.foreign_key;
         delete a.foreignKeyTableId;

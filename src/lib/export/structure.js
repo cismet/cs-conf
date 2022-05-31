@@ -91,9 +91,9 @@ function visitingNodesByChildren2(nodes, allNodes, links, duplicates) {
 }
 
 function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
-    let structureSqlDocuments = new Map();
+    let structureSqlFiles = new Map();
     let dynchildhelpers = [];
-    let helperSqlDocuments = new Map();
+    let helperSqlFiles = new Map();
     let structure = [];
 
     let nodeReadPerms = [];
@@ -194,7 +194,7 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
     for (let node of sortedNodes) {        
         if (node.dynamic_children) {
             let fileName = util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
-            structureSqlDocuments.set(fileName, node.dynamic_children);
+            structureSqlFiles.set(fileName, node.dynamic_children);
             node.dynamic_children_file = fileName;        
             delete node.dynamic_children;
         }
@@ -207,7 +207,7 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
     }) : dynchildhelpersResult;
     for (let dynchildhelper of sortedDynchildhelpers) {
         let fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
-        helperSqlDocuments.set(fileName, dynchildhelper.code);
+        helperSqlFiles.set(fileName, dynchildhelper.code);
         dynchildhelper.code_file = fileName;    
         delete dynchildhelper.id;
         delete dynchildhelper.code;
@@ -216,9 +216,9 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
 
     return {
         structure,
-        structureSqlDocuments,
+        structureSqlFiles,
         dynchildhelpers,
-        helperSqlDocuments
+        helperSqlFiles
     };
 }
 

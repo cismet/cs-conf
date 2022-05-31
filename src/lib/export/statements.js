@@ -84,19 +84,13 @@ SELECT
     t.name "dbType",tc.table_name "cidsType",tc.table_name "oneToMany", tc.table_name "manyToMany", a.precision, a.scale, a.extension_attr, NOT a.optional mandatory, a.default_value "defaultValue",
     a.foreign_key, a.foreign_key_references_to "foreignKeyTableId", fkc.table_name foreignkeytable, a.substitute,
     NOT a.visible hidden, a.indexed,
-    a.isarray "isArrray", a.array_key "arrayKey",
-    jcs.type toStringType, jcs.qualifier toStringClass,
-    jce.type editorType, jce.qualifier editorClass,
-    jcce.type complexEditorType, jcce.qualifier complexEditorClass
+    a.isarray "isArrray", a.array_key "arrayKey"
 FROM 
     cs_attr a
     LEFT OUTER JOIN cs_class c ON (a.class_id=c.id)
     LEFT OUTER JOIN cs_type t ON (a.type_id=t.id)
     LEFT OUTER JOIN cs_class tc ON (t.class_id=tc.id)
     LEFT OUTER JOIN cs_class fkc ON (a.foreign_key_references_to=fkc.id)
-    LEFT OUTER JOIN cs_java_class jcs on (c.tostring=jcs.id)
-    LEFT OUTER JOIN cs_java_class jce on (c.editor=jce.id)
-    LEFT OUTER JOIN cs_java_class jcce on (c.renderer=jcce.id)
 ORDER BY
     c.table_name, a.pos;
 `;

@@ -15,9 +15,7 @@ export function readConfigFiles(folder) {
     let usermanagementFile = util.format("%s/usermanagement.json", folder);
     let classesFile = util.format("%s/classes.json", folder);
     let classPermsFile = util.format("%s/classPerms.json", folder);
-    //let normalizedClassPermsFile = util.format("%s/normalizedClassPerms.json", folder);
     let attrPermsFile =util.format("%s/attrPerms.json", folder);
-    //let normalizedAttrPermsFile = util.format("%s/normalizedAttrPerms.json", folder);
     let structureFile = util.format("%s/structure.json", folder);
     let dynchildhelpersFile = util.format("%s/dynchildhelpers.json", folder);
 
@@ -27,9 +25,7 @@ export function readConfigFiles(folder) {
     let usermanagement = fs.existsSync(usermanagementFile) ? JSON.parse(fs.readFileSync(usermanagementFile, {encoding: 'utf8'})) : [];
     let classes = fs.existsSync(classesFile) ? JSON.parse(fs.readFileSync(classesFile, {encoding: 'utf8'})) : [];
     let classPerms = fs.existsSync(classPermsFile) ? JSON.parse(fs.readFileSync(classPermsFile, {encoding: 'utf8'})) : [];
-    //let normalizedClassPerms = fs.existsSync(normalizedClassPermsFile) ? JSON.parse(fs.readFileSync(normalizedClassPermsFile, {encoding: 'utf8'})) : [];
     let attrPerms = fs.existsSync(attrPermsFile) ? JSON.parse(fs.readFileSync(attrPermsFile, {encoding: 'utf8'})) : [];
-    //let normalizedAttrPerms = fs.existsSync(normalizedAttrPermsFile) ? JSON.parse(fs.readFileSync(normalizedAttrPermsFile, {encoding: 'utf8'})) : [];
     let structure = fs.existsSync(structureFile) ? JSON.parse(fs.readFileSync(structureFile, {encoding: 'utf8'})) : [];
     let dynchildhelpers = fs.existsSync(dynchildhelpersFile) ? JSON.parse(fs.readFileSync(dynchildhelpersFile, {encoding: 'utf8'})) : [];
 
@@ -96,8 +92,8 @@ export function writeConfigFiles(folder, config, overwrite = false) {
         attrPerms,
         structure,
         dynchildhelpers,
-        structureSqlDocuments,
-        helperSqlDocuments,
+        structureSqlFiles,
+        helperSqlFiles,
         xmlFiles
     } = config;
 
@@ -124,14 +120,14 @@ export function writeConfigFiles(folder, config, overwrite = false) {
     if (fs.existsSync(structureDynamicChildrenFolder)) {
         fs.rmSync(structureDynamicChildrenFolder, { recursive: true, force: true });
     }
-    if (structureSqlDocuments.size > 0) {
+    if (structureSqlFiles.size > 0) {
         fs.mkdirSync(structureDynamicChildrenFolder);
     }
 
     if (fs.existsSync(structureHelperStatementsFolder)) {
         fs.rmSync(structureHelperStatementsFolder, { recursive: true, force: true });
     }
-    if (helperSqlDocuments.size > 0) {
+    if (helperSqlFiles.size > 0) {
         fs.mkdirSync(structureHelperStatementsFolder);
     }
 
@@ -161,14 +157,14 @@ export function writeConfigFiles(folder, config, overwrite = false) {
     if (structure.length > 0) {
         fs.writeFileSync(util.format("%s/structure.json", folder), stringify(structure, { maxLength: 80 }), "utf8");
     }
-    if (helperSqlDocuments.size > 0) {
-        helperSqlDocuments.forEach(async (value, key) => {
+    if (helperSqlFiles.size > 0) {
+        helperSqlFiles.forEach(async (value, key) => {
             fs.writeFileSync(util.format("%s/%s", structureHelperStatementsFolder, key), value, "utf8");
         });
     }
-    if (structureSqlDocuments.size > 0) {
+    if (structureSqlFiles.size > 0) {
         fs.writeFileSync(util.format("%s/dynchildhelpers.json", folder), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
-        structureSqlDocuments.forEach(async (value, key) => {
+        structureSqlFiles.forEach(async (value, key) => {
             fs.writeFileSync(util.format("%s/%s", structureDynamicChildrenFolder, key), value, "utf8");
         });
     }        
