@@ -3,7 +3,7 @@ import { extractGroupAndDomain } from '../../../build/lib/tools/cids';
 
 function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     let csConfigAttrKeyEntries = []
-    let csConfigAttrValueEntries = new Set();
+    let csConfigAttrValueEntries = new Map();
     let csConfigAttrValues4A = []; //only action attrs
     let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
     
@@ -64,15 +64,13 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
             duplicateKeyFinder.add(fullKey);
         }
 
-        let value;
         if (type === 'X' || type === 'C') {
-            if (type === 'X') {
-                //hier xml file einladen
-                value = xmlFiles.get(allConfigurationAttribute.xmlfile);
-            } else {
-                value = allConfigurationAttribute.value;
-            }
-            csConfigAttrValueEntries.add(value);
+            let value = (type === 'X') ? xmlFiles.get(allConfigurationAttribute.xmlfile) : allConfigurationAttribute.value;
+            let filename = (type === 'X') ? allConfigurationAttribute.xmlfile : null;
+            csConfigAttrValueEntries.set(value, [ 
+                value, 
+                filename 
+            ]);
             csConfigAttrValues4CandX.push([
                 allConfigurationAttribute.domain, 
                 allConfigurationAttribute.group, 
@@ -92,8 +90,7 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
             ]);
         }   
     }
-    let csConfigAttrValueEntriesArray = [];
-    csConfigAttrValueEntries.forEach( csConfigAttrValueEntry => csConfigAttrValueEntriesArray.push([csConfigAttrValueEntry]) );
+    let csConfigAttrValueEntriesArray = Array.from(csConfigAttrValueEntries.values());
 
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
 }

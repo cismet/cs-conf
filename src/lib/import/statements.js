@@ -85,7 +85,7 @@ INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id, i
 `;
 
 export const simple_cs_config_attr_value = `
-INSERT INTO cs_config_attr_value (id, value) VALUES (DEFAULT, $1);
+INSERT INTO cs_config_attr_value (id, value, filename) VALUES (DEFAULT, $1, $2);
 `;
 
 // $1 = domain[[]
@@ -131,7 +131,7 @@ INSERT INTO cs_java_class (qualifier, notice, "type") VALUES ($1, NULL, $2);
 `;
 
 export const simple_cs_dynamic_children_helper = `
-INSERT INTO cs_dynamic_children_helper (name, code, id) VALUES ($1, $2, $3);
+INSERT INTO cs_dynamic_children_helper (name, code, filename, id) VALUES ($1, $2, $3, $4);
 `;
 
 export const execute_cs_refresh_dynchilds_functions = `
@@ -337,13 +337,26 @@ INSERT INTO cs_ug_attr_perm (ug_id, attr_id, permission, domain, id)
 
 export const complex_cs_cat_node = `
 INSERT INTO cs_cat_node (
-    name, url, class_id, object_id, node_type, 
-    is_root, org, dynamic_children, sql_sort, policy, 
-    derive_permissions_from_class, iconfactory, icon, artificial_id, id
+    name, 
+    url, 
+    class_id, 
+    object_id, 
+    node_type, 
+    is_root, 
+    org, 
+    dynamic_children, 
+    dynamic_children_filename, 
+    sql_sort, 
+    policy, 
+    derive_permissions_from_class, 
+    iconfactory, 
+    icon, 
+    artificial_id, 
+    id
 ) 
     SELECT     
         n, d, cs_class.id, oid, nt,
-        ir, o, dc, ss, cs_policy.id, 
+        ir, o, dc, dcfn, ss, cs_policy.id, 
         dpc, null, i, aid, tid
     FROM (SELECT
         UNNEST($1::text[]), -- name
@@ -354,16 +367,17 @@ INSERT INTO cs_cat_node (
         UNNEST($6::bool[]), -- is_root
         UNNEST($7::text[]), -- org
         UNNEST($8::text[]), -- dynamic_children
-        UNNEST($9::bool[]), -- sql_sort
-        UNNEST($10::text[]), -- policy
-        UNNEST($11::bool[]), -- derive_permissions_from_class
-        UNNEST($12::text[]), -- iconfactory
-        UNNEST($13::text[]), -- icon
-        UNNEST($14::text[]), -- artificial_id
-        UNNEST($15::integer[]) -- id
-    ) AS t(n,d,t,oid,nt,ir,o,dc,ss,p,dpc,if,i,aid,tid)
-    LEFT OUTER JOIN  cs_class ON (t=cs_class.table_name)
-    LEFT OUTER JOIN cs_policy ON (p=cs_policy.name)
+        UNNEST($9::text[]), -- dynamic_children_filename
+        UNNEST($10::bool[]), -- sql_sort
+        UNNEST($11::text[]), -- policy
+        UNNEST($12::bool[]), -- derive_permissions_from_class
+        UNNEST($13::text[]), -- iconfactory
+        UNNEST($14::text[]), -- icon
+        UNNEST($15::text[]), -- artificial_id
+        UNNEST($16::integer[]) -- id
+    ) AS t(n, d, t, oid, nt, ir, o, dc, dcfn, ss, p, dpc, if, i, aid, tid)
+    LEFT OUTER JOIN  cs_class ON (t = cs_class.table_name)
+    LEFT OUTER JOIN cs_policy ON (p = cs_policy.name)
 ;
 `;
 

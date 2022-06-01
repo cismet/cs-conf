@@ -16,6 +16,7 @@ function analyzeAndPreprocess(configAttributes) {
     const domainConfigAttrs = new Map();
     const xmlFiles = new Map();
 
+    let valuesToFilename = new Map();
     let xmlDocCounter = new Map();
     for (let attr of configAttributes) {
         let attrInfo = {
@@ -23,25 +24,31 @@ function analyzeAndPreprocess(configAttributes) {
             keygroup: attr.keygroup
         }
         switch (attr.type) {
-            case 'C':
-                {
-                    attrInfo.value = attr.value
-                    break;
-                }
-            case 'X':
-                {
+            case 'C': {
+                attrInfo.value = attr.value                
+            } break;
+            case 'X': {
+                let xmlToSave;
+                try {
+                    xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n' });
+                } catch (formatterProblem) {
+                    xmlToSave = attr.value;
+                }                    
+
+                let fileName;
+                if (attr.filename != null) {
+                    fileName = attr.filename;
+                } else if (valuesToFilename.has(attr.value)) {
+                    fileName = valuesToFilename.get(attr.value);
+                } else {
                     let counter = xmlDocCounter.has(attr.key) ? xmlDocCounter.get(attr.key) + 1 : 1;
                     xmlDocCounter.set(attr.key, counter);
-                    let xmlToSave;
-                    try {
-                        xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n' });
-                    } catch (formatterProblem) {
-                        xmlToSave = attr.value;
-                    }
-                    let fileName = util.format("%s.%s.xml", attr.key, zeroFill(4, counter));
-                    xmlFiles.set(fileName, xmlToSave);
-                    attrInfo.xmlfile = fileName;
+                    fileName = util.format("%s.%s.xml", attr.key, zeroFill(4, counter));
                 }
+                valuesToFilename.set(attr.value, fileName);
+                xmlFiles.set(fileName, xmlToSave);
+                attrInfo.xmlfile = fileName;
+            } break;
         }
         if (attr.login_name) {
             let allAttributesForUser = userConfigAttrs.get(attr.login_name);

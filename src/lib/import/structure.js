@@ -38,8 +38,12 @@ function flattenStructure(children, level = 0, originals = new Map(), copiesPerO
 
 function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
     let csDynamicChildrenHelperEntries = [];
-    for (let h of dynchildhelpers) {
-        csDynamicChildrenHelperEntries.push([h.name, helperSqlFiles.get(h.code_file)]);
+    for (let dynchildhelper of dynchildhelpers) {
+        csDynamicChildrenHelperEntries.push([
+            dynchildhelper.name, 
+            helperSqlFiles.get(dynchildhelper.code_file),
+            dynchildhelper.code_file,
+        ]);
     }
     return csDynamicChildrenHelperEntries;
 }
@@ -58,6 +62,7 @@ function prepareCatNodes(nodes, structureSqlFiles) {
                 node.root,
                 node.org,
                 structureSqlFiles.get(node.dynamic_children_file),
+                node.dynamic_children_file,
                 node.sql_sort,
                 node.policy,
                 node.derive_permissions_from_class,

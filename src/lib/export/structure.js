@@ -193,7 +193,8 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
     }): Array.from(allNodes.values());
     for (let node of sortedNodes) {        
         if (node.dynamic_children) {
-            let fileName = util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
+            let fileName = node.dynamic_children_filename != null ? node.dynamic_children_filename : util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
+            delete node.dynamic_children_filename;
             structureSqlFiles.set(fileName, node.dynamic_children);
             node.dynamic_children_file = fileName;        
             delete node.dynamic_children;
@@ -206,7 +207,13 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
         return aSimple.localeCompare(bSimple);
     }) : dynchildhelpersResult;
     for (let dynchildhelper of sortedDynchildhelpers) {
-        let fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
+        let fileName;
+        if (dynchildhelper.filename != null) {
+            fileName = dynchildhelper.filename;
+        } else {
+            fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
+        }
+        delete dynchildhelper.filename;
         helperSqlFiles.set(fileName, dynchildhelper.code);
         dynchildhelper.code_file = fileName;    
         delete dynchildhelper.id;

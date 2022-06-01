@@ -1,22 +1,23 @@
 export const configAttr = `
 SELECT 
-    u.login_name,
-    md.name domainname,
-    ug.name||'@'||ugd.name groupkey,
-    k.key,
-    k.group_name keygroup,
-    t.type,
-    v.value,
-    jt.id AS id
+    usr.login_name,
+    domain.name AS domainname,
+    ug.name || '@' || ug_domain.name AS groupkey,
+    key.key,
+    key.group_name AS keygroup,
+    type.type,
+    value.value,
+    value.filename
 FROM 
-    cs_config_attr_jt jt
-    INNER JOIN cs_config_attr_key k ON (jt.key_id=k.id)
-    INNER JOIN cs_config_attr_type t ON (jt.type_id=t.id)
-    INNER JOIN cs_config_attr_value v ON (jt.val_id=v.id) 
-    LEFT OUTER JOIN cs_domain md ON (jt.dom_id=md.id)
-    LEFT OUTER JOIN cs_usr u ON (jt.usr_id=u.id) 
-    LEFT OUTER JOIN cs_ug ug ON (jt.ug_id=ug.id) LEFT OUTER JOIN cs_domain ugd ON (ug."domain"=ugd.id)
-ORDER BY id;
+    cs_config_attr_jt AS jt
+    INNER JOIN cs_config_attr_key key ON jt.key_id = key.id
+    INNER JOIN cs_config_attr_type type ON jt.type_id = type.id
+    INNER JOIN cs_config_attr_value value ON jt.val_id = value.id
+    LEFT OUTER JOIN cs_domain AS domain ON jt.dom_id = domain.id
+    LEFT OUTER JOIN cs_usr AS usr ON jt.usr_id = usr.id
+    LEFT OUTER JOIN cs_ug AS ug ON jt.ug_id = ug.id
+    LEFT OUTER JOIN cs_domain AS ug_domain ON ug.domain = ug_domain.id
+ORDER BY jt.id;
 `;
 
 export const domains = 'SELECT name AS domainname FROM cs_domain ORDER BY id;';
@@ -132,21 +133,32 @@ ORDER BY cs_ug_attr_perm.id
 
 export const nodes = `
 SELECT 
-    n.id, n.name, n.url as descr, c.table_name as table, 
-    n.derive_permissions_from_class, n.object_id, n.node_type, n.is_root, n.org, 
-    n.dynamic_children, n.sql_sort, p.name "policy", iconfactory, icon, artificial_id
+    node.id, 
+    node.name, 
+    node.url AS descr, 
+    class.table_name AS table, 
+    node.derive_permissions_from_class, 
+    node.object_id, 
+    node.node_type, 
+    node.is_root, 
+    node.org, 
+    node.dynamic_children, 
+    node.dynamic_children_filename,
+    node.sql_sort, 
+    policy.name AS policy, 
+    node.iconfactory, 
+    node.icon, 
+    node.artificial_id
 FROM
-    cs_cat_node n
-    LEFT OUTER JOIN cs_class "c" ON (n.class_id=c.id)
-    LEFT OUTER JOIN cs_policy p ON (n.policy=p.id)
-ORDER BY n.id
+    cs_cat_node AS node
+    LEFT OUTER JOIN cs_class AS class ON node.class_id = class.id
+    LEFT OUTER JOIN cs_policy AS policy ON node.policy = policy.id
+ORDER BY node.id
 `;
 
 export const dynchildhelpers = `
-SELECT 
-    id, name, code
-FROM
-    cs_dynamic_children_helper
+SELECT id, name, code, filename
+FROM cs_dynamic_children_helper
 ORDER BY id    
 `;
 

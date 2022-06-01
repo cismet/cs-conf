@@ -61,9 +61,9 @@ function testConfigurationAttributes() {
 
     it('normal', (done) => {
         let expected = JSON.parse(`[
-            { "key": "inTestGroup@LOCAL", "keygroup": "testGroup", "value": null, "xmlfile": null },
-            { "key": "withoutGroupNorValue@LOCAL", "keygroup": "__no_group__", "value": null, "xmlfile": null },
-            { "key": "InNoGroupWithValue@LOCAL", "keygroup": "__no_group__", "value": "test", "xmlfile": null }
+            { "key": "inTestGroup", "keygroup": "testGroup", "value": null, "xmlfile": null },
+            { "key": "withoutGroupNorValue", "keygroup": "__no_group__", "value": null, "xmlfile": null },
+            { "key": "InNoGroupWithValue", "keygroup": "__no_group__", "value": "test", "xmlfile": null }
         ]`);   
         let normalized = normalizeConfigurationAttributes(domains);            
         expectEqualJson(normalized, expected, done);
