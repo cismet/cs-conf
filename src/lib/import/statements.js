@@ -36,15 +36,16 @@ INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator, pw_has
 `;
 
 export const nested_cs_ug_membership = `
-INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain) 
-    SELECT cs_ug.id,cs_usr.id,cs_ug.domain FROM (SELECT 
+INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain, id) 
+    SELECT cs_ug.id, cs_usr.id, cs_ug.domain, t.id FROM (SELECT 
         UNNEST($1::text[]), 
         UNNEST($2::text[]), 
-        UNNEST($3::text[])
-    ) AS t(g, u, d) 
-    JOIN cs_ug ON (cs_ug.name=g) 
-    JOIN cs_usr ON (cs_usr.login_name=u)   
-    JOIN cs_domain ON (cs_ug.domain=cs_domain.id)
+        UNNEST($3::text[]),
+        UNNEST($4::integer[])
+    ) AS t(groupname, username, domainname, id) 
+    JOIN cs_ug ON (cs_ug.name = groupname) 
+    JOIN cs_usr ON (cs_usr.login_name = username)   
+    JOIN cs_domain ON (cs_ug.domain = cs_domain.id)
 ;
 `;     
 
@@ -59,20 +60,27 @@ INSERT INTO cs_config_attr_key (id, "key", group_name) VALUES (DEFAULT, $1, $2);
 // $3 = user[]
 // $4 = key[]
 export const complex_cs_config_attrs4A = `
-INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
-    SELECT cs_usr.id user_id, cs_ug.id group_id,cs_domain.id domain_id, cs_config_attr_key.id key_id, 1,cs_config_attr_type.id type_id
+INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id, id) 
+    SELECT 
+        cs_usr.id AS user_id, 
+        cs_ug.id AS group_id,
+        cs_domain.id AS domain_id, 
+        cs_config_attr_key.id AS key_id, 
+        1,
+        cs_config_attr_type.id AS type_id,
+        t.id AS id
     FROM (SELECT 
         UNNEST($1::text[]), 
         UNNEST($2::text[]), 
         UNNEST($3::text[]), 
-        UNNEST($4::text[])
-    ) AS t(d, g, u, k) 
-    LEFT OUTER JOIN cs_domain ugd ON (ugd.name=d) 
-    LEFT OUTER JOIN cs_ug ON (cs_ug.name=g AND cs_ug.domain=ugd.id) 
-    LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
-    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
-    JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
-    JOIN cs_config_attr_type ON (cs_config_attr_type.type='A')
+        UNNEST($4::text[]),
+        UNNEST($5::integer[])
+    ) AS t(domainname, groupname, username, attrkey, id) 
+    LEFT OUTER JOIN cs_domain ON (cs_domain.name = domainname) 
+    LEFT OUTER JOIN cs_ug ON (cs_ug.name = groupname AND cs_ug.domain = cs_domain.id) 
+    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name = username)
+    JOIN cs_config_attr_key ON (cs_config_attr_key.key = attrkey)
+    JOIN cs_config_attr_type ON (cs_config_attr_type.type = 'A')
 ;
 `;
 
@@ -87,29 +95,30 @@ INSERT INTO cs_config_attr_value (id, value) VALUES (DEFAULT, $1);
 // $5 = type[]
 // $6 = value[]
 export const complex_cs_config_attrs_C_X = `
-INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id) 
+INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id, id) 
     SELECT
-        cs_usr.id user_id, 
-        cs_ug.id group_id,
-        cs_domain.id domain_id, 
-        cs_config_attr_key.id key_id, 
-        cs_config_attr_value.id value_id, 
-        cs_config_attr_type.id type_id
+        cs_usr.id AS user_id, 
+        cs_ug.id AS group_id,
+        cs_domain.id AS domain_id, 
+        cs_config_attr_key.id AS key_id, 
+        cs_config_attr_value.id AS value_id, 
+        cs_config_attr_type.id AS type_id,
+        t.id AS id
     FROM (SELECT 
         UNNEST($1::text[]), 
         UNNEST($2::text[]), 
         UNNEST($3::text[]), 
         UNNEST($4::text[]), 
         UNNEST($5::text[]), 
-        UNNEST($6::text[])
-    ) AS t(d, g, u, k, t, v) 
-    LEFT OUTER JOIN cs_domain ugd ON (ugd.name=d) 
-    LEFT OUTER JOIN cs_ug ON (cs_ug.name=g AND cs_ug.domain=ugd.id) 
-    LEFT OUTER JOIN cs_domain ON (cs_domain.name=d) 
-    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name=u)
-    JOIN cs_config_attr_key ON (cs_config_attr_key.key=k)
-    JOIN cs_config_attr_type ON (cs_config_attr_type.type=t)
-    JOIN cs_config_attr_value ON (cs_config_attr_value.value=v)
+        UNNEST($6::text[]),
+        UNNEST($7::integer[])
+    ) AS t(domainname, groupname, username, attrkey, attrtype, attrvalue, id) 
+    LEFT OUTER JOIN cs_domain ON (cs_domain.name = domainname) 
+    LEFT OUTER JOIN cs_ug ON (cs_ug.name = groupname AND cs_ug.domain = cs_domain.id) 
+    LEFT OUTER JOIN cs_usr ON (cs_usr.login_name = username)
+    JOIN cs_config_attr_key ON (cs_config_attr_key.key = attrkey)
+    JOIN cs_config_attr_type ON (cs_config_attr_type.type = attrtype)
+    JOIN cs_config_attr_value ON (cs_config_attr_value.value = attrvalue)
 ;
 `;
 

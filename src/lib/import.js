@@ -186,7 +186,7 @@ async function csImport(options) {
         console.log("(re)creating dynamic children helper functions");   
         await client.query(stmnts.execute_cs_refresh_dynchilds_functions);    
 
-        if (!options.client) {
+        if (!options.client && client != null) {
             await client.end();
         }
     } else {
@@ -278,6 +278,7 @@ export function prepareImport({
     setIdsFromOrder(csClassPermEntries);
     setIdsFromOrder(csAttrPermEntries);
     setIdsFromOrder(csDynamicChildrenHelperEntries);
+    setIdsFromOrder(csUgMembershipEntries);
     //setIdsFromOrder(csCatNodeEntries);
 
     return {

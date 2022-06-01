@@ -134,7 +134,7 @@ async function csExport(options) {
         Object.assign(config, reorganize ? reorganizeConfig(exported) : exported);
     } finally {
         //close the connection -----------------------------------------------------------------------
-        if (!options.client) {
+        if (!options.client && client != null) {
             await client.end();
         }
     }

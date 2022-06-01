@@ -1,5 +1,5 @@
-import * as cidstools from '../tools/cids';
 import util from 'util';
+import { extractGroupAndDomain } from '../../../build/lib/tools/cids';
 
 function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     let csConfigAttrKeyEntries = []
@@ -21,7 +21,7 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
         if (group.configurationAttributes != null) {
             let groupKey = group.key;
             let configurationAttributes = group.configurationAttributes;
-            let groupAndDomain = cidstools.extractGroupAndDomain(groupKey);
+            let groupAndDomain = extractGroupAndDomain(groupKey);
             for (let configurationAttribute of configurationAttributes) {
                 configurationAttribute.group = groupAndDomain.group;
                 configurationAttribute.domain = groupAndDomain.domain;
@@ -33,7 +33,7 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
     for (let user of usermanagement) {
         if (user.configurationAttributes != null) {
             let group = user.groups[0];
-            let groupAndDomain = cidstools.extractGroupAndDomain(group);
+            let groupAndDomain = extractGroupAndDomain(group);
             for (let configurationAttribute of user.configurationAttributes) {
                 configurationAttribute.user = user.login_name;
                 configurationAttribute.group = groupAndDomain.group;
@@ -43,6 +43,7 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
         }
     }
 
+    let id = 1;
     let duplicateKeyFinder = new Set();
     for (let allConfigurationAttribute of allConfigurationAttributes) {
         let type;
@@ -78,14 +79,16 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
                 allConfigurationAttribute.user, 
                 allConfigurationAttribute.key, 
                 type, 
-                value 
+                value,
+                id++, 
             ]);
         } else {
             csConfigAttrValues4A.push([
                 allConfigurationAttribute.domain, 
                 allConfigurationAttribute.group, 
                 allConfigurationAttribute.user, 
-                allConfigurationAttribute.key
+                allConfigurationAttribute.key,
+                id++, 
             ]);
         }   
     }

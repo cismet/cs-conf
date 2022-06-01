@@ -35,7 +35,7 @@ async function csRestore(options) {
         let seconds = (end - start) / 1000;
         console.log(util.format(" ↳ done in %f seconds.", seconds));
 
-        if (!options.client) {
+        if (!options.client && client != null) {
             //close the connection -----------------------------------------------------------------------
             await client.end();
         }

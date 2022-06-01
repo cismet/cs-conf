@@ -390,7 +390,7 @@ async function csSync(options) {
 
     if (!noDiffs) {
         let differences = await csDiff( { folder, comparisionFolder: null, configDir, schema, client } );
-        if (differences > 0) {
+        if (differences.length > 0) {
             throw util.format("%d differences found, aborting sync !", differences);
         }
     }
@@ -584,7 +584,7 @@ async function csSync(options) {
 
     // ----
 
-    if (!options.client) {
+    if (!options.client && client != null) {
         //close the connection -----------------------------------------------------------------------
         await client.end();
     }

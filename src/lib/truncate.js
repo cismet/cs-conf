@@ -28,7 +28,7 @@ async function csTruncate(options) {
         console.log(" ↳ done.");
 
 
-        if (!options.client) {
+        if (!options.client && client != null) {
             //close the connection -----------------------------------------------------------------------
             await client.end();
         }

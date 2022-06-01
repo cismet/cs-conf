@@ -35,7 +35,7 @@ async function csBackup(options) {
     console.log(util.format("writing backup to %s", fileName));
     fs.writeFileSync(fileName, zlib.gzipSync(queries), "utf8");
     
-    if (!options.client) {
+    if (!options.client && client != null) {
         //close the connection -----------------------------------------------------------------------
         await client.end();
     }

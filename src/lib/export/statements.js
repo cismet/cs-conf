@@ -47,14 +47,17 @@ ORDER BY cs_ug.id;
 `;
 
 export const usergroupmembership = ` 
-SELECT distinct
-    cs_ug_membership.id AS id, cs_usr.login_name AS login_name, cs_domain.name AS domainname, cs_ug.name AS groupname
-FROM 
-    cs_ug_membership cs_ug_membership 
-    INNER JOIN cs_usr ON (cs_ug_membership.usr_id = cs_usr.id)
-    INNER JOIN cs_ug ON (cs_ug_membership.ug_id = cs_ug.id) 
-    INNER JOIN cs_domain ON (cs_domain.id = cs_ug.domain)
-ORDER BY cs_ug_membership.id;    
+SELECT login_name, domainname, groupname
+FROM (
+    SELECT min(cs_ug_membership.id) AS id, cs_usr.login_name AS login_name, cs_domain.name AS domainname, cs_ug.name AS groupname
+    FROM 
+        cs_ug_membership cs_ug_membership 
+        INNER JOIN cs_usr ON (cs_ug_membership.usr_id = cs_usr.id)
+        INNER JOIN cs_ug ON (cs_ug_membership.ug_id = cs_ug.id) 
+        INNER JOIN cs_domain ON (cs_domain.id = cs_ug.domain)
+    GROUP BY cs_usr.login_name, cs_domain.name, cs_ug.name
+) AS sub
+ORDER BY id; 
 `;
 
 export const classes = `

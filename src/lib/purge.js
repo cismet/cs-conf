@@ -25,7 +25,7 @@ async function csPurge(options) {
         await client.query(statements.join("\n"));
         console.log(" ↳ done .");        
 
-        if (!options.client) {
+        if (!options.client && client != null) {
             //close the connection -----------------------------------------------------------------------
             await client.end();
         }
