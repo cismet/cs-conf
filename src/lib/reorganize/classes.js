@@ -1,18 +1,19 @@
+import reorganizeAttributes from "./attributes";
+
 function reorganizeClasses(classes) {
     if (classes != null) {
         for (let clazz of classes) {
+            if (clazz.table != null) {
+                clazz.table = clazz.table.toLowerCase();
+            }            
             if (clazz.attributes != null) {
-                clazz.attributes = clazz.attributes.sort((a, b) => { 
-                    let aField = a.field.toLowerCase();
-                    let bField = b.field.toLowerCase();
-                    return aField.localeCompare(bField);
-                });
+                clazz.attributes = reorganizeAttributes(clazz.attributes);
             }
         }
         // TODO additionalattributes (which is a Map, not an array) ?
 
         classes = classes.sort((a, b) => {
-            return a.table.toLowerCase().localeCompare(b.table.toLowerCase())
+            return a.table.localeCompare(b.table)
         });
     }
     
