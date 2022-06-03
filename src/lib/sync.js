@@ -42,23 +42,23 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
                             if (cidsAttribute.manyToMany) {
                                     // array attribute => adding mandatory integer column
-                                columns.push({ name: fieldName, type: "integer", primary: fieldName == pk, null: false });
+                                columns.push({ name: fieldName, type: "integer", primary: false, null: false });
                             } else {
                                 // primitive attribute => adding column with attributes
                                 columns.push({ name: fieldName, type: fullTypeFromAttribute(cidsAttribute), primary: fieldName == pk, null: !cidsAttribute.mandatory, default: cidsAttribute.defaultValue});
                             }
 
-                            if (fieldName == pk) {
+                            /*if (fieldName == pk) {
                                 // no need to create a pk anymore, it was explicitly defined
                                 pk = null;
-                            }
+                            }*/
                         }
                     } 
                 } 
-                if (pk) {
+                /*if (pk) { 
                     // adding primary key (at the beginning)
                     columns.unshift({ name: pk, type: "integer", null: false, default: util.format("nextval('%s')", sequenceName) })
-                }
+                }*/
 
             }
 

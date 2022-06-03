@@ -16,8 +16,9 @@ import reorganizeClassPerms from './reorganize/classPerms';
 import reorganizePolicyRules from './reorganize/policyRules';
 import reorganizeDomains from './reorganize/domains';
 import reorganizeDynchildhelpers from './reorganize/dynchildhelpers';
-import reorganizeUsergroups from './reorganize/usergroups';
+import reorganizeStructure from './reorganize/structure';
 import reorganizeUsermanagememt from './reorganize/usermanagement';
+import reorganizeUsergroups from './reorganize/usergroups';
 
 async function createConfig(client) {
     console.log("analyzing configuration attributes");
@@ -105,7 +106,7 @@ function reorganizeConfig({
         classPerms: reorganizeClassPerms(classPerms),
         attrPerms: reorganizeAttrPerms(attrPerms),
         dynchildhelpers: reorganizeDynchildhelpers(dynchildhelpers),
-        structure: structure,
+        structure: reorganizeStructure(structure),
         structureSqlFiles,
         helperSqlFiles,
         xmlFiles
@@ -142,7 +143,7 @@ async function csExport(options) {
     // TODO simplify
 
     console.log("writing config Files");
-    writeConfigFiles(folder, config, overwrite);
+    writeConfigFiles(config, folder, overwrite);
 }
 
 export default csExport;

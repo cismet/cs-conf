@@ -1,0 +1,23 @@
+[
+    {
+        "table": "table1",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@LOCAL"],
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "comment": null
+    }, {
+        "table": "table2",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "write": [],
+        "comment": null
+    }, {
+        "table": "table3",
+        "read": [],
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "comment": null
+    }, {
+        "table": "table4",
+        "read": [],
+        "write": [],
+        "comment": null
+    }          
+]

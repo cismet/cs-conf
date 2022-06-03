@@ -1,5 +1,5 @@
 import normalizeConfigurationAttributes from "./configurationAttributes";
-import { defaultDomain } from "./_defaultObjects";
+import { defaultDomain } from "../tools/defaultObjects";
 
 function normalizeDomains(domains) {
     let normalized = [];

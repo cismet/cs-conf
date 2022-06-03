@@ -1,5 +1,5 @@
 import normalizePerms from "./perms";
-import { defaultNode } from "./_defaultObjects";
+import { defaultNode } from "../tools/defaultObjects";
 
 function normalizeStructure(structure) {
     let normalized = [];

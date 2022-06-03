@@ -12,6 +12,7 @@ import csCreate from './lib/create';
 import csTruncate from './lib/truncate';
 import csPassword from './lib/password';
 import csNormalize from './lib/normalize';
+import csSimplify from './lib/simplify';
 
 program.version('0.9.9').option('-c, --config <path>', 'set config path. ', './runtime.properties');
 
@@ -121,6 +122,26 @@ program.command('sync').alias('s').description('synchronizes the cids classes wi
 		console.log();
 		try {
 			await csNormalize(options);
+			process.exit(0);
+		} catch (e) {
+			console.error(e); // 💩
+			process.exit(1);
+		}	
+	});
+
+	program.command('simplify').alias('_').description('TODO')
+	.option('-f, --folder <folder1>', 'the folder containing the classes configuration', 'config')
+	.option('-t, --target <folder2>', 'the folder to simplify the config into', null)
+	.action(async (cmd) => {		
+		let options = { 
+			folder: cmd.folder,
+			target: cmd.target,
+		};
+		console.log("starting simplify with following options:");
+		console.table(options);
+		console.log();
+		try {
+			await csSimplify(options);
 			process.exit(0);
 		} catch (e) {
 			console.error(e); // 💩

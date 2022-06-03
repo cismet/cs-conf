@@ -15,7 +15,7 @@ async function csNormalize(options) {
     let config = readConfigFiles(folder);    
     let normalized = normalizeConfig(config);
     if (target != null) {
-        writeConfigFiles(target, normalized, true);
+        writeConfigFiles(normalized, target, true);
     }
     return normalized;
 }

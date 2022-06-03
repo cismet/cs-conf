@@ -1,11 +1,13 @@
+import reorganizePerms from "./perms";
+
 function reorganizeAttrPerms(attrPerms) {
     if (attrPerms != null) {
         for (let attrPerm of attrPerms) {
             if (attrPerm.write) {
-                attrPerm.write = attrPerm.write.sort();
+                attrPerm.write = reorganizePerms(attrPerm.write);
             }
             if (attrPerm.read) {
-                attrPerm.read = attrPerm.read.sort();
+                attrPerm.read = reorganizePerms(attrPerm.read);
             }
         }
 

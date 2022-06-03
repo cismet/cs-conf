@@ -1,4 +1,4 @@
-import { defaultPolicyRule } from "./_defaultObjects";
+import { defaultPolicyRule } from "../tools/defaultObjects";
 
 function normalizePolicyRules(policyRules) {
     let normalized = [];

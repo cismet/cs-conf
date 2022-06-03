@@ -1,6 +1,6 @@
 import util from 'util';
 import normalizeAttributes from "./attributes";
-import { defaultClass } from "./_defaultObjects";
+import { defaultClass } from "../tools/defaultObjects";
 
 function normalizeClasses(classes) {
     let normalized = [];
@@ -15,12 +15,20 @@ function normalizeClasses(classes) {
             //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw util.format("oneToMany '%s' has to be uppercase", clazz.oneToMany);
             //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw util.format("manyToMany '%s' has to be uppercase", clazz.manyToMany);
 
+            if (clazz.table != null) {
+                clazz.table = clazz.table.toLowerCase();
+            }            
+            if (clazz.pk != null) {
+                clazz.pk = clazz.pk.toLowerCase();
+            }            
+
             normalized.push(Object.assign({}, defaultClass, clazz, {
                 name: clazz.name != null ? clazz.name : clazz.table,
                 toString: normalizeSpecial(clazz.toString),
                 editor: normalizeSpecial(clazz.editor),
                 renderer: normalizeSpecial(clazz.renderer),
                 attributes: normalizeAttributes(clazz.attributes),
+                icon: undefined,
                 classIcon: clazz.classIcon || clazz.icon || null,
                 objectIcon: clazz.objectIcon || clazz.icon || null,
             }));

@@ -1,11 +1,13 @@
+import reorganizePerms from "./perms";
+
 function reorganizeClassPerms(classPerms) {
     if (classPerms != null) {
         for (let classPerm of classPerms) {
             if (classPerm.write) {
-                classPerm.write = classPerm.write.sort();
+                classPerm.write = reorganizePerms(classPerm.write);
             }
             if (classPerm.read) {
-                classPerm.read = classPerm.read.sort();
+                classPerm.read = reorganizePerms(classPerm.read);
             }
         }
 

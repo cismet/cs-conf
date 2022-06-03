@@ -1,0 +1,9 @@
+[
+    {
+      "name": "helper1",
+      "code" : "SELECT stuff FROM somewhere"
+    }, { 
+        "name": "helper2",
+        "code_file" : "helper2.sql"
+    }
+]

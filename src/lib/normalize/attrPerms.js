@@ -1,5 +1,5 @@
 import normalizePerms from "./perms";
-import { defaultAttrPerm } from "./_defaultObjects";
+import { defaultAttrPerm } from "../tools/defaultObjects";
 
 function normalizeAttrPerms(attrPerms) {
     let normalized = [];

@@ -1,5 +1,4 @@
-import { extendLocalDomain } from "../tools/cids";
-import { defaultConfigurationAttributes } from "./_defaultObjects";
+import { defaultConfigurationAttributes } from "../tools/defaultObjects";
 
 function normalizeConfigurationAttributes(configurationAttributes) {
     let normalized = [];

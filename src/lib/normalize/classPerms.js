@@ -1,5 +1,5 @@
 import normalizePerms from "./perms";
-import { defaultClassPerm } from "./_defaultObjects";
+import { defaultClassPerm } from "../tools/defaultObjects";
 
 function normalizeClassPerms(classPerms) {
     let normalized = [];

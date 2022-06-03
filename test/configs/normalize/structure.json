@@ -1,0 +1,22 @@
+[
+    {
+        "name": "Node 1",
+        "table": "table1",
+        "derive_permissions_from_class": true,
+        "org": "Org.1",
+        "policy": "STANDARD",
+        "dynamic_children_file": "node1.sql"
+    }, {
+        "name": "Node 2",
+        "table": "table1",
+        "org": "Org.2",
+        "children": [
+            {
+                "name": "Node 3",
+                "table": "table2",
+                "dynamic_children_file": "node3.sql"        
+            }
+        ]
+    }
+
+]

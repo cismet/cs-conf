@@ -1,12 +1,10 @@
+import reorganizeConfigurationAttributes from "./configurationAttributes";
+
 function reorganizeDomains(domains) {
     if (domains != null) {
         for (let domain of domains) {
             if (domain.configurationAttributes) {
-                domain.configurationAttributes = domain.configurationAttributes.sort((a, b) => { 
-                    let aKey = a.key;
-                    let bKey = b.key;
-                    return aKey.localeCompare(bKey);
-                });
+                domain.configurationAttributes = reorganizeConfigurationAttributes(domain.configurationAttributes);
             }
         }
 

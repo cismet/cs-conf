@@ -1,0 +1,8 @@
+[
+    {
+      "domainname": "LOCAL",
+      "configurationAttributes": [{ "key": "test" }]
+    }, { 
+        "domainname": "TEST" 
+    }
+]

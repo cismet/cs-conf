@@ -3,9 +3,6 @@ import reorganizeAttributes from "./attributes";
 function reorganizeClasses(classes) {
     if (classes != null) {
         for (let clazz of classes) {
-            if (clazz.table != null) {
-                clazz.table = clazz.table.toLowerCase();
-            }            
             if (clazz.attributes != null) {
                 clazz.attributes = reorganizeAttributes(clazz.attributes);
             }

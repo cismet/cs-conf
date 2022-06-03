@@ -1,5 +1,5 @@
 import util from 'util';
-import { defaultAttribute } from "./_defaultObjects";
+import { defaultAttribute } from "../tools/defaultObjects";
 
 function normalizeAttributes(attributes) {
     let normalized = [];
@@ -8,16 +8,28 @@ function normalizeAttributes(attributes) {
     if (attributes !== undefined) {
         for (let attribute of attributes) {
             if (attribute.field == null) throw "missing field";
-            //if (attribute.field !== attribute.field.toUpperCase()) throw util.format("field '%s' has to be uppercase", attribute.field);
-            
-            let defaultValue = attribute.defaultValue;
+
+            if (attribute.field != null) {
+                attribute.field = attribute.field.toLowerCase();
+            }
+            if (attribute.cidsType != null) {
+                attribute.cidsType = attribute.cidsType.toLowerCase();
+            }
+            if (attribute.oneToMany != null) {
+                attribute.oneToMany = attribute.oneToMany.toLowerCase();
+            }
+            if (attribute.manyToMany != null) {
+                attribute.manyToMany = attribute.manyToMany.toLowerCase();
+            }
+                
+            let defaultValue = attribute.defaultValue !== undefined ? attribute.defaultValue : null;
             if (attribute.defaulValue != null) {
                 defaulValueWarning = true;
                 if (defaultValue == null) {
                     defaultValue = attribute.defaulValue;
                 }
             }
-
+            
             if (
                 attribute.dbType == null &&
                 attribute.cidsType == null &&

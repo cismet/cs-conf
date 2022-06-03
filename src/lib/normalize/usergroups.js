@@ -1,6 +1,6 @@
 import { extendLocalDomain } from "../tools/cids";
 import normalizeConfigurationAttributes from "./configurationAttributes";
-import { defaultUserGroup } from "./_defaultObjects";
+import { defaultUserGroup } from "../tools/defaultObjects";
 
 function normalizeUsergroups(usergroups) {
     let normalized = [];

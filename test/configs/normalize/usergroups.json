@@ -1,0 +1,9 @@
+[
+    {
+        "key": "Group1",
+        "descr": "Descr1",
+        "configurationAttributes": [{ "key": "test" }]
+    }, { 
+        "key": "Group2" 
+    }
+]

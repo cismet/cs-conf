@@ -1,0 +1,15 @@
+[
+    {
+        "table": "table1",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3"],
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+    }, {
+        "table": "table2",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+    }, {
+        "table": "table3",
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+    }, {
+        "table": "table4"
+    }          
+]

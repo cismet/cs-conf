@@ -4,30 +4,24 @@ import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
 import * as constants from './constants.js';
 
+export function readConfigFile(file) {
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : []
+}
+
 export function readConfigFiles(folder) {
     if (!fs.existsSync(folder)) {
         throw util.format("%s does not exist", folder);
     }
 
-    let domainsFile = util.format("%s/domains.json", folder);
-    let policyRulesFile = util.format("%s/policyRules.json", folder);
-    let usergroupsFile = util.format("%s/usergroups.json", folder);
-    let usermanagementFile = util.format("%s/usermanagement.json", folder);
-    let classesFile = util.format("%s/classes.json", folder);
-    let classPermsFile = util.format("%s/classPerms.json", folder);
-    let attrPermsFile =util.format("%s/attrPerms.json", folder);
-    let structureFile = util.format("%s/structure.json", folder);
-    let dynchildhelpersFile = util.format("%s/dynchildhelpers.json", folder);
-
-    let domains = fs.existsSync(domainsFile) ? JSON.parse(fs.readFileSync(domainsFile, {encoding: 'utf8'})) : [];
-    let policyRules = fs.existsSync(policyRulesFile) ? JSON.parse(fs.readFileSync(policyRulesFile, {encoding: 'utf8'})) : [];
-    let usergroups = fs.existsSync(usergroupsFile) ? JSON.parse(fs.readFileSync(usergroupsFile, {encoding: 'utf8'})) : [];
-    let usermanagement = fs.existsSync(usermanagementFile) ? JSON.parse(fs.readFileSync(usermanagementFile, {encoding: 'utf8'})) : [];
-    let classes = fs.existsSync(classesFile) ? JSON.parse(fs.readFileSync(classesFile, {encoding: 'utf8'})) : [];
-    let classPerms = fs.existsSync(classPermsFile) ? JSON.parse(fs.readFileSync(classPermsFile, {encoding: 'utf8'})) : [];
-    let attrPerms = fs.existsSync(attrPermsFile) ? JSON.parse(fs.readFileSync(attrPermsFile, {encoding: 'utf8'})) : [];
-    let structure = fs.existsSync(structureFile) ? JSON.parse(fs.readFileSync(structureFile, {encoding: 'utf8'})) : [];
-    let dynchildhelpers = fs.existsSync(dynchildhelpersFile) ? JSON.parse(fs.readFileSync(dynchildhelpersFile, {encoding: 'utf8'})) : [];
+    let domains = readConfigFile(util.format("%s/domains.json", folder));
+    let policyRules = readConfigFile(util.format("%s/policyRules.json", folder));
+    let usergroups = readConfigFile(util.format("%s/usergroups.json", folder));
+    let usermanagement = readConfigFile(util.format("%s/usermanagement.json", folder));
+    let classes = readConfigFile(util.format("%s/classes.json", folder));
+    let classPerms = readConfigFile(util.format("%s/classPerms.json", folder));
+    let attrPerms = readConfigFile(util.format("%s/attrPerms.json", folder));
+    let structure = readConfigFile(util.format("%s/structure.json", folder));
+    let dynchildhelpers = readConfigFile(util.format("%s/dynchildhelpers.json", folder));
 
     let xmlFiles = new Map();
     let confAttrXmlSnippetsFolder = util.format("%s/%s", folder, constants.confAttrXmlSnippetsFolder);
@@ -81,7 +75,7 @@ export function checkConfigFolders(folder, overwrite = false) {
     }
 }
 
-export function writeConfigFiles(folder, config, overwrite = false) {
+export function writeConfigFiles(config, folder, overwrite = false) {
     let {
         domains,
         policyRules,

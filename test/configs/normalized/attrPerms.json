@@ -1,0 +1,23 @@
+[
+    {
+        "key": "class1.attr1",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@LOCAL"],
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "comment": null
+    }, {
+        "key": "class1.attr2",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "write": [],
+        "comment": null
+    }, {
+        "key": "class2.attr1",
+        "read": [],
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "comment": null
+    }, {
+        "key": "class2.attr2",
+        "read": [],
+        "write": [],
+        "comment": null
+    }          
+]

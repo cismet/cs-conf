@@ -1,12 +1,10 @@
+import reorganizeConfigurationAttributes from "./configurationAttributes";
+
 function reorganizeManagement(usermanagement) {
     if (usermanagement != null) {
         for (let user of usermanagement) {
             if (user.configurationAttributes) {
-                user.configurationAttributes = user.configurationAttributes.sort((a, b) => { 
-                    let aKey = a.key;
-                    let bKey = b.key;
-                    return aKey.localeCompare(bKey);
-                });
+                user.configurationAttributes = reorganizeConfigurationAttributes(user.configurationAttributes);
             }
             if (user.groups) {
                 user.groups = user.groups.sort();

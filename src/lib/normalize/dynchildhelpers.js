@@ -1,5 +1,5 @@
 import normalizeConfigurationAttributes from "./configurationAttributes";
-import { defaultDynchildhelper } from "./_defaultObjects";
+import { defaultDynchildhelper } from "../tools/defaultObjects";
 
 function normalizeDynchildhelpers(dynchildhelpers) {
     let normalized = [];
