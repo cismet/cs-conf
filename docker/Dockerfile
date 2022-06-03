@@ -4,10 +4,11 @@ ENV TZ Europe/Berlin
 
 WORKDIR /app
 
-COPY ./.babelrc ./package.json ./yarn.lock /app/
-COPY ./build /app/build/
-COPY ./src /app/src/
-
 RUN apt -y update && apt -y install postgresql-client && rm -rf /var/lib/apt/lists/*
-RUN yarn install && yarn build
-RUN npm install -g
+RUN npm install -g @babel/core @babel/node
+
+COPY ./.babelrc ./package.json ./package-lock.json /app/
+RUN npm install
+
+COPY ./src /app/src/
+RUN npm run build
