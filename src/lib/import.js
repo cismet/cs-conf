@@ -17,9 +17,9 @@ import { getClientForConfig, setIdsFromOrder, singleRowFiller, nestedFiller } fr
 import { normalizeConfig } from './normalize';
 
 async function csImport(options) {
-    let { folder, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, configDir } = options;
+    let { configDir, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, runtimePropertiesFile } = options;
         
-    let config = readConfigFiles(folder);
+    let config = readConfigFiles(configDir);
     let normalized = normalizeConfig(config);
     let prepared = prepareImport(normalized);
 
@@ -55,8 +55,8 @@ async function csImport(options) {
         if (options.client) {
             client = options.client;
         } else {
-            console.log(util.format("loading config %s", configDir));
-            client = getClientForConfig(configDir);
+            console.log(util.format("loading config %s", runtimePropertiesFile));
+            client = getClientForConfig(runtimePropertiesFile);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
@@ -64,9 +64,9 @@ async function csImport(options) {
 
         if (!skipBackup) {
             let backupFileName = await csBackup({
-                folder: backupFolder, 
+                configDir: backupFolder, 
                 prefix: backupPrefix, 
-                configDir,
+                runtimePropertiesFile,
                 client
             });
             console.log(util.format(" ↳ %s", backupFileName));
@@ -80,7 +80,7 @@ async function csImport(options) {
                 execute: false, 
                 silent: true, 
                 schema, 
-                configDir
+                runtimePropertiesFile
             }));
         } else {
             console.log("truncate cs_tables");
@@ -88,7 +88,7 @@ async function csImport(options) {
                 execute: false, 
                 init: true, 
                 silent: true, 
-                configDir
+                runtimePropertiesFile
             }));
         }
 

@@ -4,7 +4,7 @@ import util from 'util';
 import { getClientForConfig } from './tools/db';
 
 async function csPurge(options) {
-    let { execute, silent, configDir } = options;
+    let { execute, silent, runtimePropertiesFile } = options;
     let statements = [];
     
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-drop.sql', __dirname), 'utf8'));
@@ -14,8 +14,8 @@ async function csPurge(options) {
         if (options.client) {
             client = options.client;
         } else {    
-            console.log(util.format("loading config %s", configDir));
-            client = getClientForConfig(configDir);
+            console.log(util.format("loading config %s", runtimePropertiesFile));
+            client = getClientForConfig(runtimePropertiesFile);
     
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();

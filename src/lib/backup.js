@@ -4,13 +4,13 @@ import zlib from 'zlib';
 import { getClientForConfig } from './tools/db';
 
 async function csBackup(options) {
-    let { folder, prefix, configDir } = options;
+    let { configDir, prefix, runtimePropertiesFile } = options;
     let client;
     if (options.client) {
         client = options.client;
     } else {
-        console.log(util.format("loading config %s", configDir));
-        client = getClientForConfig(configDir);
+        console.log(util.format("loading config %s", runtimePropertiesFile));
+        client = getClientForConfig(runtimePropertiesFile);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
@@ -30,7 +30,7 @@ async function csBackup(options) {
         prefix = util.format("%s[%s:%d]", client.database, client.host, client.port);
     }
     let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-    let fileName = util.format("%s/%s.%s.sql.gz", folder, prefix, formattedDate);
+    let fileName = util.format("%s/%s.%s.sql.gz", configDir, prefix, formattedDate);
 
     console.log(util.format("writing backup to %s", fileName));
     fs.writeFileSync(fileName, zlib.gzipSync(queries), "utf8");

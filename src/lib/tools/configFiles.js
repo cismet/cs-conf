@@ -8,23 +8,23 @@ export function readConfigFile(file) {
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : []
 }
 
-export function readConfigFiles(folder) {
-    if (!fs.existsSync(folder)) {
-        throw util.format("%s does not exist", folder);
+export function readConfigFiles(configDir) {
+    if (!fs.existsSync(configDir)) {
+        throw util.format("%s does not exist", configDir);
     }
 
-    let domains = readConfigFile(util.format("%s/domains.json", folder));
-    let policyRules = readConfigFile(util.format("%s/policyRules.json", folder));
-    let usergroups = readConfigFile(util.format("%s/usergroups.json", folder));
-    let usermanagement = readConfigFile(util.format("%s/usermanagement.json", folder));
-    let classes = readConfigFile(util.format("%s/classes.json", folder));
-    let classPerms = readConfigFile(util.format("%s/classPerms.json", folder));
-    let attrPerms = readConfigFile(util.format("%s/attrPerms.json", folder));
-    let structure = readConfigFile(util.format("%s/structure.json", folder));
-    let dynchildhelpers = readConfigFile(util.format("%s/dynchildhelpers.json", folder));
+    let domains = readConfigFile(util.format("%s/domains.json", configDir));
+    let policyRules = readConfigFile(util.format("%s/policyRules.json", configDir));
+    let usergroups = readConfigFile(util.format("%s/usergroups.json", configDir));
+    let usermanagement = readConfigFile(util.format("%s/usermanagement.json", configDir));
+    let classes = readConfigFile(util.format("%s/classes.json", configDir));
+    let classPerms = readConfigFile(util.format("%s/classPerms.json", configDir));
+    let attrPerms = readConfigFile(util.format("%s/attrPerms.json", configDir));
+    let structure = readConfigFile(util.format("%s/structure.json", configDir));
+    let dynchildhelpers = readConfigFile(util.format("%s/dynchildhelpers.json", configDir));
 
     let xmlFiles = new Map();
-    let confAttrXmlSnippetsFolder = util.format("%s/%s", folder, constants.confAttrXmlSnippetsFolder);
+    let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
     if (fs.existsSync(confAttrXmlSnippetsFolder)) {
         for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
             if (extname(file) == ".xml") {
@@ -34,7 +34,7 @@ export function readConfigFiles(folder) {
     }
 
     let structureSqlFiles=new Map();
-    let structureDynamicChildrenFolder = util.format("%s/%s", folder, constants.structureDynamicChildrenFolder);
+    let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
     if (fs.existsSync(structureDynamicChildrenFolder)) {
         for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
             if (extname(file) == ".sql") {
@@ -44,7 +44,7 @@ export function readConfigFiles(folder) {
     }
 
     let helperSqlFiles=new Map();
-    let structureHelperStatementsFolder = util.format("%s/%s", folder, constants.structureHelperStatementsFolder);
+    let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
     if (fs.existsSync(structureHelperStatementsFolder)) {
         for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
             if (extname(file) == ".sql") {
@@ -69,13 +69,13 @@ export function readConfigFiles(folder) {
     }
 }
 
-export function checkConfigFolders(folder, overwrite = false) {
-    if (fs.existsSync(folder) && !overwrite) {
-        throw util.format("%s exists already", folder);
+export function checkConfigFolders(configDir, overwrite = false) {
+    if (fs.existsSync(configDir) && !overwrite) {
+        throw util.format("%s exists already", configDir);
     }
 }
 
-export function writeConfigFiles(config, folder, overwrite = false) {
+export function writeConfigFiles(config, configDir, overwrite = false) {
     let {
         domains,
         policyRules,
@@ -91,17 +91,17 @@ export function writeConfigFiles(config, folder, overwrite = false) {
         xmlFiles
     } = config;
 
-    let confAttrXmlSnippetsFolder = util.format("%s/%s", folder, constants.confAttrXmlSnippetsFolder);
-    let structureDynamicChildrenFolder = util.format("%s/%s", folder, constants.structureDynamicChildrenFolder);
-    let structureHelperStatementsFolder = util.format("%s/%s", folder, constants.structureHelperStatementsFolder);
+    let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
+    let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
+    let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
 
-    // create folder structure
+    // create configDir structure
 
-    if (fs.existsSync(folder) && overwrite) {
-        //fs.rmSync(folder, { recursive: true, force: true }) // DANGER!!!
+    if (fs.existsSync(configDir) && overwrite) {
+        //fs.rmSync(configDir, { recursive: true, force: true }) // DANGER!!!
     }
-    if (!fs.existsSync(folder)) {
-        fs.mkdirSync(folder);
+    if (!fs.existsSync(configDir)) {
+        fs.mkdirSync(configDir);
     }
 
     if (fs.existsSync(confAttrXmlSnippetsFolder)) {
@@ -128,28 +128,28 @@ export function writeConfigFiles(config, folder, overwrite = false) {
     // writing files
 
     if (domains.length > 0) {
-        fs.writeFileSync(util.format("%s/domains.json", folder), stringify(domains), "utf8");
+        fs.writeFileSync(util.format("%s/domains.json", configDir), stringify(domains), "utf8");
     }
     if (policyRules.length > 0) {
-        fs.writeFileSync(util.format("%s/policyRules.json", folder), stringify(policyRules), "utf8");
+        fs.writeFileSync(util.format("%s/policyRules.json", configDir), stringify(policyRules), "utf8");
     }
     if (usergroups.length > 0) {
-    fs.writeFileSync(util.format("%s/usergroups.json", folder), stringify(usergroups, { maxLength: 160 }), "utf8");
+    fs.writeFileSync(util.format("%s/usergroups.json", configDir), stringify(usergroups, { maxLength: 160 }), "utf8");
     }
     if (usermanagement.length > 0) {
-        fs.writeFileSync(util.format("%s/usermanagement.json", folder), stringify(usermanagement, { maxLength: 120 }), "utf8");
+        fs.writeFileSync(util.format("%s/usermanagement.json", configDir), stringify(usermanagement, { maxLength: 120 }), "utf8");
     }
     if (classes.length > 0) {
-        fs.writeFileSync(util.format("%s/classes.json", folder), stringify(classes, { maxLength: 100 }), "utf8");
+        fs.writeFileSync(util.format("%s/classes.json", configDir), stringify(classes, { maxLength: 100 }), "utf8");
     }
     if (classPerms.length > 0) {
-        fs.writeFileSync(util.format("%s/classPerms.json", folder), stringify(classPerms, { maxLength: 100 }), "utf8");
+        fs.writeFileSync(util.format("%s/classPerms.json", configDir), stringify(classPerms, { maxLength: 100 }), "utf8");
     }
     if (attrPerms.length > 0) {
-        fs.writeFileSync(util.format("%s/attrPerms.json", folder), stringify(attrPerms, { maxLength: 100 }), "utf8");
+        fs.writeFileSync(util.format("%s/attrPerms.json", configDir), stringify(attrPerms, { maxLength: 100 }), "utf8");
     }
     if (structure.length > 0) {
-        fs.writeFileSync(util.format("%s/structure.json", folder), stringify(structure, { maxLength: 80 }), "utf8");
+        fs.writeFileSync(util.format("%s/structure.json", configDir), stringify(structure, { maxLength: 80 }), "utf8");
     }
     if (helperSqlFiles.size > 0) {
         helperSqlFiles.forEach(async (value, key) => {
@@ -157,7 +157,7 @@ export function writeConfigFiles(config, folder, overwrite = false) {
         });
     }
     if (structureSqlFiles.size > 0) {
-        fs.writeFileSync(util.format("%s/dynchildhelpers.json", folder), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
+        fs.writeFileSync(util.format("%s/dynchildhelpers.json", configDir), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
         structureSqlFiles.forEach(async (value, key) => {
             fs.writeFileSync(util.format("%s/%s", structureDynamicChildrenFolder, key), value, "utf8");
         });

@@ -1,5 +1,6 @@
 #!/usr/local/bin/babel-node --
 
+import util from 'util';
 import program from 'commander';
 import csExport from './lib/export';
 import csImport from './lib/import';
@@ -15,64 +16,78 @@ import csNormalize from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
 
-program.version('0.9.9')
-	.option('-c, --config <path>', 'set config path. ', './runtime.properties');
+const runtimePropertiesOption = { 
+	flags: '-r, --runtime-properties <filepath>', 
+	description: 'the runtime.properties to load the database connection informations from',
+	default: './runtime.properties'
+};
+const schemaOption = { 
+	flags: '-s, --schema <schema>', 
+	description: 'the schema where the cs-Tables are',
+	default: 'public'
+};
+
+program.version('0.9.9');
 
 program.command(' ');
 
-program.command('import').description('imports the (cs_*)meta-information from a configuration folder into a database')
- 	.option('-f, --folder <folder>', 'the folder where the config is', 'config')
- 	.option('-s, --schema <schema>', 'the schema where the cs-Tables will be', 'public')
-	.option('-b, --backup-folder <folder>', 'backup folder', 'backups')	
+program.command('import').description('imports the (cs_*)meta-information from a configuration configDir into a database')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+	.option('-c, --config <dirpath>', 'the folder where the config is', 'config')
+	.option('-b, --backup-folder <dirpath>', 'backup configDir', 'backups')	
 	.option('-p, --backup-prefix', 'backup file prefix', null)	
 	.option('-N, --no-backup', 'does not create backup before import')	
-	.option('-r, --recreate', 'purge and recreate cs_* structure before import')	
-	.option('-I, --import', 'activates the real import (expected for avoiding unintended importing)')
+	.option('-R, --recreate', 'purge and recreate cs_* structure before import')	
+	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
  	.action(async (cmd) => {
 		cs(csImport, {
-			folder: cmd.folder, 
+			configDir: cmd.config, 
 			recreate: cmd.recreate, 
 			execute: cmd.import,
 			skipBackup: !cmd.backup,
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
 
 program.command('backup').description('backups the (cs_*)meta-information to a file')
-	.option('-f, --folder <folder>', 'the folder to backup into', 'backups')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option('-c, --config <dirpath>', 'the folder to backup into', 'backups')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
 		cs(csBackup, {
-			folder: cmd.folder, 
+			configDir: cmd.config, 
 			prefix: cmd.prefix, 
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
  
 program.command('restore').description('restores the (cs_*)meta-information from a backup file')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-f, --file <file>', 'the backup file to restore from', null)
-	.option('-R, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
+	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
 	.action(async (cmd) => {
 		cs(csRestore, {
 			file: cmd.file,
 			execute: cmd.restore,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});	
 	});
  
 program.command('diff').description('shows differences between (cs_*)meta-information and the given classes configuration')
-	.option('-f, --folder <folder1>', 'the folder where the config is', 'config')
-	.option('-t, --target <folder2>', 'the folder to compare the config with. if null, the current configs are exported', null)
-	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+	.option('-c, --config <dirpath>', 'the folder where the config is', 'config')
+	.option('-t, --target <dirpath>', 'the folder to compare the config with. if null, the current configs are exported', null)
 	.action(async (cmd) => {
 		cs(csDiff, {
-			folder: cmd.folder, 
+			configDir: cmd.config, 
 			target: cmd.target, 
 			schema: cmd.schema, 
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
  
@@ -89,76 +104,79 @@ program.command('password').description('generates password hashes for the userm
 	});
  
 program.command('sync').description('synchronizes classes with the database')
-	.option('-f, --folder <folder>', 'the folder containing the classes configuration', 'config')
-	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+	.option('-c, --config <dirpath>', 'the folder containing the classes configuration', 'config')
 	.option('-p, --purge', 'activate all drop statements')
 	.option('-n, --noDiffs', 'disables comparision with current cs_* state')
 	.option('-S, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.action(async (cmd) => {
 		cs(csSync, { 
-			folder: cmd.folder,
+			configDir: cmd.config,
 			execute: cmd.sync,
 			purge: cmd.purge,
 			noDiffs: cmd.noDiffs,
 			schema: cmd.schema,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
 
 program.command(' ');
 
-program.command('normalize').description('normalizes the configuration in a given folder')
-	.option('-f, --folder <folder1>', 'the folder containing the configuration files', 'config')
-	.option('-t, --target <folder2>', 'the folder to normalize the config into', null)
+program.command('normalize').description('normalizes the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
 	.action(async (cmd) => {
 		cs(csNormalize, { 
-			folder: cmd.folder,
+			configDir: cmd.config,
 			target: cmd.target,
 		});
 	});
 
-program.command('reorganize').description('reorganizes the configuration in a given folder')
-	.option('-f, --folder <folder1>', 'the folder containing the configuration files', 'config')
-	.option('-t, --target <folder2>', 'the folder to reorganize the config into', null)
+program.command('reorganize').description('reorganizes the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
 	.action(async (cmd) => {
 		cs(csReorganize, { 
-			folder: cmd.folder,
+			configDir: cmd.config,
 			target: cmd.target,
 		});
 	});
 	 
-program.command('simplify').description('simplifies the configuration in a given folder')
-	.option('-f, --folder <folder1>', 'the folder containing the configuration files', 'config')
-	.option('-t, --target <folder2>', 'the folder to simplify the config into', null)
+program.command('simplify').description('simplifies the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
 	.action(async (cmd) => {
 		cs(csSimplify, { 
-			folder: cmd.folder,
+			configDir: cmd.config,
 			target: cmd.target,
 		});
 	});
 	 	 
 program.command(' ');
 
-program.command('export').description('exports the (cs_*)meta-information of a database into a folder')
-	.option('-f, --folder <folder>', 'the folder where the config will be written', 'config')
-	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')
+program.command('export').description('exports the (cs_*)meta-information of a database into a configDir')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+	.option('-c, --config <dirpath>', 'the folder where the config will be written', 'config')
 	.option('-O, --overwrite', 'overwrite existing config')
 	.option('-R, --reorganize', 'reorganize config')
 	.action(async (cmd) => {
 		cs(csExport, {
-			folder: cmd.folder, 
+			configDir: cmd.config, 
 			schema: cmd.schema, 
 			overwrite: cmd.overwrite,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 			reorganize: cmd.reorganize,
 		});
 	});
 
 program.command('create').description('creates and initializes cs_tables on a given database')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-p, --purge', 'purges before creating')
 	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
-	.option('-C, --create', 'activates the real create (expected for avoiding unintended creating)')
-	.option('-s, --schema <schema>', 'the schema where the cs-Tables are', 'public')	
+	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
 	.action(async (cmd) => {
 		cs(csCreate, {
 			purge: cmd.purge,
@@ -166,29 +184,31 @@ program.command('create').description('creates and initializes cs_tables on a gi
 			execute: cmd.create,
 			schema: cmd.schema,
 			silent: false,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
 	
 program.command('truncate').description('truncates the cs_tables on a given database')
-	.option('-T, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
+	.option('-X, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
 	.action(async (cmd) => {
 		cs(csTruncate, {
 			execute: cmd.truncate,
 			init: cmd.init,
 			silent: false,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
 
 program.command('purge').description('purges the cs_tables on a given database')
-	.option('-P, --purge', 'activates the real purge (expected for avoiding unintended purging)')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.action(async (cmd) => {
 		cs(csPurge, {
 			execute: cmd.purge,
 			silent: false,
-			configDir: cmd.parent.config,
+			runtimePropertiesFile: cmd.runtimeProperties,
 		});
 	});
 
@@ -205,7 +225,7 @@ if (process.argv.slice(2).length == 0) {
 // ============================
 
 async function cs(csFunction, options) {
-	console.log("starting password with these options:");
+	console.log(util.format("starting %s with these options:", csFunction.name));
 	console.table(options);
 	console.log();
 	try {

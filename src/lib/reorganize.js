@@ -1,4 +1,3 @@
-import { normalizeConfig } from "./normalize";
 import reorganizeAttrPerms from "./reorganize/attrPerms";
 import reorganizeClasses from "./reorganize/classes";
 import reorganizeClassPerms from "./reorganize/classPerms";
@@ -11,13 +10,16 @@ import reorganizeUsermanagement from "./reorganize/usermanagement";
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csReorganize(options) {
-    let { folder, target } = options;
+    let { configDir, target } = options;
+    if (configDir == null) throw "configDir not set";
 
-    let config = readConfigFiles(folder);    
-    let normalized = normalizeConfig(config);
-    let reorganized = reorganizeConfig(normalized);
+    let config = readConfigFiles(configDir);    
+    let reorganized = reorganizeConfig(config);
+
     if (target != null) {
         writeConfigFiles(reorganized, target, true);
+    } else {
+        writeConfigFiles(reorganized, configDir, true);
     }
     return reorganized;
 }

@@ -376,33 +376,33 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { folder, execute, purge, schema, noDiffs, configDir } = options;
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile } = options;
     let client;
     if (options.client) {
         client = options.client;
     } else {
-        console.log(util.format("loading config %s", configDir));
-        client = getClientForConfig(configDir);
+        console.log(util.format("loading config %s", runtimePropertiesFile));
+        client = getClientForConfig(runtimePropertiesFile);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
     }
 
     if (!noDiffs) {
-        let differences = await csDiff( { folder, comparisionFolder: null, configDir, schema, client } );
+        let differences = await csDiff( { configDir, comparisionFolder: null, runtimePropertiesFile, schema, client } );
         if (differences.length > 0) {
             throw util.format("%d differences found, aborting sync !", differences);
         }
     }
     
-    let classesJson = util.format("%s/classes.json", folder);
+    let classesJson = util.format("%s/classes.json", configDir);
     console.log(util.format("reading classes from %s", classesJson));
     let classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));
     let normalized = normalizeClasses(classes);
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     try {
-        let sync = JSON.parse(fs.readFileSync(util.format("%s/sync.json", folder), {encoding: 'utf8'}));        
+        let sync = JSON.parse(fs.readFileSync(util.format("%s/sync.json", configDir), {encoding: 'utf8'}));        
         ignoreRules.push(... sync.tablesToIgnore);
     } catch (e) {
         console.log("no sync.json found");

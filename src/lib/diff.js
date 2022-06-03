@@ -7,14 +7,14 @@ import { readConfigFiles } from './tools/configFiles';
 import { normalizeConfig } from './normalize';
 
 async function csDiff(options) {
-    let { folder, target, schema, configDir } = options;
+    let { configDir, target, schema, runtimePropertiesFile } = options;
 
     let client;
     if (options.client) {
         client = options.client;
     } else if (!target) {
-        console.log(util.format("loading config %s", configDir));
-        client = getClientForConfig(configDir);
+        console.log(util.format("loading config %s", runtimePropertiesFile));
+        client = getClientForConfig(runtimePropertiesFile);
 
         console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
         await client.connect();
@@ -31,7 +31,7 @@ async function csDiff(options) {
         console.log("#################");
         console.log(util.format("### exporting current config to %s for comparision.", current));
         console.log("#################");
-        await csExport({ folder: current, schema: schema, configDir, client: client });
+        await csExport({ configDir: current, schema: schema, runtimePropertiesFile, client: client });
         console.log("#################");
         console.log("### export done. starting comparision.");
         console.log("#################");    
@@ -41,10 +41,10 @@ async function csDiff(options) {
         await client.end();
     }
 
-    let configA = normalizeConfig(readConfigFiles(folder));
+    let configA = normalizeConfig(readConfigFiles(configDir));
     let configB = normalizeConfig(readConfigFiles(current));
 
-    console.log(util.format("comparing %s with %s ...", folder, current));
+    console.log(util.format("comparing %s with %s ...", configDir, current));
     let result = diffString(configA, configB, { maxElisions: 1 });
     if (result) {
         //console.log(util.format(" ↳ differences found:\n%s:", result));

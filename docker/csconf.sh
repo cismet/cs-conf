@@ -13,20 +13,20 @@ else
 fi
 
 CONFIG=$(echo $ARGS | perl -pe 's/(^|.*\s+)-c\s*(.*?)(\s+.*|$)/$2/')
-FOLDER=$(echo $ARGS | perl -pe 's/(^|.*\s+)-f\s*(.*?)(\s+.*|$)/$2/')
+configDir=$(echo $ARGS | perl -pe 's/(^|.*\s+)-f\s*(.*?)(\s+.*|$)/$2/')
 
 VOLUMES=
 if [ "$ARGS" != "$CONFIG" ]; then
   VOLUMES="$VOLUMES -v $CONFIG:$CONFIG:ro"
 fi
-if [ "$ARGS" != "$FOLDER" ]; then
-  VOLUMES="$VOLUMES -v $FOLDER:$FOLDER:rw"
+if [ "$ARGS" != "$configDir" ]; then
+  VOLUMES="$VOLUMES -v $configDir:$configDir:rw"
 fi
 
 if [ "$VOLUMES" != "" ]; then
   echo "docker-volumes:"
   echo " - config: $CONFIG"
-  echo " - folder: $FOLDER"
+  echo " - configDir: $configDir"
 fi
 
 docker run -it --rm $VOLUMES ${IMAGE_TAG} $*

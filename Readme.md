@@ -26,7 +26,7 @@ Usage: export|e [options]
 
   Options:
 
-    -f, --folder <folder>  the folder where the config will be written (default: config)
+    -f, --configDir <configDir>  the configDir where the config will be written (default: config)
     -s, --schema <schema>  the schema where the cs-Tables are (default: public)
     -o, --only             Only export the following topics
     -x, --skip             Skip the export of the following topics
@@ -41,7 +41,7 @@ Usage: import|i [options]
 
   Options:
 
-    -f, --folder <folder>  the folder where the config is (default: config)
+    -f, --configDir <configDir>  the configDir where the config is (default: config)
     -s, --schema <schema>  the schema where the cs-Tables will be (default: public)
     -o, --only             Only import the following topics
     -x, --skip             Skip the import of the following topics

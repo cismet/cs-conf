@@ -7,6 +7,7 @@
         "substitute": false,
         "extension_attr": false,
         "indexed": false,
+        "icon": null,
         "classIcon": null,
         "objectIcon": null,
         "array_link": false,

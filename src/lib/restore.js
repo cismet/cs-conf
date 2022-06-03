@@ -5,11 +5,11 @@ import { getClientForConfig } from './tools/db';
 import csTruncate from './truncate';
 
 async function csRestore(options) {
-    let { file, execute, configDir } = options;
+    let { file, execute, runtimePropertiesFile } = options;
     console.log(util.format("reading statements from %s", file));
     
     let statements = [];
-    statements.push(await csTruncate({ execute: false, init: true, silent: true, configDir }));
+    statements.push(await csTruncate({ execute: false, init: true, silent: true, runtimePropertiesFile }));
     if(file.endsWith(".gz")){
         statements.push(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
     } else {
@@ -21,8 +21,8 @@ async function csRestore(options) {
         if (options.client) {
             client = options.client;
         } else {    
-            console.log(util.format("loading config %s", configDir));
-            client = getClientForConfig(configDir);
+            console.log(util.format("loading config %s", runtimePropertiesFile));
+            client = getClientForConfig(runtimePropertiesFile);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();

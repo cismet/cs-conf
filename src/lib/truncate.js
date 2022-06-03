@@ -3,7 +3,7 @@ import util from 'util';
 import { getClientForConfig } from './tools/db';
 
 async function csTruncate(options) {
-    let { execute, init, silent, configDir } = options;
+    let { execute, init, silent, runtimePropertiesFile } = options;
     let statements = [];
     
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-truncate.sql', __dirname), 'utf8'));
@@ -16,8 +16,8 @@ async function csTruncate(options) {
         if (options.client) {
             client = options.client;
         } else {
-            console.log(util.format("loading config %s", configDir));
-            client = getClientForConfig(configDir);
+            console.log(util.format("loading config %s", runtimePropertiesFile));
+            client = getClientForConfig(runtimePropertiesFile);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();

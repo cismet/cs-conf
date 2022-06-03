@@ -114,9 +114,9 @@ function reorganizeConfig({
 }
 
 async function csExport(options) {
-    let  { folder, schema, overwrite = false, configDir, reorganize = false } = options;
+    let  { configDir, schema, overwrite = false, runtimePropertiesFile, reorganize = false } = options;
 
-    checkConfigFolders(folder, overwrite);
+    checkConfigFolders(configDir, overwrite);
 
     let config = {};    
     let client;
@@ -124,8 +124,8 @@ async function csExport(options) {
         if (options.client) {
             client = options.client;
         } else {
-            console.log(util.format("loading config %s", configDir));
-            client = getClientForConfig(configDir);
+            console.log(util.format("loading config %s", runtimePropertiesFile));
+            client = getClientForConfig(runtimePropertiesFile);
 
             console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
             await client.connect();
@@ -143,7 +143,7 @@ async function csExport(options) {
     // TODO simplify
 
     console.log("writing config Files");
-    writeConfigFiles(config, folder, overwrite);
+    writeConfigFiles(config, configDir, overwrite);
 }
 
 export default csExport;

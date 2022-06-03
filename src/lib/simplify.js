@@ -11,13 +11,16 @@ import simplifyUsermanagement from "./simplify/usermanagement";
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csSimplify(options) {
-    let { folder, target } = options;
+    let { configDir, target } = options;
+    if (configDir == null) throw "configDir not set";
 
-    let config = readConfigFiles(folder);    
-    let normalized = normalizeConfig(config);
-    let simplified = simplifyConfig(normalized);
+    let config = readConfigFiles(configDir);    
+    let simplified = simplifyConfig(config);
+
     if (target != null) {
         writeConfigFiles(simplified, target, true);
+    } else {
+        writeConfigFiles(simplified, configDir, true);
     }
     return simplified;
 }
