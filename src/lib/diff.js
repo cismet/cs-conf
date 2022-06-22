@@ -26,7 +26,7 @@ async function csDiff(options) {
     } else {    
         let prefix = util.format("%s[%s:%d]", client.database, client.host, client.port);
         let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-        current = util.format("diffs/%s.%s", prefix, formattedDate);
+        current = util.format("/tmp/diffs_%s.%s", prefix, formattedDate);
 
         console.log("#################");
         console.log(util.format("### exporting current config to %s for comparision.", current));

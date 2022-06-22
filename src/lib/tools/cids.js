@@ -8,6 +8,14 @@ export function extendLocalDomain(key) {
 
 }
 
+export function removeLocalDomain(key) {
+    if (key != null && key.endsWith("@LOCAL")) {
+        return key.substring(0, key.length - "@LOCAL".length);
+    } else {
+        return key;
+    }
+}
+
 export function extractGroupAndDomain(key) {
     if (key != null) {
         let keyComponents = key.split('@');

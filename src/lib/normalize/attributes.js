@@ -1,11 +1,11 @@
-import util from 'util';
-import { defaultAttribute } from "../tools/defaultObjects";
+import { defaultAttribute, defaultClass } from "../tools/defaultObjects";
 
-function normalizeAttributes(attributes) {
+function normalizeAttributes(attributes, pk = defaultClass.pk) {
     let normalized = [];
 
     let defaulValueWarning = false;
     if (attributes !== undefined) {
+        let pkMissing = true;
         for (let attribute of attributes) {
             if (attribute.field == null) throw "missing field";
 
@@ -21,7 +21,11 @@ function normalizeAttributes(attributes) {
             if (attribute.manyToMany != null) {
                 attribute.manyToMany = attribute.manyToMany.toLowerCase();
             }
-                
+
+            if (pk !== undefined && attribute.field == pk) {
+                pkMissing = false;
+            }
+
             let defaultValue = attribute.defaultValue !== undefined ? attribute.defaultValue : null;
             if (attribute.defaulValue != null) {
                 defaulValueWarning = true;
@@ -41,6 +45,14 @@ function normalizeAttributes(attributes) {
             normalized.push(Object.assign({}, defaultAttribute, attribute, {
                 name: attribute.name || attribute.field,
                 defaultValue,
+            }));
+        }
+        if (pkMissing) {
+            normalized.unshift(Object.assign({}, defaultAttribute, {
+                field: pk,
+                name: pk,
+                dbType: "INTEGER",
+                mandatory: true
             }));
         }
     }

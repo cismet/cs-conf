@@ -9,7 +9,7 @@ function simplifyDomains(domains) {
     for (let domain of normalizeDomains(domains)) {
         if (domain != null) {
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
-            if (domain.configurationAttributes !== undefined) {
+            if (domain.configurationAttributes !== undefined && domain.configurationAttributes.length > 0) {
                 simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes);
             }
             simplified.push(simplifiedDomain);

@@ -8,22 +8,17 @@ function simplifyClasses(classes) {
     let simplified = [];
     for (let clazz of normalizeClasses(classes)) {
         if (clazz != null) {
-            let simplifiedClazz = copyFromTemplate(clazz, defaultClass);
+            let classWithSimplifiedIcon = Object.assign(clazz, {
+                icon: clazz.icon == null && clazz.classIcon == clazz.objectIcon ? clazz.classIcon : clazz.icon,
+                classIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.classIcon,
+                objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
+            });
+            let simplifiedClazz = copyFromTemplate(classWithSimplifiedIcon, defaultClass);
             if (clazz.attributes !== undefined) {
-                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes);
+                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk);
             }
             if (simplifiedClazz.name == simplifiedClazz.table) {
                 delete simplifiedClazz.name;
-            }
-            if (simplifiedClazz.classIcon == simplifiedClazz.objectIcon) {
-                if (simplifiedClazz.icon == null) {
-                    simplifiedClazz.icon = simplifiedClazz.classIcon;
-                }
-                delete simplifiedClazz.classIcon;
-                delete simplifiedClazz.objectIcon;
-            }
-            if (simplifiedClazz.attributes !== undefined) {
-                simplifiedClazz.attributes = simplifiedClazz.attributes.filter(attribute => attribute.field != (clazz.pk !== undefined ? clazz.pk : defaultClass.pk));
             }
             simplified.push(simplifiedClazz);
         }

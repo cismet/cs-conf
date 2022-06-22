@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.17.10",
-    "@babel/core": "^7.17.10",
-    "@babel/node": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
+    "@babel/core": "^7.18.5",
+    "@babel/node": "^7.18.5",
+    "@babel/preset-env": "^7.18.2",
     "@babel/register": "^7.17.7",
     "chai": "^4.1.2",
     "mocha": "^10.0.0"
@@ -33,7 +33,7 @@
   "scripts": {
     "start": "babel-node src/cs-conf.js",
     "build": "babel -d ./build src/ --copy-files && chmod +x build/cs-conf.js && mv build/cs-conf.js build/csconf",
-    "buildDocker" : "docker/buildImage.sh",
+    "buildDocker": "docker/buildImage.sh",
     "test": "node_modules/.bin/mocha --require @babel/register --recursive || true"
   }
 }

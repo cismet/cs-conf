@@ -22,18 +22,15 @@ function normalizeClasses(classes) {
                 clazz.pk = clazz.pk.toLowerCase();
             }            
 
-            let icon = clazz.icon != null ? clazz.icon : clazz.classIcon == clazz.objectIcon ? clazz.classIcon || null : null;
-            let classIcon = clazz.icon == null ? clazz.classIcon || null : null;
-            let objectIcon = clazz.icon == null ? clazz.objectIcon || null : null;
             normalized.push(Object.assign({}, defaultClass, clazz, {
                 name: clazz.name != null ? clazz.name : clazz.table,
                 toString: normalizeSpecial(clazz.toString),
                 editor: normalizeSpecial(clazz.editor),
                 renderer: normalizeSpecial(clazz.renderer),
                 attributes: normalizeAttributes(clazz.attributes),
-                icon,
-                classIcon,
-                objectIcon,
+                icon: null,
+                classIcon: clazz.classIcon || clazz.icon || null,
+                objectIcon: clazz.objectIcon || clazz.icon || null,
             }));
         }
     }

@@ -1,4 +1,4 @@
-#!/usr/local/bin/babel-node --
+#!/usr/bin/babel-node --
 
 import util from 'util';
 import program from 'commander';
