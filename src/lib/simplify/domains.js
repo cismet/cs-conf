@@ -29,9 +29,13 @@ function simplifyDomains(domains) {
             } else if (domain.domainname === "LOCAL") {
                 domain.main = true;
                 domain.domainname = simpleMain.domainname;
+                simplified.push(copyFromTemplate(domain, defaultDomain));
+            } else {
+                simplified.push(domain);
             }
+        } else {
+            simplified.push(domain);
         }
-        simplified.push(domain);
     }
     return simplified;
 }
