@@ -21,15 +21,19 @@ export async function singleRowFiller(client, stmnt, rows) {
     }
 }
 
+function getPropsFromConfig(config) {
+    let propFileContent = fs.readFileSync(config, {encoding: 'utf8'});
+    return propertyParser.parse(propFileContent);
+}
+
 export function getClientForConfig(config) {
-    const propFileContent = fs.readFileSync(config, {encoding: 'utf8'})
-    const props = propertyParser.parse(propFileContent);
-    const conUrl = props["connection.url"];
-    const conImportant = conUrl.split("//")[1];
-    const host = conImportant.split(":")[0];
-    const port = conImportant.split(":")[1].split("/")[0];
-    const dbname = conImportant.split(":")[1].split("/")[1];
-    const dbconfig = {
+    let props = getPropsFromConfig(config);
+    let conUrl = props["connection.url"];
+    let conImportant = conUrl.split("//")[1];
+    let host = conImportant.split(":")[0];
+    let port = conImportant.split(":")[1].split("/")[0];
+    let dbname = conImportant.split(":")[1].split("/")[1];
+    let dbconfig = {
         user: props["connection.username"],
         host: host,
         database: dbname,
@@ -38,6 +42,11 @@ export function getClientForConfig(config) {
     };
     //TODO make more bullet proof
     return new Client(dbconfig);
+}
+
+export function getDomainFromConfig(config) {
+    let props = getPropsFromConfig(config);
+    return props["serverName"];
 }
 
 export function setIdsFromOrder(rows) {

@@ -8,7 +8,7 @@ import exportClasses from './export/classes';
 import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
-import { getClientForConfig } from './tools/db';
+import { getClientForConfig, getDomainFromConfig } from './tools/db';
 import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
 import reorganizeAttrPerms from './reorganize/attrPerms';
 import reorganizeClasses from './reorganize/classes';
@@ -20,7 +20,7 @@ import reorganizeStructure from './reorganize/structure';
 import reorganizeUsermanagememt from './reorganize/usermanagement';
 import reorganizeUsergroups from './reorganize/usergroups';
 
-async function createConfig(client) {
+async function createConfig(client, mainDomain) {
     console.log("analyzing configuration attributes");
     let {
         userConfigAttrs,
@@ -30,7 +30,7 @@ async function createConfig(client) {
     } = await exportConfigAttributes(client);
 
     console.log("analyzing domains");
-    let { domains } = await exportDomains(client, domainConfigAttrs);
+    let { domains } = await exportDomains(client, mainDomain, domainConfigAttrs);
 
     console.log("analyzing policy defaults");
     let { policyRules } = await exportPolicyRules(client);
@@ -131,7 +131,9 @@ async function csExport(options) {
             await client.connect();
         }
 
-        let exported = await createConfig(client);
+        let mainDomain = getDomainFromConfig(runtimePropertiesFile);
+
+        let exported = await createConfig(client, mainDomain);
         Object.assign(config, reorganize ? reorganizeConfig(exported) : exported);
     } finally {
         //close the connection -----------------------------------------------------------------------
