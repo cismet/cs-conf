@@ -34,7 +34,7 @@ program.command(' ');
 program.command('import').description('imports the (cs_*)meta-information from a configuration configDir into a database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config is', 'config')
+	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
 	.option('-b, --backup-folder <dirpath>', 'backup configDir', 'backups')	
 	.option('-p, --backup-prefix', 'backup file prefix', null)	
 	.option('-N, --no-backup', 'does not create backup before import')	
@@ -80,7 +80,7 @@ program.command('restore').description('restores the (cs_*)meta-information from
 program.command('diff').description('shows differences between (cs_*)meta-information and the given classes configuration')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config is', 'config')
+	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
 	.option('-t, --target <dirpath>', 'the folder to compare the config with. if null, the current configs are exported', null)
 	.action(async (cmd) => {
 		cs(csDiff, {
@@ -106,7 +106,7 @@ program.command('password').description('generates password hashes for the userm
 program.command('sync').description('synchronizes classes with the database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder containing the classes configuration', 'config')
+	.option('-c, --config <dirpath>', 'the folder containing the classes configuration', '.')
 	.option('-p, --purge', 'activate all drop statements')
 	.option('-n, --noDiffs', 'disables comparision with current cs_* state')
 	.option('-S, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
@@ -124,7 +124,7 @@ program.command('sync').description('synchronizes classes with the database')
 program.command(' ');
 
 program.command('normalize').description('normalizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
 	.action(async (cmd) => {
 		cs(csNormalize, { 
@@ -134,7 +134,7 @@ program.command('normalize').description('normalizes the configuration in a give
 	});
 
 program.command('reorganize').description('reorganizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
 	.action(async (cmd) => {
 		cs(csReorganize, { 
@@ -144,7 +144,7 @@ program.command('reorganize').description('reorganizes the configuration in a gi
 	});
 	 
 program.command('simplify').description('simplifies the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', 'config')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
 	.action(async (cmd) => {
 		cs(csSimplify, { 
@@ -158,7 +158,7 @@ program.command(' ');
 program.command('export').description('exports the (cs_*)meta-information of a database into a configDir')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config will be written', 'config')
+	.option('-c, --config <dirpath>', 'the folder where the config will be written', '.')
 	.option('-O, --overwrite', 'overwrite existing config')
 	.option('-R, --reorganize', 'reorganize config')
 	.action(async (cmd) => {
