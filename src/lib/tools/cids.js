@@ -8,12 +8,17 @@ export function extendLocalDomain(key) {
 
 }
 
-export function removeLocalDomain(key) {
-    if (key != null && key.endsWith("@LOCAL")) {
-        return key.substring(0, key.length - "@LOCAL".length);
+function removeDomain(key, name) {
+    let atDomain = util.format("@%s", name);
+    if (key != null && key.endsWith(atDomain)) {
+        return key.substring(0, key.length - atDomain.length);
     } else {
         return key;
     }
+}
+
+export function removeLocalDomain(key, main = null) {
+    return removeDomain(removeDomain(key, main), "LOCAL");
 }
 
 export function extractGroupAndDomain(key) {

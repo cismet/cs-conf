@@ -1,8 +1,8 @@
 function prepareDomains(domains) {
     let csDomainEntries = [];
-    for (let d of domains) {
+    for (let domain of domains) {
         csDomainEntries.push([ 
-            d.domainname 
+            domain.domainname 
         ]);
     }
     return { csDomainEntries };

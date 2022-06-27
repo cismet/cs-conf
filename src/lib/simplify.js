@@ -39,6 +39,15 @@ export function simplifyConfig({
     usermanagement, 
     xmlFiles,
 }) {
+    let mainDomain = null;
+    if (domains != null) {
+        for (let domain of domains) {
+            if (domain != null && domain.main === true) {
+                mainDomain = domain.domainname;
+                break;
+            }
+        }
+    }
     return {
         attrPerms: simplifyAttrPerms(attrPerms), 
         classes: simplifyClasses(classes), 
@@ -49,8 +58,8 @@ export function simplifyConfig({
         policyRules: simplifyPolicyRules(policyRules), 
         structure: simplifyStructure(structure), 
         structureSqlFiles,
-        usergroups: simplifyUsergroups(usergroups), 
-        usermanagement: simplifyUsermanagement(usermanagement), 
+        usergroups: simplifyUsergroups(usergroups, mainDomain), 
+        usermanagement: simplifyUsermanagement(usermanagement, mainDomain), 
         xmlFiles,
     };
 }
