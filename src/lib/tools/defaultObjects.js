@@ -69,6 +69,7 @@ export const defaultConfigurationAttributes = {
 
 // domains
 export const defaultDomain = {
+    main: false,
     domainname: null,
     configurationAttributes: [],
     comment: null,

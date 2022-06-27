@@ -1,8 +1,7 @@
 [
     {
-      "domainname": "LOCAL",
+      "main": true,
+      "domainname": "TEST",
       "configurationAttributes": [{ "key": "test" }]
-    }, { 
-        "domainname": "TEST" 
     }
 ]

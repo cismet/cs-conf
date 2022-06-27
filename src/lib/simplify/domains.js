@@ -5,15 +5,33 @@ import simplifyConfigurationAttributes from "./configurationAttributes";
 function simplifyDomains(domains) {
     if (domains == null) return null;
 
-    let simplified = [];
+    let simplifiedBeforeLocal = [];
+    let simpleMain = null;
+    let domainnames = [];
     for (let domain of normalizeDomains(domains)) {
         if (domain != null) {
+            domainnames.push(domain.domainname);
+            if (domain.main === true && domain.configurationAttributes.length == 0 && domain.comment == null) {
+                simpleMain = domain;
+            }
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
             if (domain.configurationAttributes !== undefined && domain.configurationAttributes.length > 0) {
                 simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes);
             }
-            simplified.push(simplifiedDomain);
+            simplifiedBeforeLocal.push(simplifiedDomain);
         }
+    }
+    let simplified = [];
+    for (let domain of simplifiedBeforeLocal) {  
+        if (simpleMain != null) {
+            if (domain.domainname === simpleMain.domainname) {
+                continue;
+            } else if (domain.domainname === "LOCAL") {
+                domain.main = true;
+                domain.domainname = simpleMain.domainname;
+            }
+        }
+        simplified.push(domain);
     }
     return simplified;
 }

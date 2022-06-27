@@ -1,11 +1,13 @@
 [
   {
-      "domainname": "LOCAL",
-      "configurationAttributes": [{ "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null }],
-      "comment": null
+    "main": false,
+    "domainname": "LOCAL",
+    "configurationAttributes": [{ "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null }],
+    "comment": null
   }, { 
-      "domainname": "TEST",
-      "configurationAttributes": [],
-      "comment": null
+    "main": true,
+    "domainname": "TEST",
+    "configurationAttributes": [],
+    "comment": null
   }
 ]
