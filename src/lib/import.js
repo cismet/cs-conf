@@ -193,7 +193,7 @@ async function csImport(options) {
         //console.table(prepared);
 
         console.log("!!!!!!!!!!!!!");
-        console.log("!!! ERROR !!! import disabled for security reasons. Use -I to force import.");
+        console.log("!!! ERROR !!! import disabled for security reasons. Use -X to force import.");
         console.log("!!!!!!!!!!!!!");
     }
 }   
