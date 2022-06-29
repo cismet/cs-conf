@@ -160,6 +160,7 @@ program.command('export').description('exports the (cs_*)meta-information of a d
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config will be written', '.')
 	.option('-O, --overwrite', 'overwrite existing config')
+	.option('-S, --simplify', 'simplify config')
 	.option('-R, --reorganize', 'reorganize config')
 	.action(async (cmd) => {
 		cs(csExport, {
@@ -167,6 +168,7 @@ program.command('export').description('exports the (cs_*)meta-information of a d
 			schema: cmd.schema, 
 			overwrite: cmd.overwrite,
 			runtimePropertiesFile: cmd.runtimeProperties,
+			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
 		});
 	});

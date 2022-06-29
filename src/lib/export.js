@@ -19,6 +19,7 @@ import reorganizeDynchildhelpers from './reorganize/dynchildhelpers';
 import reorganizeStructure from './reorganize/structure';
 import reorganizeUsermanagememt from './reorganize/usermanagement';
 import reorganizeUsergroups from './reorganize/usergroups';
+import { simplifyConfig } from './simplify';
 
 async function createConfig(client, mainDomain) {
     console.log("analyzing configuration attributes");
@@ -114,7 +115,7 @@ function reorganizeConfig({
 }
 
 async function csExport(options) {
-    let  { configDir, schema, overwrite = false, runtimePropertiesFile, reorganize = false } = options;
+    let  { configDir, schema, overwrite = false, runtimePropertiesFile, simplify = false, reorganize = false } = options;
 
     checkConfigFolders(configDir, overwrite);
 
@@ -133,8 +134,7 @@ async function csExport(options) {
 
         let mainDomain = getDomainFromConfig(runtimePropertiesFile);
 
-        let exported = await createConfig(client, mainDomain);
-        Object.assign(config, reorganize ? reorganizeConfig(exported) : exported);
+        config = await createConfig(client, mainDomain);
     } finally {
         //close the connection -----------------------------------------------------------------------
         if (!options.client && client != null) {
@@ -142,7 +142,12 @@ async function csExport(options) {
         }
     }
 
-    // TODO simplify
+    if (reorganize) {
+        config = reorganizeConfig(config);
+    }
+    if (simplify) {
+        config = simplifyConfig(config);
+    }
 
     console.log("writing config Files");
     writeConfigFiles(config, configDir, overwrite);
