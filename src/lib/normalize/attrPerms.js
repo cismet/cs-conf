@@ -9,6 +9,7 @@ function normalizeAttrPerms(attrPerms) {
             if (attrPerm.key == null) throw "missing key";
 
             normalized.push(Object.assign({}, defaultAttrPerm, attrPerm, {
+                key: attrPerm.key.toLowerCase(),
                 read: normalizePerms(attrPerm.read),
                 write: normalizePerms(attrPerm.write),
             }));

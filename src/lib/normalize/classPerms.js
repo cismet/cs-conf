@@ -9,6 +9,7 @@ function normalizeClassPerms(classPerms) {
             if (classPerm.table == null) throw "missing table for classPerm";
 
             normalized.push(Object.assign({}, defaultClassPerm, classPerm, {
+                table: classPerm.table.toLowerCase(),
                 read: normalizePerms(classPerm.read),
                 write: normalizePerms(classPerm.write),
             }));

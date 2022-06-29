@@ -49,9 +49,9 @@ export function simplifyConfig({
         }
     }
     return {
-        attrPerms: simplifyAttrPerms(attrPerms), 
+        attrPerms: simplifyAttrPerms(attrPerms, mainDomain), 
         classes: simplifyClasses(classes), 
-        classPerms: simplifyClassPerms(classPerms), 
+        classPerms: simplifyClassPerms(classPerms, mainDomain), 
         domains: simplifyDomains(domains), 
         dynchildhelpers: simplifyDynchildhelpers(dynchildhelpers),
         helperSqlFiles, 
