@@ -13,6 +13,7 @@ function normalizeStructure(structure) {
             }
 
             normalized.push(Object.assign({}, defaultNode, node, {
+                table: node.table != null ? node.table.toLowerCase() : node.table,
                 children: normalizeStructure(node.children),
                 readPerms: normalizePerms(node.readPerms),
                 writePerms: normalizePerms(node.writePerms),
