@@ -20,7 +20,7 @@ async function csPassword(options) {
         salt
     }
     console.log("##########################################");
-    console.log(user);
+    console.log(JSON.stringify(user, null, 2));
     console.log("##########################################");
 }   
 
