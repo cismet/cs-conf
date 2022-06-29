@@ -47,9 +47,9 @@ async function csDiff(options) {
     console.log(util.format("comparing %s with %s ...", configDir, current));
     let result = diffString(configA, configB, { maxElisions: 1 });
     if (result) {
-        //console.log(util.format(" ↳ differences found:\n%s:", result));
+        console.log(util.format(" ↳ differences found:\n%s:", result));
     } else {
-        console.log(util.format(" ↳ no differences found.", result));
+        console.log(" ↳ no differences found.");
     }
     console.log("#########################");
     console.log("### comparision done. ###");
