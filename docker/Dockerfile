@@ -23,6 +23,7 @@ RUN npm install -g @babel/node
 RUN npm install @babel/cli @babel/preset-env --save-dev
 
 COPY ./src /app/src/
+COPY ./test /app/test/
+RUN npm run test
 RUN npm run build
-
 RUN npm install -g
