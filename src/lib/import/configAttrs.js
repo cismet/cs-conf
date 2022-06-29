@@ -1,5 +1,5 @@
 import util from 'util';
-import { extractGroupAndDomain } from '../../../build/lib/tools/cids';
+import { extractGroupAndDomain } from '../tools/cids';
 
 function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     let csConfigAttrKeyEntries = []
