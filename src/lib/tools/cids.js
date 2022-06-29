@@ -5,7 +5,6 @@ export function extendLocalDomain(key) {
     let group = parts[0];
     let domain = parts.length == 1 ? 'LOCAL' : parts[1];
     return util.format("%s@%s", group, domain);
-
 }
 
 function removeDomain(key, name) {
