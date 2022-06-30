@@ -12,11 +12,9 @@ function reorganizeUsergroups(usergroups) {
         usergroups = usergroups.sort((a, b) => {
             let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a.key));
             let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b.key));
-            return aGroupAndDomain.domain.localeCompare(bGroupAndDomain.domain) || aGroupAndDomain.group.localeCompare(bGroupAndDomain.group);
-        }).sort((a, b) => {
-            let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a.key));
-            let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b.key));
-            return aGroupAndDomain.domain == 'LOCAL' || aGroupAndDomain.domain.localeCompare(bGroupAndDomain.domain);
+            let aDomain = aGroupAndDomain.domain != 'LOCAL' ? aGroupAndDomain.domain : ''
+            let bDomain = bGroupAndDomain.domain != 'LOCAL' ? bGroupAndDomain.domain : ''
+            return aDomain.localeCompare(bDomain) || aGroupAndDomain.group.localeCompare(bGroupAndDomain.group);
         });
     }
     return usergroups;

@@ -28,7 +28,7 @@ function simplifyDomains(domains, mainDomain = null) {
             if (domain.domainname === simpleMain.domainname) {
                 continue;
             } else if (domain.domainname === "LOCAL") {               
-                simplified.push(copyFromTemplate(Object.assign({}, domain, { 
+                simplified.unshift(copyFromTemplate(Object.assign({}, domain, { 
                     main: true,
                     domainname: simpleMain.domainname,
                 }), defaultDomain));                
