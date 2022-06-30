@@ -1,3 +1,4 @@
+import { extendLocalDomain, extractGroupAndDomain } from "../tools/cids";
 import reorganizeConfigurationAttributes from "./configurationAttributes";
 
 function reorganizeUsergroups(usergroups) {
@@ -9,15 +10,13 @@ function reorganizeUsergroups(usergroups) {
         }
 
         usergroups = usergroups.sort((a, b) => {
-            let aKey = a.key;
-            let bKey = b.key;
-            let aSplit = aKey.split('@');
-            let bSplit = bKey.split('@');
-            let aGroup = aSplit[0];
-            let bGroup = bSplit[0];
-            let aDomain = aSplit[1];
-            let bDomain = bSplit[1];
-            return aDomain != 'LOCAL' || aDomain.localeCompare(bDomain) || aGroup.localeCompare(bGroup);
+            let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a.key));
+            let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b.key));
+            return aGroupAndDomain.domain.localeCompare(bGroupAndDomain.domain) || aGroupAndDomain.group.localeCompare(bGroupAndDomain.group);
+        }).sort((a, b) => {
+            let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a.key));
+            let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b.key));
+            return aGroupAndDomain.domain == 'LOCAL' || aGroupAndDomain.domain.localeCompare(bGroupAndDomain.domain);
         });
     }
     return usergroups;
