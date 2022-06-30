@@ -12,11 +12,11 @@ function normalizeDomains(domains) {
             if (domain.domainname == null) throw "missing domainname";
             if (domainnames.includes(domain.domainname)) throw util.format("domain '%s' already exists", domain.domainname);
 
-            if (domain.main === true) {
+            if (domain.main === true || domains.length == 1) {
                 if (main != null) {
                     throw util.format("can't set %s as main, %s is already main", domain.domainname, main.domainname);
                 }
-                main = domain;
+                main = Object.assign(domain, { main: true });
             } else {
                 domainnames.push(domain.domainname);
                 normalized.push(Object.assign({}, defaultDomain, domain, {
