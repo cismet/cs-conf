@@ -107,11 +107,11 @@ async function csExport(options) {
 
     config = normalizeConfig(config);
 
-    if (reorganize) {
-        config = reorganizeConfig(config);
-    }
     if (simplify) {
         config = simplifyConfig(config);
+    }
+    if (reorganize) {
+        config = reorganizeConfig(config);
     }
 
     console.log("writing config Files");
