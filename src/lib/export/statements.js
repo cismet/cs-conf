@@ -164,13 +164,10 @@ ORDER BY id
 
 export const links = `
 SELECT 
-    id_from,id_to,org 
+    id_from, id_to, org 
 FROM 
-    cs_cat_link l
-    JOIN cs_domain d ON (d.id=l.domain_to)
-WHERE 
-    d.name = 'LOCAL' OR d.name = 'WUNDA_BLAU';     
-`;
+    cs_cat_link
+;`;
 
 export const nodePermissions = `
 SELECT 

@@ -55,7 +55,7 @@ export function simplifyConfig({
         domains: simplifyDomains(domains, mainDomain), 
         dynchildhelpers: simplifyDynchildhelpers(dynchildhelpers),
         policyRules: simplifyPolicyRules(policyRules), 
-        structure: simplifyStructure(structure), 
+        structure: simplifyStructure(structure, mainDomain), 
         usergroups: simplifyUsergroups(usergroups, mainDomain), 
         usermanagement: simplifyUsermanagement(usermanagement, mainDomain), 
         helperSqlFiles, 

@@ -1,38 +1,18 @@
 import * as cidstools from '../tools/cids';
 
-function flattenStructure(children, level = 0, originals = new Map(), copiesPerOriginal = new Map()) {
+function flattenStructure(children, linkToNode, level = 0) {
     let flattenNodes = [];
     for (let node of children) { 
         node.root = level === 0;
+        
+        if (node.key != null) {
+            linkToNode.set(node.key, node);
+        }
         flattenNodes.push(node);
-        if (node.hasOwnProperty('link')) {
-            let link = node.link;
-            let copies;
-            if (copiesPerOriginal.has(link)) {
-                copies = copiesPerOriginal.get(link);
-            } else {
-                copies = [];
-            }
-            copies.push(node);
-            copiesPerOriginal.set(link, copies);        
-        } else {
-            if (node.hasOwnProperty('key')) {
-                originals.set(node.key, node);
-            }
-            if (node.hasOwnProperty('children')) {
-                flattenNodes.push(... flattenStructure(node.children, level+1, originals, copiesPerOriginal));
-            }
+        if (node.children != null) {
+            flattenNodes.push(... flattenStructure(node.children, linkToNode, level + 1));
         }
     } 
-
-    if (level == 0) {
-        for (let key of originals.keys()) {
-            let original = originals.get(key);
-            if (copiesPerOriginal.has(key)) {
-                original.copies = copiesPerOriginal.get(key);
-            }
-        }
-    }
     return flattenNodes;
 }
 
@@ -50,8 +30,9 @@ function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
 
 function prepareCatNodes(nodes, structureSqlFiles) {    
     let csCatNodeEntries = [];
+
     for (let node of nodes) {
-        if (!node.hasOwnProperty('link')) {
+        if (node.link == null) {
             node.id = csCatNodeEntries.length;
             let catNode = [
                 node.name,
@@ -73,33 +54,27 @@ function prepareCatNodes(nodes, structureSqlFiles) {
             ];
             csCatNodeEntries.push(catNode);
             delete node.root;
-
-            if (node.hasOwnProperty('copies')) {
-                for (let copy of node.copies) {
-                    copy.id = node.id;
-                }
-            }
         }
     }
     return csCatNodeEntries;
 }
 
-function generateCsCatLinkEntries(node) {
+function generateCsCatLinkEntries(node, linkToNode) {
     let csCatLinkEntries = [];
-    if (node.hasOwnProperty('children')) {
+    if (node.children != null) {
         for (let child of node.children) {
-            let catLink = [ node.id, child.id ];
+            let catLink = [ node.id, child.link != null ? linkToNode.get(child.link).id : child.id ];
             csCatLinkEntries.push(catLink);    
-            csCatLinkEntries.push(... generateCsCatLinkEntries(child));
+            csCatLinkEntries.push(... generateCsCatLinkEntries(child, linkToNode));
         }
     }    
     return csCatLinkEntries;
 }
 
-function prepareCatLinks(structure) {
+function prepareCatLinks(structure, linkToNode) {
     let csCatLinkEntries = [];
     for (let parent of structure) { 
-        csCatLinkEntries.push(... generateCsCatLinkEntries(parent));
+        csCatLinkEntries.push(... generateCsCatLinkEntries(parent, linkToNode));
     }
     return csCatLinkEntries;
 }
@@ -107,9 +82,9 @@ function prepareCatLinks(structure) {
 function prepareCatNodePerms(nodes) {
     let csCatNodePermEntries=[];
     for (let node of nodes) {
-        if (node.hasOwnProperty('readPerms')) {
+        if (node.readPerms != null) {
             for (let groupkey of node.readPerms) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
+                let {group, domain} = cidstools.extractGroupAndDomain(groupkey);
                 csCatNodePermEntries.push([
                     group,
                     domain,
@@ -118,9 +93,9 @@ function prepareCatNodePerms(nodes) {
             ]);
             }
         }
-        if (node.hasOwnProperty('writePerms')) {
+        if (node.writePerms != null) {
             for (let groupkey of node.writePerms){
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
+                let {group, domain} = cidstools.extractGroupAndDomain(groupkey);
                 csCatNodePermEntries.push([
                     group,
                     domain,
@@ -134,9 +109,11 @@ function prepareCatNodePerms(nodes) {
 }
 
 function prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
-    let nodes = flattenStructure(structure);
+    let linkToNode = new Map();
+    let nodes = flattenStructure(structure, linkToNode);
+
     let csCatNodeEntries = prepareCatNodes(nodes, structureSqlFiles);
-    let csCatLinkEntries = prepareCatLinks(structure);
+    let csCatLinkEntries = prepareCatLinks(structure, linkToNode);
     let csCatNodePermEntries = prepareCatNodePerms(nodes);
     let csDynamicChildrenHelperEntries = prepareDataDynchilds(dynchildhelpers, helperSqlFiles);
 

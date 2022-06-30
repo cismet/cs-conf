@@ -11,6 +11,8 @@
         "node_type": "N",
         "dynamic_children_file": "node1.sql",
         "children": [],
+        "key": null,
+        "link": null,
         "comment": null
     },
     {
@@ -37,9 +39,13 @@
                 "node_type": "N",
                 "dynamic_children_file": "node3.sql",
                 "children": [],
+                "key": null,
+                "link": null,
                 "comment": null
             }
         ],
+        "key": null,
+        "link": null,
         "comment": null
     }
 ]

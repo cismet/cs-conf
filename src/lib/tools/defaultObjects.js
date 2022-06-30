@@ -105,6 +105,8 @@ export const defaultNode = {
     node_type: 'N',
     dynamic_children_file: null,
     children: [],
+    key: null,
+    link: null,
     comment: null,
 };
 
