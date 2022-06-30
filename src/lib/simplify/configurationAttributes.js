@@ -8,12 +8,11 @@ function simplifyConfigurationAttributes(configurationAttributes, mainDomain = n
     let simplified = [];
     for (let configurationAttribute of normalizeConfigurationAttributes(configurationAttributes)) {
         if (configurationAttribute != null) {
-            let simplifiedConfigurationAttribute = copyFromTemplate(configurationAttribute, defaultConfigurationAttributes);           
-            if (simplifiedConfigurationAttribute.groups != null && simplifiedConfigurationAttribute.groups.length > 0) {
-                simplifiedConfigurationAttribute.groups = simplifyGroups(simplifiedConfigurationAttribute.groups, mainDomain);
-            }            
-            simplified.push(simplifiedConfigurationAttribute);
+            simplified.push(copyFromTemplate(Object.assign({}, configurationAttribute, { 
+                groups: simplifyGroups(configurationAttribute.groups, mainDomain) 
+            }), defaultConfigurationAttributes));
         }
+    }
     return simplified.length > 0 ? simplified : undefined;
 }
 

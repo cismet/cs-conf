@@ -32,12 +32,18 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
 
     for (let user of usermanagement) {
         if (user.configurationAttributes != null) {
-            for (let group of user.groups) {
-                let groupAndDomain = extractGroupAndDomain(group);
-                for (let configurationAttribute of user.configurationAttributes) {
+            for (let configurationAttribute of user.configurationAttributes) {
+                if (configurationAttribute.groups != null && configurationAttribute.groups.length > 0) {
+                    for (let group of configurationAttribute.groups) {
+                        let groupAndDomain = extractGroupAndDomain(group);                        
+                        allConfigurationAttributes.push(Object.assign({}, configurationAttribute, {
+                            user: user.login_name,
+                            group: groupAndDomain.group,
+                            domain: groupAndDomain.domain,
+                        }));
+                    }
+                } else {
                     configurationAttribute.user = user.login_name;
-                    configurationAttribute.group = groupAndDomain.group;
-                    configurationAttribute.domain = groupAndDomain.domain;
                     allConfigurationAttributes.push(configurationAttribute);
                 }
             }

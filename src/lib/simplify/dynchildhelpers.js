@@ -7,8 +7,7 @@ function simplifyDynchildhelpers(dynchildhelpers) {
     let simplified = [];
     for (let dynchildhelper of normalizeDynchildhelpers(dynchildhelpers)) {
         if (dynchildhelper != null) {
-            let simplifiedDynchildhelper = copyFromTemplate(dynchildhelper, defaultDynchildhelper);                
-            simplified.push(simplifiedDynchildhelper);
+            simplified.push(copyFromTemplate(dynchildhelper, defaultDynchildhelper));
         }
     }
     return simplified.length > 0 ? simplified : undefined;

@@ -3,19 +3,18 @@ import { removeLocalDomain } from "../tools/cids";
 import { copyFromTemplate, defaultUser } from "../tools/defaultObjects";
 import simplifyConfigurationAttributes from "./configurationAttributes";
 
-function simplifyUsermanagement(usermanagement, mainDomain = null) {
+function simplifyUsermanagement(usermanagement, mainDomain) {
     if (usermanagement == null) return null;
 
     let simplified = [];
     for (let user of normalizeUsermanagement(usermanagement)) {
         if (user != null) {
-            let simplifiedUser = copyFromTemplate(user, defaultUser);
-            if (user.configurationAttributes !== undefined && user.configurationAttributes.length > 0) {
-                simplifiedUser.configurationAttributes = simplifyConfigurationAttributes(user.configurationAttributes, mainDomain);
-            }            
-            if (user.groups != null && user.groups.length > 0) {
-                simplifiedUser.groups = simplifyGroups(user.groups, mainDomain);
-            }
+            simplified.push(copyFromTemplate(Object.assign({}, user, { 
+                groups: simplifyGroups(user.groups, mainDomain),
+                configurationAttributes: simplifyConfigurationAttributes(user.configurationAttributes, mainDomain),
+            }), defaultUser));
+        }
+    }
     return simplified.length > 0 ? simplified : undefined;
 }
 

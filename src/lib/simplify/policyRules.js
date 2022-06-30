@@ -7,8 +7,7 @@ function simplifyPolicyRules(policyRules) {
     let simplified = [];
     for (let policyRule of normalizePolicyRules(policyRules)) {
         if (policyRule != null) {
-            let simplifiedPolicyRule = copyFromTemplate(policyRule, defaultPolicyRule);                
-            simplified.push(simplifiedPolicyRule);
+            simplified.push(copyFromTemplate(policyRule, defaultPolicyRule));
         }
     }
     return simplified.length > 0 ? simplified : undefined;

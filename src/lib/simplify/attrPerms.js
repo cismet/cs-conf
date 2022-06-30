@@ -8,10 +8,10 @@ function simplifyAttrPerms(attrPerms, mainDomain) {
     let simplified = [];
     for (let attrPerm of normalizeAttrPerms(attrPerms)) {
         if (attrPerm != null) {
-            let simplifiedAttrPerm = copyFromTemplate(attrPerm, defaultAttrPerm);
-            simplifiedAttrPerm.read = simplifyPerms(simplifiedAttrPerm.read, mainDomain);
-            simplifiedAttrPerm.write = simplifyPerms(simplifiedAttrPerm.write, mainDomain);
-            simplified.push(simplifiedAttrPerm);
+            simplified.push(copyFromTemplate(Object.assign({}, attrPerm, { 
+                read: simplifyPerms(attrPerm.read, mainDomain), 
+                write: simplifyPerms(attrPerm.write, mainDomain) 
+            }), defaultAttrPerm));
         }
     }
     return simplified.length > 0 ? simplified : undefined;
