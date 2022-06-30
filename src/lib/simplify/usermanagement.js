@@ -11,7 +11,7 @@ function simplifyUsermanagement(usermanagement, mainDomain = null) {
         if (user != null) {
             let simplifiedUser = copyFromTemplate(user, defaultUser);
             if (user.configurationAttributes !== undefined && user.configurationAttributes.length > 0) {
-                simplifiedUser.configurationAttributes = simplifyConfigurationAttributes(user.configurationAttributes);
+                simplifiedUser.configurationAttributes = simplifyConfigurationAttributes(user.configurationAttributes, mainDomain);
             }            
             if (user.groups != null && user.groups.length > 0) {
                 simplifiedUser.groups = simplifyGroups(user.groups, mainDomain);

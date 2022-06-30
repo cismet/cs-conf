@@ -51,23 +51,33 @@ function analyzeAndPreprocess(configAttributes) {
             } break;
         }
         if (attr.login_name) {
-            let allAttributesForUser = userConfigAttrs.get(attr.login_name);
-            if (allAttributesForUser) {
-                allAttributesForUser.push(attrInfo);
+            attrInfo = Object.assign(attrInfo, { groups: [ attr.groupkey ] });
+            if (userConfigAttrs.has(attr.login_name)) {
+                let found = false;
+                for (let userConfigAttr of userConfigAttrs.get(attr.login_name)) {
+                    if (userConfigAttr != null && userConfigAttr.key == attrInfo.key) {
+                        found = true;
+                        if (attr.groupkey != null && userConfigAttr.groups != null && !userConfigAttr.groups.contains(attr.groupkey)) {
+                            userConfigAttr.groups.push(attr.groupkey);
+                        }
+                        break;
+                    }
+                }
+                if (!found) {
+                    userConfigAttrs.get(attr.login_name).push(attrInfo);
+                }
             } else {
                 userConfigAttrs.set(attr.login_name, [attrInfo]);
             }
         } else if (attr.groupkey) {
-            let allAttributesForGroup = groupConfigAttrs.get(attr.groupkey);
-            if (allAttributesForGroup) {
-                allAttributesForGroup.push(attrInfo);
+            if (groupConfigAttrs.has(attr.groupkey)) {
+                groupConfigAttrs.get(attr.groupkey).push(attrInfo);
             } else {
                 groupConfigAttrs.set(attr.groupkey, [attrInfo]);
             }
         } else if (attr.domainname) {
-            let allAttributesForDomain = domainConfigAttrs.get(attr.domainname);
-            if (allAttributesForDomain) {
-                allAttributesForDomain.push(attrInfo);
+            if (domainConfigAttrs.has(attr.domainname)) {
+                domainConfigAttrs.get(attr.domainname).push(attrInfo);
             } else {
                 domainConfigAttrs.set(attr.domainname, [attrInfo]);
             }

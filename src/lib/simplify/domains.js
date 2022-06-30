@@ -2,7 +2,7 @@ import normalizeDomains from "../normalize/domains";
 import { copyFromTemplate, defaultDomain } from "../tools/defaultObjects";
 import simplifyConfigurationAttributes from "./configurationAttributes";
 
-function simplifyDomains(domains) {
+function simplifyDomains(domains, mainDomain = null) {
     if (domains == null) return null;
 
     let simplifiedBeforeLocal = [];
@@ -16,11 +16,12 @@ function simplifyDomains(domains) {
             }
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
             if (domain.configurationAttributes !== undefined && domain.configurationAttributes.length > 0) {
-                simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes);
+                simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes, mainDomain);
             }
             simplifiedBeforeLocal.push(simplifiedDomain);
         }
     }
+    
     let simplified = [];
     for (let domain of simplifiedBeforeLocal) {  
         if (simpleMain != null) {
@@ -36,6 +37,10 @@ function simplifyDomains(domains) {
         } else {
             simplified.push(domain);
         }
+    }
+
+    if (simplified.length == 1) {
+        simplified[0].main = undefined;
     }
     return simplified;
 }

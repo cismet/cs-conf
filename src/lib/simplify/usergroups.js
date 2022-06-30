@@ -3,7 +3,7 @@ import { removeLocalDomain } from "../tools/cids";
 import { copyFromTemplate, defaultUserGroup } from "../tools/defaultObjects";
 import simplifyConfigurationAttributes from "./configurationAttributes";
 
-function simplifyUsergroups(usergroups, mainDomain = true) {
+function simplifyUsergroups(usergroups, mainDomain = null) {
     if (usergroups == null) return null;
 
     let simplified = [];
@@ -12,7 +12,7 @@ function simplifyUsergroups(usergroups, mainDomain = true) {
             group.key = removeLocalDomain(group.key, mainDomain);
             let simplifiedGroup = copyFromTemplate(group, defaultUserGroup);
             if (group.configurationAttributes !== undefined && group.configurationAttributes.length > 0) {
-                simplifiedGroup.configurationAttributes = simplifyConfigurationAttributes(group.configurationAttributes);
+                simplifiedGroup.configurationAttributes = simplifyConfigurationAttributes(group.configurationAttributes, mainDomain);
             }
             simplified.push(simplifiedGroup);
         }
