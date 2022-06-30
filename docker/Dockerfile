@@ -18,7 +18,7 @@ RUN curl -Ls --output /usr/local/bin/gitlab-runner "https://gitlab-runner-downlo
 
 RUN rm -rf /var/lib/apt/lists/*
 
-COPY ./.babelrc ./package.json ./package-lock.json /app/
+COPY ./.babelrc ./package.json /app/
 RUN npm install -g @babel/node
 RUN npm install @babel/cli @babel/preset-env --save-dev
 
