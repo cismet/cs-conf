@@ -52,14 +52,14 @@ export function simplifyConfig({
         attrPerms: simplifyAttrPerms(attrPerms, mainDomain), 
         classes: simplifyClasses(classes), 
         classPerms: simplifyClassPerms(classPerms, mainDomain), 
-        domains: simplifyDomains(domains), 
+        domains: simplifyDomains(domains, mainDomain), 
         dynchildhelpers: simplifyDynchildhelpers(dynchildhelpers),
-        helperSqlFiles, 
         policyRules: simplifyPolicyRules(policyRules), 
         structure: simplifyStructure(structure), 
-        structureSqlFiles,
         usergroups: simplifyUsergroups(usergroups, mainDomain), 
         usermanagement: simplifyUsermanagement(usermanagement, mainDomain), 
+        helperSqlFiles, 
+        structureSqlFiles,
         xmlFiles,
     };
 }

@@ -30,12 +30,12 @@ export function reorganizeConfig({
     classPerms, 
     domains, 
     dynchildhelpers,
-    helperSqlFiles,
     policyRules, 
     structure, 
-    structureSqlFiles,
     usergroups, 
     usermanagement, 
+    helperSqlFiles,
+    structureSqlFiles,
     xmlFiles,
 }) {
     return {
