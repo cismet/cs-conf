@@ -5,9 +5,11 @@ import { diffString } from 'json-diff';
 import { getClientForConfig } from './tools/db';
 import { readConfigFiles } from './tools/configFiles';
 import { normalizeConfig } from './normalize';
+import { simplifyConfig } from './simplify';
+import { reorganizeConfig } from './reorganize';
 
 async function csDiff(options) {
-    let { configDir, target, schema, runtimePropertiesFile } = options;
+    let { configDir, target, schema, runtimePropertiesFile, simplify, reorganize, normalize } = options;
 
     let client;
     if (options.client) {
@@ -41,8 +43,29 @@ async function csDiff(options) {
         await client.end();
     }
 
-    let configA = normalizeConfig(readConfigFiles(configDir));
-    let configB = normalizeConfig(readConfigFiles(current));
+    let configA = readConfigFiles(configDir);
+    let configB = readConfigFiles(current);
+
+    if (simplify) {
+        console.log(util.format("simplifying config %s", configDir));
+        configA = simplifyConfig(configA);
+        console.log(util.format("simplifying config %s", current));
+        configB = simplifyConfig(configB);
+    }
+
+    if (reorganize) {
+        console.log(util.format("reorganizing config %s", configDir));
+        configA = reorganizeConfig(configA);
+        console.log(util.format("reorganizing config %s", current));
+        configB = reorganizeConfig(configB);
+    }
+
+    if (normalize) {
+        console.log(util.format("normalizing config %s", configDir));
+        configA = normalizeConfig(configA);
+        console.log(util.format("normalizing config %s", current));
+        configB = normalizeConfig(configB);
+    }
 
     console.log(util.format("comparing %s with %s ...", configDir, current));
     let result = diffString(configA, configB, { maxElisions: 1 });

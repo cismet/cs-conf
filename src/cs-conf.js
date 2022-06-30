@@ -82,12 +82,19 @@ program.command('diff').description('shows differences between (cs_*)meta-inform
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
 	.option('-t, --target <dirpath>', 'the folder to compare the config with. if null, the current configs are exported', null)
+	.option('-S, --simplify', 'compare simplified diffs')
+	.option('-R, --reorganize', 'compare reorganized diffs')
+	.option('-N, --normaliz', 'compare normalized diffs') //for some reason "normalize" (with "e") does not work... ?!
 	.action(async (cmd) => {
+		console.log(cmd);
 		cs(csDiff, {
 			configDir: cmd.config, 
 			target: cmd.target, 
 			schema: cmd.schema, 
 			runtimePropertiesFile: cmd.runtimeProperties,
+			simplify: cmd.simplify,
+			reorganize: cmd.reorganize,
+			normalize: cmd.normaliz,
 		});
 	});
  
