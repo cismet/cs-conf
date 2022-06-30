@@ -10,16 +10,9 @@ import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
 import { getClientForConfig, getDomainFromConfig } from './tools/db';
 import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
-import reorganizeAttrPerms from './reorganize/attrPerms';
-import reorganizeClasses from './reorganize/classes';
-import reorganizeClassPerms from './reorganize/classPerms';
-import reorganizePolicyRules from './reorganize/policyRules';
-import reorganizeDomains from './reorganize/domains';
-import reorganizeDynchildhelpers from './reorganize/dynchildhelpers';
-import reorganizeStructure from './reorganize/structure';
-import reorganizeUsermanagememt from './reorganize/usermanagement';
-import reorganizeUsergroups from './reorganize/usergroups';
 import { simplifyConfig } from './simplify';
+import { reorganizeConfig } from './reorganize';
+import { normalizeConfig } from './normalize';
 
 async function createConfig(client, mainDomain) {
     console.log("analyzing configuration attributes");
@@ -84,36 +77,6 @@ async function createConfig(client, mainDomain) {
     }
 }
 
-function reorganizeConfig({
-    domains,
-    policyRules,
-    usermanagement,
-    usergroups,
-    classes,
-    classPerms,
-    attrPerms,
-    structure,
-    dynchildhelpers,
-    structureSqlFiles,
-    helperSqlFiles,
-    xmlFiles
-}) {
-    return {
-        domains: reorganizeDomains(domains),
-        policyRules: reorganizePolicyRules(policyRules),
-        usermanagement: reorganizeUsermanagememt(usermanagement),
-        usergroups: reorganizeUsergroups(usergroups),
-        classes: reorganizeClasses(classes),
-        classPerms: reorganizeClassPerms(classPerms),
-        attrPerms: reorganizeAttrPerms(attrPerms),
-        dynchildhelpers: reorganizeDynchildhelpers(dynchildhelpers),
-        structure: reorganizeStructure(structure),
-        structureSqlFiles,
-        helperSqlFiles,
-        xmlFiles
-    };
-}
-
 async function csExport(options) {
     let  { configDir, schema, overwrite = false, runtimePropertiesFile, simplify = false, reorganize = false } = options;
 
@@ -141,6 +104,8 @@ async function csExport(options) {
             await client.end();
         }
     }
+
+    config = normalizeConfig(config);
 
     if (reorganize) {
         config = reorganizeConfig(config);
