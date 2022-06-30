@@ -5,7 +5,7 @@
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
-        "configurationAttributes": [ { "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null } ],
+        "configurationAttributes": [ { "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null } ],
         "comment": null
     }, {
         "login_name": "User2",

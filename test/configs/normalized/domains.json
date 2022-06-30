@@ -2,7 +2,7 @@
   {
     "main": false,
     "domainname": "LOCAL",
-    "configurationAttributes": [{ "key": "test", "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null }],
+    "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null }],
     "comment": null
   }, { 
     "main": true,
