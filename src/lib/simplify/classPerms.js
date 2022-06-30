@@ -14,7 +14,7 @@ function simplifyClassPerms(classPerms, mainDomain) {
             simplified.push(simplifiedClassPerm);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyClassPerms;

@@ -23,7 +23,7 @@ function simplifyClasses(classes) {
             simplified.push(simplifiedClazz);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyClasses;

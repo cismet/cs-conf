@@ -16,10 +16,7 @@ function simplifyUsermanagement(usermanagement, mainDomain = null) {
             if (user.groups != null && user.groups.length > 0) {
                 simplifiedUser.groups = simplifyGroups(user.groups, mainDomain);
             }
-            simplified.push(simplifiedUser);
-        }
-    }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 function simplifyGroups(groups, mainDomain = null) {
@@ -31,7 +28,7 @@ function simplifyGroups(groups, mainDomain = null) {
         }
     }
 
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyUsermanagement;

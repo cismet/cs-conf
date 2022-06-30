@@ -17,7 +17,7 @@ function simplifyAttributes(attributes, pk = defaultClass.pk) {
             simplified.push(simplifiedAttribute);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyAttributes;

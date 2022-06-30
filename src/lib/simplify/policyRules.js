@@ -11,7 +11,7 @@ function simplifyPolicyRules(policyRules) {
             simplified.push(simplifiedPolicyRule);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyPolicyRules;

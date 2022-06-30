@@ -14,7 +14,7 @@ function simplifyAttrPerms(attrPerms, mainDomain) {
             simplified.push(simplifiedAttrPerm);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyAttrPerms;

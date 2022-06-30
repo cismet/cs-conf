@@ -14,8 +14,7 @@ function simplifyConfigurationAttributes(configurationAttributes, mainDomain = n
             }            
             simplified.push(simplifiedConfigurationAttribute);
         }
-    }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 function simplifyGroups(groups, mainDomain = null) {
@@ -27,7 +26,7 @@ function simplifyGroups(groups, mainDomain = null) {
         }
     }
 
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyConfigurationAttributes;

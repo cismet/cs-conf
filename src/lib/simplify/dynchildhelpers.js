@@ -11,7 +11,7 @@ function simplifyDynchildhelpers(dynchildhelpers) {
             simplified.push(simplifiedDynchildhelper);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyDynchildhelpers;

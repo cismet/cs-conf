@@ -42,7 +42,7 @@ function simplifyDomains(domains, mainDomain = null) {
     if (simplified.length == 1) {
         simplified[0].main = undefined;
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyDomains;

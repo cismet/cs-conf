@@ -8,7 +8,7 @@ function simplifyPerms(perms, mainDomain) {
     for (let perm of normalizePerms(perms)) {
         simplified.push(removeLocalDomain(perm, mainDomain));
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyPerms;

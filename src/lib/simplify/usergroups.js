@@ -17,7 +17,7 @@ function simplifyUsergroups(usergroups, mainDomain = null) {
             simplified.push(simplifiedGroup);
         }
     }
-    return simplified;
+    return simplified.length > 0 ? simplified : undefined;
 }
 
 export default simplifyUsergroups;
