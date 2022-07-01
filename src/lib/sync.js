@@ -380,7 +380,7 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncFile, skipBackup, backupPrefix, backupFolder, main } = options;
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncJson, skipBackup, backupPrefix, backupFolder, main } = options;
 
     if (execute && !skipBackup && backupFolder == null) throw "backupFolder has to be set !";
 
@@ -414,20 +414,20 @@ async function csSync(options) {
             logOut(util.format("Reading classes from %s ...", classesJson));
             classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));    
 
-            if (syncFile == null) {
-                syncFile = util.format("%s/sync.json", configDir);
+            if (syncJson == null) {
+                syncJson = util.format("%s/sync.json", configDir);
             }
         }
         
         let normalized = normalizeClasses(classes);
 
         let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
-        if (syncFile != null) {
+        if (syncJson != null) {
             try {
-                let sync = JSON.parse(fs.readFileSync(syncFile, {encoding: 'utf8'}));        
+                let sync = JSON.parse(fs.readFileSync(syncJson, {encoding: 'utf8'}));        
                 ignoreRules.push(... sync.tablesToIgnore);
             } catch (e) {
-                throw util.format("could not load syncFile %s: %s", syncFile, e);
+                throw util.format("could not load syncJson %s: %s", syncJson, e);
             }
         } else {
             logInfo("no sync.json found");

@@ -22,7 +22,7 @@ global.verbose = false;
 global.debug = false;
 
 const runtimePropertiesOption = { 
-	flags: '-r, --runtimeProperties <filepath>', 
+	flags: '-r, --runtime-properties <filepath>', 
 	description: 'the runtime.properties to load the database connection informations from',
 };
 const schemaOption = { 
@@ -45,14 +45,14 @@ program.command(' ');
 commands.set('import', program.command('import'));
 commands.get('import')
 	.description('imports the (cs_*)meta-information from a configuration configDir into a database')
+	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
-	.option('-b, --backup-folder <dirpath>', 'backup configDir')	
-	.option('-p, --backup-prefix', 'backup file prefix', null)	
-	.option('-N, --no-backup', 'does not create backup before import')	
-	.option('-R, --recreate', 'purge and recreate cs_* structure before import')	
-	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
+	.option('--no-backup', 'does not create backup before import')	
+	.option('--backup-folder <dirpath>', 'backup configDir')	
+	.option('--backup-prefix', 'backup file prefix', null)	
+	.option('--recreate', 'purge and recreate cs_* structure before import')	
  	.action(async (cmd) => {
 		cs(csImport, {
 			configDir: cmd.config, 
@@ -70,11 +70,11 @@ commands.set('backup', program.command('backup'));
 commands.get('backup')
 	.description('backups the (cs_*)meta-information to a file')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
-	.option('-c, --config <dirpath>', 'the folder to backup into', 'backups')
+	.option('-f, --folder <dirpath>', 'the folder to backup into')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
 		cs(csBackup, {
-			configDir: cmd.config, 
+			backupDir: cmd.folder, 
 			prefix: cmd.prefix, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
@@ -83,9 +83,9 @@ commands.get('backup')
 commands.set('restore', program.command('restore'));
 commands.get('restore')
 	.description('restores the (cs_*)meta-information from a backup file')
+	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-f, --file <file>', 'the backup file to restore from', null)
-	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
 	.action(async (cmd) => {
 		cs(csRestore, {
 			file: cmd.file,
@@ -133,16 +133,16 @@ commands.get('password')
 commands.set('sync', program.command('sync'));
 commands.get('sync')
 	.description('synchronizes classes with the database')
+	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder containing the classes configuration')
-	.option('-b, --backup-folder <dirpath>', 'backup configDir')	
-	.option('-p, --backup-prefix', 'backup file prefix', null)	
-	.option('-N, --no-backup', 'does not create backup before import')	
+	.option('-j, --sync-json <filepath>', 'the file containing the sync-configuration (sync.json)')
+	.option('--no-diffs', 'disables comparision with current cs_* state')
+	.option('--no-backup', 'does not create backup before import')	
+	.option('--backup-folder <dirpath>', 'backup configDir')	
+	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('-P, --purge', 'activate all drop statements')
-	.option('-n, --no-diffs', 'disables comparision with current cs_* state')
-	.option('-S, --sync-file <filepath>', 'the file containing the sync-configuration (sync.json)')
-	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.action(async (cmd) => {
 		cs(csSync, { 
 			configDir: cmd.config,
@@ -151,7 +151,7 @@ commands.get('sync')
 			noDiffs: cmd.noDiffs,
 			schema: cmd.schema,
 			runtimePropertiesFile: cmd.runtimeProperties,
-			syncFile: cmd.syncFile,
+			syncJson: cmd.syncJson,
 			skipBackup: cmd.noBackup,
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
@@ -221,11 +221,11 @@ commands.get('export')
 commands.set('create', program.command('create'));
 commands.get('create')
 	.description('creates and initializes cs_tables on a given database')
+	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-p, --purge', 'purges before creating')
-	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
-	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
+	.option('-P, --purge', 'purges before creating')
+	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
 		cs(csCreate, {
 			purge: cmd.purge,
@@ -240,9 +240,9 @@ commands.get('create')
 commands.set('truncate', program.command('truncate'));
 commands.get('truncate')
 	.description('truncates the cs_tables on a given database')
-	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
-	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
 	.option('-X, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
 		cs(csTruncate, {
 			execute: cmd.truncate,
@@ -255,8 +255,8 @@ commands.get('truncate')
 commands.set('purge', program.command('purge'));
 commands.get('purge')
 	.description('purges the cs_tables on a given database')
-	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
+	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.action(async (cmd) => {
 		cs(csPurge, {
 			execute: cmd.purge,
