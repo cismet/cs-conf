@@ -5,6 +5,7 @@ import csDiff from './diff';
 import normalizeClasses from './normalize/classes';
 import exportClasses from './export/classes';
 import { createClient, logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import csBackup from './backup';
 
 async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
     let statements = [];
@@ -377,7 +378,9 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncFile, main } = options;
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncFile, skipBackup, backupPrefix, backupFolder, main } = options;
+
+    if (execute && !skipBackup && backupFolder == null) throw "backupFolder has to be set !";
 
     let client;
     try {
@@ -390,6 +393,17 @@ async function csSync(options) {
             }
         }
         
+        if (execute && !skipBackup) {
+            await csBackup({
+                configDir: backupFolder, 
+                prefix: backupPrefix, 
+                runtimePropertiesFile,
+                client
+            });
+        } else {
+            logVerbose("Skipping backup.");
+        }
+
         let classes;
         if (configDir == null) {
             ({ classes } = await exportClasses(client));

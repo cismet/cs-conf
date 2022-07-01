@@ -136,9 +136,12 @@ commands.get('sync')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder containing the classes configuration')
-	.option('-p, --purge', 'activate all drop statements')
-	.option('-n, --noDiffs', 'disables comparision with current cs_* state')
-	.option('-S, --syncFile <filepath>', 'the file containing the sync-configuration (sync.json)')
+	.option('-b, --backup-folder <dirpath>', 'backup configDir')	
+	.option('-p, --backup-prefix', 'backup file prefix', null)	
+	.option('-N, --no-backup', 'does not create backup before import')	
+	.option('-P, --purge', 'activate all drop statements')
+	.option('-n, --no-diffs', 'disables comparision with current cs_* state')
+	.option('-S, --sync-file <filepath>', 'the file containing the sync-configuration (sync.json)')
 	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.action(async (cmd) => {
 		cs(csSync, { 
@@ -149,6 +152,9 @@ commands.get('sync')
 			schema: cmd.schema,
 			runtimePropertiesFile: cmd.runtimeProperties,
 			syncFile: cmd.syncFile,
+			skipBackup: cmd.noBackup,
+			backupPrefix: cmd.backupPrefix,
+			backupFolder: cmd.backupFolder,
 		}, cmd);
 	});
 
