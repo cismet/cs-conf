@@ -53,7 +53,6 @@ function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 
                 normalized.push(Object.assign({}, defaultAttribute, attribute, {
                     name: attribute.name || attribute.field,
-                    defaultValue: attribute.defaultValue,
                 }));    
             }
         }
