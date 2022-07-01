@@ -30,7 +30,7 @@
                 "manyToMany": null,
                 "mandatory": true,
                 "substitute": false,
-                "defaultValue": null,
+                "defaultValue": "nextval('table1_seq')",
                 "hidden": false,
                 "indexed": false,
                 "arrayKey": null,
