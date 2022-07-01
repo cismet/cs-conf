@@ -27,7 +27,7 @@ function normalizeClasses(classes) {
                 toString: normalizeSpecial(clazz.toString),
                 editor: normalizeSpecial(clazz.editor),
                 renderer: normalizeSpecial(clazz.renderer),
-                attributes: normalizeAttributes(clazz.attributes, clazz.pk),
+                attributes: normalizeAttributes(clazz.attributes, clazz.pk, clazz.table),
                 icon: null,
                 classIcon: clazz.classIcon || clazz.icon || null,
                 objectIcon: clazz.objectIcon || clazz.icon || null,

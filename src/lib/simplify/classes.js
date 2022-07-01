@@ -15,7 +15,7 @@ function simplifyClasses(classes) {
             });
             let simplifiedClazz = copyFromTemplate(classWithSimplifiedIcon, defaultClass);
             if (clazz.attributes !== undefined) {
-                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk);
+                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk, clazz.table);
             }
             if (simplifiedClazz.name == simplifiedClazz.table) {
                 delete simplifiedClazz.name;
