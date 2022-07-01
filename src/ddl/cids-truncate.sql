@@ -10,6 +10,10 @@ ALTER SEQUENCE cs_cat_link_sequence RESTART WITH 1;
 DELETE FROM cs_class_attr;
 ALTER SEQUENCE cs_attr_sequence RESTART WITH 1;
 
+--TRUNCATE TABLE cs_type CASCADE;
+DELETE FROM cs_type;
+ALTER SEQUENCE cs_type_sequence RESTART WITH 1;
+
 --TRUNCATE TABLE cs_class CASCADE;
 DELETE FROM cs_class;
 ALTER SEQUENCE cs_class_sequence RESTART WITH 1;
@@ -54,9 +58,9 @@ ALTER SEQUENCE cs_policy_sequence RESTART WITH 1;
 DELETE FROM cs_permission;
 ALTER SEQUENCE cs_permission_sequence RESTART WITH 1;
 
---TRUNCATE TABLE cs_type CASCADE;
-DELETE FROM cs_type;
-ALTER SEQUENCE cs_type_sequence RESTART WITH 1;
+--TRUNCATE TABLE cs_ug_membership CASCADE;
+DELETE FROM cs_ug_membership;
+ALTER SEQUENCE cs_ug_membership_sequence RESTART WITH 1;
 
 --TRUNCATE TABLE cs_ug CASCADE;
 DELETE FROM cs_ug;
@@ -65,10 +69,6 @@ ALTER SEQUENCE cs_ug_sequence RESTART WITH 1;
 --TRUNCATE TABLE cs_ug_class_perm CASCADE;
 DELETE FROM cs_ug_class_perm;
 ALTER SEQUENCE cs_ug_class_perm_sequence RESTART WITH 1;
-
---TRUNCATE TABLE cs_ug_membership CASCADE;
-DELETE FROM cs_ug_membership;
-ALTER SEQUENCE cs_ug_membership_sequence RESTART WITH 1;
 
 --TRUNCATE TABLE cs_usr CASCADE; 
 DELETE FROM cs_usr;
