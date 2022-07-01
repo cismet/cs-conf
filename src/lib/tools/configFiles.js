@@ -129,39 +129,60 @@ export function writeConfigFiles(config, configDir, overwrite = false) {
 
     if (domains != null) {
         fs.writeFileSync(util.format("%s/domains.json", configDir), stringify(domains), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/domains.json", configDir));
     }
     if (policyRules != null) {
         fs.writeFileSync(util.format("%s/policyRules.json", configDir), stringify(policyRules), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/policyRules.json", configDir));
     }
     if (usergroups != null) {
-    fs.writeFileSync(util.format("%s/usergroups.json", configDir), stringify(usergroups, { maxLength: 160 }), "utf8");
+        fs.writeFileSync(util.format("%s/usergroups.json", configDir), stringify(usergroups, { maxLength: 160 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/usergroups.json", configDir));
     }
     if (usermanagement != null) {
         fs.writeFileSync(util.format("%s/usermanagement.json", configDir), stringify(usermanagement, { maxLength: 120 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/usermanagement.json", configDir));
     }
     if (classes != null) {
         fs.writeFileSync(util.format("%s/classes.json", configDir), stringify(classes, { maxLength: 100 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/classes.json", configDir));
     }
     if (classPerms != null) {
         fs.writeFileSync(util.format("%s/classPerms.json", configDir), stringify(classPerms, { maxLength: 100 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/classPerms.json", configDir));
     }
     if (attrPerms != null) {
         fs.writeFileSync(util.format("%s/attrPerms.json", configDir), stringify(attrPerms, { maxLength: 100 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/attrPerms.json", configDir));
     }
     if (structure != null) {
         fs.writeFileSync(util.format("%s/structure.json", configDir), stringify(structure, { maxLength: 80 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/structure.json", configDir));
     }
+    if (dynchildhelpers != null) {
+        fs.writeFileSync(util.format("%s/dynchildhelpers.json", configDir), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
+    } else {
+        fs.rmSync(util.format("%s/dynchildhelpers.json", configDir));
+    }
+
     if (helperSqlFiles != null && helperSqlFiles.size > 0) {
         helperSqlFiles.forEach(async (value, key) => {
             fs.writeFileSync(util.format("%s/%s", structureHelperStatementsFolder, key), value, "utf8");
         });
     }
     if (structureSqlFiles != null && structureSqlFiles.size > 0) {
-        fs.writeFileSync(util.format("%s/dynchildhelpers.json", configDir), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
         structureSqlFiles.forEach(async (value, key) => {
             fs.writeFileSync(util.format("%s/%s", structureDynamicChildrenFolder, key), value, "utf8");
         });
-    }        
+    }
     if (xmlFiles != null && xmlFiles.size > 0) {
         xmlFiles.forEach(async (xmlToSave, fileName) => {
             fs.writeFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, fileName), xmlToSave, "utf8");
