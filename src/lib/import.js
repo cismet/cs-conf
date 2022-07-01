@@ -20,6 +20,8 @@ import { createClient, extractDbInfo, logDebug, logInfo, logOut, logVerbose, log
 async function csImport(options) {
     let { configDir, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, runtimePropertiesFile } = options;
 
+    if (execute && !skipBackup && backupFolder == null) throw "backupFolder has to be set !";
+
     logVerbose(util.format("Reading configuration from '%s'", configDir));
     let config = readConfigFiles(configDir);
     logOut("Preparing import ...");
