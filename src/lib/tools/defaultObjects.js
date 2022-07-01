@@ -134,7 +134,7 @@ export function copyFromTemplate(object, template) {
     for (let [key, value] of Object.entries(template)) {
         let check = object[key];
         if (
-            check !== undefined && !(
+            check != null && !(
                 check == value || 
                 (check.constructor === Array && check.length == 0) ||
                 (check.constructor === Object && Object.keys(check).length == 0) ||  

@@ -75,6 +75,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
                 // skipping views (f.e.)
 
+                let pkFound = false;
                 let columnsDone = [];
                 if (clazz.attributes) {
                     for (let cidsAttribute of clazz.attributes) {
@@ -113,7 +114,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                     }
 
                                 } else {
-                                    let existingColumn = existingTable.columns[fieldName];                            
+                                    let existingColumn = existingTable.columns[fieldName];                                                                
 
                                     let oldType = { 
                                         dbType: existingColumn.dataType, 
@@ -121,10 +122,10 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                         scale: existingColumn.scale 
                                     };
 
-                                    let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: fieldName, primary : fieldName == pk, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.null, oldDefault: existingColumn.default };
-        
-                                    if (fieldName == pk) {
-                                        pk = null;
+                                    let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: fieldName, primary : fieldName == pk, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.isNullable, oldDefault: existingColumn.default };
+                                                    
+                                    if (fieldName == pk) {                
+                                        pkFound = true;
                                     }
 
                                     // primitive column existing => altering if needed
@@ -152,8 +153,9 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                             statement.null = !mandatory;
                                         }
 
+                                        let normalizedDefaultValue = fieldName == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
                                         let isText = isTextType(existingColumn.dataType);
-                                        let escapedExisting = cidsAttribute.defaultValue && isText ? existingColumn.default : util.format("'%s'", existingColumn.default);
+                                        let escapedExisting = cidsAttribute.defaultValue && isText ? normalizedDefaultValue : util.format("'%s'", normalizedDefaultValue);
                                         if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
                                             statement.default = existingColumn.dataType && cidsAttribute.defaultValue && isText ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
                                         }
@@ -172,7 +174,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                     }
                 }
 
-                if (pk) {
+                if (!pkFound) {
                     // primary key => fixed attributes
 
                     let existingColumn = existingTable.columns[pk];                            
@@ -184,20 +186,20 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                             scale: existingColumn.scale 
                         };
 
-                        let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: pk, primary : true, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.null, oldDefault: existingColumn.default };
+                        let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: pk, primary : true, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.isNullable, oldDefault: existingColumn.default };
 
                         if (existingColumn.isNullable) {
                             statement.oldNull = existingColumn.isNullable;
                         }
-                        if (existingColumn.defaulValue) {
-                            statement.oldDefault = existingColumn.defaulValue;
+                        if (existingColumn.defaultValue) {
+                            statement.oldDefault = existingColumn.defaultValue;
                         }
 
                         if (existingColumn.isNullable) {
                             statement.null = false;
                         }
                         if(existingColumn.default != util.format("nextval('%s_seq'::text)", cidsTableName) && existingColumn.default != util.format("nextval('%s_seq'::regclass)", cidsTableName)) {
-                            statement.default = util.format("nextval('%s_seq');", cidsTableName);
+                            statement.default = util.format("nextval('%s_seq')", cidsTableName);
                         }
                         if (statement.type !== undefined || statement.null !== undefined || statement.default !== undefined || statement.update !== undefined) {
                             statements.push(statement);
