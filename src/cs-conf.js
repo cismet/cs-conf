@@ -48,7 +48,7 @@ commands.get('import')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
-	.option('-b, --backup-folder <dirpath>', 'backup configDir', 'backups')	
+	.option('-b, --backup-folder <dirpath>', 'backup configDir')	
 	.option('-p, --backup-prefix', 'backup file prefix', null)	
 	.option('-N, --no-backup', 'does not create backup before import')	
 	.option('-R, --recreate', 'purge and recreate cs_* structure before import')	
@@ -58,7 +58,7 @@ commands.get('import')
 			configDir: cmd.config, 
 			recreate: cmd.recreate, 
 			execute: cmd.import,
-			skipBackup: !cmd.backup,
+			skipBackup: cmd.noBackup,
 			backupPrefix: cmd.backupPrefix,
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
