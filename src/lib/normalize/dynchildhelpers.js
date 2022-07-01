@@ -6,9 +6,9 @@ function normalizeDynchildhelpers(dynchildhelpers) {
 
     if (dynchildhelpers !== undefined) {
         for (let dynchildhelper of dynchildhelpers) {
-            if (dynchildhelper.name == null) throw "name missing";
-            if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw "either code or code_file missing";
-            if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw "either code or code_file can't be set both";
+            if (dynchildhelper.name == null) throw "normalizeDynchildhelpers: name missing";
+            if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw "normalizeDynchildhelpers: either code or code_file missing";
+            if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw "normalizeDynchildhelpers: either code or code_file can't be set both";
 
             normalized.push(Object.assign({}, defaultDynchildhelper, dynchildhelper));
         }

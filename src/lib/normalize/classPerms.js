@@ -6,7 +6,7 @@ function normalizeClassPerms(classPerms) {
     
     if (classPerms !== undefined) {
         for (let classPerm of classPerms) {
-            if (classPerm.table == null) throw "missing table for classPerm";
+            if (classPerm.table == null) throw "normalizeClassPerms: missing table for classPerm";
 
             normalized.push(Object.assign({}, defaultClassPerm, classPerm, {
                 table: classPerm.table.toLowerCase(),

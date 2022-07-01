@@ -1,6 +1,7 @@
 import cryptoRandomString from 'crypto-random-string';
 import md5 from 'md5';
 import util from 'util';
+import { logOut } from './tools/tools';
 
 async function csPassword(options) {
     let { loginName, password, salt = cryptoRandomString({ length: 16 }) } = options;
@@ -19,9 +20,8 @@ async function csPassword(options) {
         pw_hash: hash,
         salt
     }
-    console.log("##########################################");
-    console.log(JSON.stringify(user, null, 2));
-    console.log("##########################################");
+
+    logOut(JSON.stringify(user, null, 2));
 }   
 
 export default csPassword;

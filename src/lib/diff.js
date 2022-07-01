@@ -2,81 +2,72 @@ import fs from 'fs';
 import util from 'util';
 import csExport from './export';
 import { diffString } from 'json-diff';
-import { getClientForConfig } from './tools/db';
 import { readConfigFiles } from './tools/configFiles';
 import { normalizeConfig } from './normalize';
 import { simplifyConfig } from './simplify';
 import { reorganizeConfig } from './reorganize';
+import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csDiff(options) {
-    let { configDir, target, schema, runtimePropertiesFile, simplify, reorganize, normalize } = options;
+    let { configDir, target, runtimePropertiesFile, simplify, reorganize, normalize, schema, main } = options;
 
-    let client;
-    if (options.client) {
-        client = options.client;
-    } else if (!target) {
-        console.log(util.format("loading config %s", runtimePropertiesFile));
-        client = getClientForConfig(runtimePropertiesFile);
-
-        console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-        await client.connect();
-    }
+    if (configDir == null) throw "'configDir' has to be set !";
+    if (target == null && runtimePropertiesFile == null) throw "Either 'target' or 'runtimePropertiesFile' has to be set !";
 
     let current;
     if (target) {
         current = target;
     } else {    
-        let prefix = util.format("%s[%s:%d]", client.database, client.host, client.port);
-        let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-        current = util.format("/tmp/diffs_%s.%s", prefix, formattedDate);
+        let client;
+        try {
+            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
 
-        console.log("#################");
-        console.log(util.format("### exporting current config to %s for comparision.", current));
-        console.log("#################");
-        await csExport({ configDir: current, schema: schema, runtimePropertiesFile, client: client });
-        console.log("#################");
-        console.log("### export done. starting comparision.");
-        console.log("#################");    
+            let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
+            let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
+            current = util.format("/tmp/diff_%s.%s", prefix, formattedDate);
+
+            await csExport({ configDir: current, schema, runtimePropertiesFile, client });
+        } finally {
+            if (options.client == null && client != null) {
+                await client.end();
+            }
+        }
     }
 
-    if (!options.client && client != null) {
-        await client.end();
-    }
-
+    logVerbose("Preparing configurations for comparision ...")
+    logVerbose(util.format(" ↳ loading '%s'", configDir));
     let configA = readConfigFiles(configDir);
+    logVerbose(util.format(" ↳ loading '%s'", current));
     let configB = readConfigFiles(current);
 
     if (simplify) {
-        console.log(util.format("simplifying config %s", configDir));
+        logVerbose(util.format(" ↳ simplifying '%s'", configDir));
         configA = simplifyConfig(configA);
-        console.log(util.format("simplifying config %s", current));
+        logVerbose(util.format(" ↳ simplifying '%s'", current));
         configB = simplifyConfig(configB);
     }
 
     if (reorganize) {
-        console.log(util.format("reorganizing config %s", configDir));
+        logVerbose(util.format(" ↳ reorganizing '%s'", configDir));
         configA = reorganizeConfig(configA);
-        console.log(util.format("reorganizing config %s", current));
+        logVerbose(util.format(" ↳ reorganizing '%s'", current));
         configB = reorganizeConfig(configB);
     }
 
     if (normalize) {
-        console.log(util.format("normalizing config %s", configDir));
+        logVerbose(util.format(" ↳ normalizing '%s'", configDir));
         configA = normalizeConfig(configA);
-        console.log(util.format("normalizing config %s", current));
+        logVerbose(util.format(" ↳ normalizing '%s'", current));
         configB = normalizeConfig(configB);
     }
 
-    console.log(util.format("comparing %s with %s ...", configDir, current));
+    logOut(util.format("Comparing '%s' with '%s' ...", configDir, current));
     let result = diffString(configA, configB, { maxElisions: 1 });
     if (result) {
-        console.log(util.format(" ↳ differences found:\n%s:", result));
+        logOut(result, { noSilent: main });
     } else {
-        console.log(" ↳ no differences found.");
+        logInfo("no differences found");
     }
-    console.log("#########################");
-    console.log("### comparision done. ###");
-    console.log("#########################");
 
     if (!target) {
         fs.rmSync(current, { recursive: true, force: true });

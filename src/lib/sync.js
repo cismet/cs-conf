@@ -1,9 +1,10 @@
 import fs from 'fs';
 import util from 'util';
-import { getClientForConfig } from './tools/db';
 import wcmatch from 'wildcard-match';
 import csDiff from './diff';
 import normalizeClasses from './normalize/classes';
+import exportClasses from './export/classes';
+import { createClient, logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 
 async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
     let statements = [];
@@ -376,217 +377,229 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile } = options;
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncFile, main } = options;
+
     let client;
-    if (options.client) {
-        client = options.client;
-    } else {
-        console.log(util.format("loading config %s", runtimePropertiesFile));
-        client = getClientForConfig(runtimePropertiesFile);
-
-        console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-        await client.connect();
-    }
-
-    if (!noDiffs) {
-        let differences = await csDiff( { configDir, comparisionFolder: null, runtimePropertiesFile, schema, client, simplify: true, reorganize: true, normalize: false } );
-        if (differences.length > 0) {
-            throw "differences found, aborting sync !";
-        }
-    }
-    
-    let classesJson = util.format("%s/classes.json", configDir);
-    console.log(util.format("reading classes from %s", classesJson));
-    let classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));
-    let normalized = normalizeClasses(classes);
-
-    let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     try {
-        let sync = JSON.parse(fs.readFileSync(util.format("%s/sync.json", configDir), {encoding: 'utf8'}));        
-        ignoreRules.push(... sync.tablesToIgnore);
-    } catch (e) {
-        console.log("no sync.json found");
-    }
+        client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
 
-    let allCidsClasses = [...normalized];
-    let allCidsClassesByTableName = {};
-
-    let attributesCount = 0;
-    for (let singleCidsClass of allCidsClasses) {
-        if (singleCidsClass.table) {
-            allCidsClassesByTableName[singleCidsClass.table] = singleCidsClass;
-        }
-        if (singleCidsClass.attributes) {
-            attributesCount += singleCidsClass.attributes.length;
-        }
-    }
-    console.log(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.length));
-
-    let existingData = {
-        tables : {},
-        sequences : []
-    };
-
-    console.log("analysing existing sequences ...");
-    let sequencesQuery = "SELECT sequence_name FROM information_schema.sequences ORDER BY sequence_name;";
-    let { rows : sequencesResults } = await client.query(sequencesQuery);
-    for (let result of sequencesResults) {
-        let sequenceKey = result.sequence_name.toLowerCase();
-        existingData.sequences.push(sequenceKey);
-    }        
-    console.log(util.format(" ↳ %d sequences found.", existingData.sequences.length));
-
-    console.log("analysing existing tables ...");
-    let tablesQuery = "SELECT tables.table_schema AS table_schema, tables.table_type AS table_type, tables.table_name AS table_name, columns.column_name AS column_name, CASE WHEN columns.column_default ILIKE '%::' || columns.data_type THEN substring(columns.column_default, 0, length(columns.column_default) - length(columns.data_type) - 1) ELSE columns.column_default END AS column_default, columns.is_nullable = 'YES' AS column_is_nullable, columns.udt_name AS column_data_type, CASE WHEN columns.udt_name = 'bpchar' OR columns.udt_name = 'varchar' THEN columns.character_maximum_length WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_precision ELSE NULL END AS column_precision, CASE WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_scale ELSE NULL END AS column_scale FROM information_schema.tables LEFT JOIN information_schema.columns ON tables.table_name = columns.table_name AND tables.table_schema = columns.table_schema;";
-    let { rows: tablesResults } = await client.query(tablesQuery);
-    
-    let ignoredTables = [];
-    let ignoredSequences = [];
-
-    for (let tablesResult of tablesResults) {
-        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
-
-        let ignoreTable = false;
-        for (let ignoreRule of ignoreRules) {
-            if (!ignoredTables.includes(tableKey) && wcmatch(ignoreRule)(tableKey)) {
-                if (!ignoredTables.includes(tableKey)) {
-                    ignoredTables.push(tableKey);
-
-                    let sequenceKey = util.format("%s_seq", tableKey);
-                    if (existingData.sequences.includes(sequenceKey)) {
-                        existingData.sequences = existingData.sequences.filter((value) => {
-                            if (value == sequenceKey) {
-                                ignoredSequences.push(sequenceKey);
-                            }
-                            return value != sequenceKey;
-                        });
-                    }
-                }
-                ignoreTable = true;
-                break;                    
+        if (configDir != null && !noDiffs) {
+            let differences = await csDiff( { configDir, comparisionFolder: null, runtimePropertiesFile, schema, client, simplify: true, reorganize: true, normalize: false } );
+            if (differences.length > 0) {
+                throw "differences found, aborting sync !";
             }
         }
-        if (ignoreTable) {
-            continue;
-        }
-
-        if (!existingData.tables.hasOwnProperty(tableKey)) {
-            existingData.tables[tableKey] = { 
-                name: tablesResult.table_name,
-                tableType: tablesResult.table_type,
-                schema: tablesResult.table_schema,
-                columns: {}
-            };
-        }
-        let columnKey = tablesResult.column_name;
-        existingData.tables[tableKey].columns[columnKey] = {
-            name: tablesResult.column_name,
-            default: tablesResult.column_default,
-            isNullable: tablesResult.column_is_nullable,
-            dataType: tablesResult.column_data_type,
-            precision: tablesResult.column_precision,
-            scale: tablesResult.column_scale
-        };
-    }      
-    
-    console.log(util.format(" ↳ %d columns found in %d tables.", tablesResults.length, Object.keys(existingData.tables).length));
-    console.log("applying ignore rules:");
-    console.table(ignoreRules);
-    console.log(" ↳ ignoring tables:");
-    console.table(ignoredTables);
-    console.log(" ↳ ignoring sequences:");
-    console.table(ignoredSequences);
-
-
-    existingData.ignoredTables = ignoredTables;
-    existingData.ignoredSequences = ignoredSequences;
-
-    // start statements creation recursion
-
-    console.log("preparing sync statements ...");
-    let statements = [];
-    let tablesDone = [];
-    while(allCidsClasses.length > 0) {
-        let cidsClass = allCidsClasses.pop();
-        statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass));
-    }    
-    if (statements.length > 0) {
-        console.table(statements);
-    }
-
-    // dropping unused tables
-
-    for (let tableDone of tablesDone) {
-        delete existingData.tables[tableDone];
-    }
-    Object.keys(existingData.tables).forEach(function(key) {
-        if (!ignoredTables.includes(key)) {
-            var tableData = existingData.tables[key];
-            if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === "public") {
-                let sequenceKey = util.format("%s_seq", key);
-                statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
-            }
-        }
-    });
-
-    // printing all statements
-
-    if (statements.length > 0) {
-
-        let skipped = [];
-        let subQueries = [];
         
-        for (let statement of statements) {
-            if (purge !== true && statement.action.startsWith("DROP ")) {
-                skipped.push(... queriesFromStatement(statement));
-            } else {
-                subQueries.push(... queriesFromStatement(statement));
-            }
-        }
-
-        if (subQueries.length > 0) {
-            let query = "\n";
-            query += "-- ########################################\n";
-            query += "-- ### BEGIN OF SYNCHRONISATION QUERIES ###\n";
-            query += "-- ########################################\n";
-            query += subQueries.join("\n");
-            query += "\n\n";
-            query += "-- ######################################\n";
-            query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
-            query += "-- ######################################\n";
-
-            if (execute) {
-                console.log(util.format("\nstart syncing (%d queries)...", subQueries.filter((value) => {
-                    return value.trim() != "" && !value.trim().startsWith("--");
-                }).length));
-                await client.query(query);
-            } else {
-                console.log(util.format("\nresulting sync queries:"));
-                console.log(query);
-            }
-            console.log(util.format(" ↳ syncing successfull"));
+        let classes;
+        if (configDir == null) {
+            ({ classes } = await exportClasses(client));
         } else {
-            console.log("nothing to sync. done.");
+            let classesJson = util.format("%s/classes.json", configDir);
+            logOut(util.format("Reading classes from %s ...", classesJson));
+            classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));    
+
+            if (syncFile == null) {
+                syncFile = util.format("%s/sync.json", configDir);
+            }
+        }
+        
+        let normalized = normalizeClasses(classes);
+
+        let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
+        if (syncFile != null) {
+            try {
+                let sync = JSON.parse(fs.readFileSync(syncFile, {encoding: 'utf8'}));        
+                ignoreRules.push(... sync.tablesToIgnore);
+            } catch (e) {
+                throw util.format("could not load syncFile %s: %s", syncFile, e);
+            }
+        } else {
+            logInfo("no sync.json found");
         }
 
-        if (skipped.length > 0)  {
-            console.log("======================");
-            console.log(util.format("%d Skipped statements:", skipped.filter((value) => {
-                return value.trim() != "";
-            }).length));
-            console.log("----------------------");
-            console.log(skipped.join("\n"));
-            console.log("======================");
+        let allCidsClasses = [...normalized];
+        let allCidsClassesByTableName = {};
+
+        let attributesCount = 0;
+        for (let singleCidsClass of allCidsClasses) {
+            if (singleCidsClass.table) {
+                allCidsClassesByTableName[singleCidsClass.table] = singleCidsClass;
+            }
+            if (singleCidsClass.attributes) {
+                attributesCount += singleCidsClass.attributes.length;
+            }
         }
-    } else {
-        console.log("nothing to sync. done.");
-    }
+        logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.length));
 
-    // ----
+        let existingData = {
+            tables : {},
+            sequences : []
+        };
 
-    if (!options.client && client != null) {
-        //close the connection -----------------------------------------------------------------------
-        await client.end();
+        logVerbose("Analysing existing sequences ...");
+        let sequencesQuery = "SELECT sequence_name FROM information_schema.sequences ORDER BY sequence_name;";
+        let { rows : sequencesResults } = await client.query(sequencesQuery);
+        for (let result of sequencesResults) {
+            let sequenceKey = result.sequence_name.toLowerCase();
+            existingData.sequences.push(sequenceKey);
+        }        
+        logVerbose(util.format(" ↳ %d sequences found.", existingData.sequences.length));
+
+        logVerbose("Analysing existing tables ...");
+        let tablesQuery = "SELECT tables.table_schema AS table_schema, tables.table_type AS table_type, tables.table_name AS table_name, columns.column_name AS column_name, CASE WHEN columns.column_default ILIKE '%::' || columns.data_type THEN substring(columns.column_default, 0, length(columns.column_default) - length(columns.data_type) - 1) ELSE columns.column_default END AS column_default, columns.is_nullable = 'YES' AS column_is_nullable, columns.udt_name AS column_data_type, CASE WHEN columns.udt_name = 'bpchar' OR columns.udt_name = 'varchar' THEN columns.character_maximum_length WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_precision ELSE NULL END AS column_precision, CASE WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_scale ELSE NULL END AS column_scale FROM information_schema.tables LEFT JOIN information_schema.columns ON tables.table_name = columns.table_name AND tables.table_schema = columns.table_schema;";
+        let { rows: tablesResults } = await client.query(tablesQuery);
+        
+        let ignoredTables = [];
+        let ignoredSequences = [];
+
+        for (let tablesResult of tablesResults) {
+            let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
+
+            let ignoreTable = false;
+            for (let ignoreRule of ignoreRules) {
+                if (!ignoredTables.includes(tableKey) && wcmatch(ignoreRule)(tableKey)) {
+                    if (!ignoredTables.includes(tableKey)) {
+                        ignoredTables.push(tableKey);
+
+                        let sequenceKey = util.format("%s_seq", tableKey);
+                        if (existingData.sequences.includes(sequenceKey)) {
+                            existingData.sequences = existingData.sequences.filter((value) => {
+                                if (value == sequenceKey) {
+                                    ignoredSequences.push(sequenceKey);
+                                }
+                                return value != sequenceKey;
+                            });
+                        }
+                    }
+                    ignoreTable = true;
+                    break;                    
+                }
+            }
+            if (ignoreTable) {
+                continue;
+            }
+
+            if (!existingData.tables.hasOwnProperty(tableKey)) {
+                existingData.tables[tableKey] = { 
+                    name: tablesResult.table_name,
+                    tableType: tablesResult.table_type,
+                    schema: tablesResult.table_schema,
+                    columns: {}
+                };
+            }
+            let columnKey = tablesResult.column_name;
+            existingData.tables[tableKey].columns[columnKey] = {
+                name: tablesResult.column_name,
+                default: tablesResult.column_default,
+                isNullable: tablesResult.column_is_nullable,
+                dataType: tablesResult.column_data_type,
+                precision: tablesResult.column_precision,
+                scale: tablesResult.column_scale
+            };
+        }      
+        
+        logVerbose(util.format(" ↳ %d columns found in %d tables.", tablesResults.length, Object.keys(existingData.tables).length));
+
+        logVerbose("Applying ignore rules ...");
+        logVerbose(ignoreRules, { table: true });
+        logDebug(" ↳ ignoring tables:");
+        logDebug(ignoredTables, { table: true });
+        logVerbose(" ↳ ignoring sequences:");
+        logVerbose(ignoredSequences, { table: true });
+
+        existingData.ignoredTables = ignoredTables;
+        existingData.ignoredSequences = ignoredSequences;
+
+        // start statements creation recursion
+
+        logVerbose("Preparing sync statements ...");
+        let statements = [];
+        let tablesDone = [];
+        while(allCidsClasses.length > 0) {
+            let cidsClass = allCidsClasses.pop();
+            statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass));
+        }    
+        if (statements.length > 0) {
+            logVerbose(statements, { table: true });
+        }
+
+        // dropping unused tables
+
+        for (let tableDone of tablesDone) {
+            delete existingData.tables[tableDone];
+        }
+        Object.keys(existingData.tables).forEach(function(key) {
+            if (!ignoredTables.includes(key)) {
+                var tableData = existingData.tables[key];
+                if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === "public") {
+                    let sequenceKey = util.format("%s_seq", key);
+                    statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
+                }
+            }
+        });
+
+        // printing all statements
+
+        if (statements.length > 0) {
+
+            let skipped = [];
+            let subQueries = [];
+            
+            for (let statement of statements) {
+                if (purge !== true && statement.action.startsWith("DROP ")) {
+                    skipped.push(... queriesFromStatement(statement));
+                } else {
+                    subQueries.push(... queriesFromStatement(statement));
+                }
+            }
+
+            if (skipped.length > 0)  {
+                logOut("======================");
+                logOut(util.format("%d Skipped statements:", skipped.filter((value) => {
+                    return value.trim() != "";
+                }).length));
+                logOut("----------------------");
+                logOut(skipped.join("\n"));
+                logOut("======================");
+            }
+
+            if (subQueries.length > 0) {
+                let query = "\n";
+                query += "-- ########################################\n";
+                query += "-- ### BEGIN OF SYNCHRONISATION QUERIES ###\n";
+                query += "-- ########################################\n";
+                query += subQueries.join("\n");
+                query += "\n\n";
+                query += "-- ######################################\n";
+                query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
+                query += "-- ######################################\n";
+
+                if (execute) {
+                    logOut(util.format("\nstart syncing (%d queries) ...", subQueries.filter((value) => {
+                        return value.trim() != "" && !value.trim().startsWith("--");
+                    }).length));
+                    await client.query(query);
+                } else {
+                    logVerbose("\nresulting sync queries:");
+                    logOut(query, { noSilent: main });
+                }
+                if (execute) {
+                    logInfo(" ↳ syncing successfull");
+                } else {
+                    logOut(" ↳ syncing successfull");
+                    logOut();
+                    logWarn("DRY RUN nothing has really happend yet. '-X|--sync' for execution");
+                }
+            } else {
+                logInfo(" ↳ nothing to sync. done.");
+            }
+        } else {
+            logInfo(" ↳ nothing to sync. done.");
+        }
+    } finally {
+        if (options.client == null && client != null) {
+            await client.end();
+        }
     }
 }   
 

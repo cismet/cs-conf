@@ -10,7 +10,7 @@ export function readConfigFile(file) {
 
 export function readConfigFiles(configDir) {
     if (!fs.existsSync(configDir)) {
-        throw util.format("%s does not exist", configDir);
+        throw util.format("readConfigFiles: %s does not exist", configDir);
     }
 
     let domains = readConfigFile(util.format("%s/domains.json", configDir));
@@ -71,7 +71,7 @@ export function readConfigFiles(configDir) {
 
 export function checkConfigFolders(configDir, overwrite = false) {
     if (fs.existsSync(configDir) && !overwrite) {
-        throw util.format("%s exists already", configDir);
+        throw util.format("checkConfigFolders: %s exists already", configDir);
     }
 }
 

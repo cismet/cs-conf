@@ -1,11 +1,10 @@
 import fs from 'fs';
 import util from 'util';
-
-import { getClientForConfig } from './tools/db';
 import csPurge from './purge';
+import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csCreate(options) {
-    let { purge, init, execute, silent, schema, runtimePropertiesFile } = options
+    let { purge, init, execute, silent, schema, runtimePropertiesFile, main } = options
     let statements = [];
 
     statements.push(util.format("SET SCHEMA '%s';", schema));        
@@ -19,35 +18,26 @@ async function csCreate(options) {
 
     if (execute) {
         let client;
-        if (options.client) {
-            client = options.client;
-        } else {    
-            console.log(util.format("loading config %s", runtimePropertiesFile));
-            client = getClientForConfig(runtimePropertiesFile);
-    
-            console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-            await client.connect();
-    
-            console.log("creating ...");
-            await client.query(statements.join("\n"));
-            console.log(" ↳ done.");
-        }
+        try {
+            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
 
-        if (!options.client && client != null) {
-            //close the connection -----------------------------------------------------------------------
-            await client.end();
+            logOut("Creating ...");
+            await client.query(statements.join("\n"));
+            logVerbose(" ↳ done.");
+        } finally {
+            if (options.client == null && client != null) {
+                await client.end();
+            }
         }
     } else if (!silent) {
-        console.log();
-        console.log("################################################################################# ");
-        console.log("##### showing create statements, NO execution (--create for real execution) ##### ");
-        console.log("################################################################################# ");
-        console.log();
-        console.log(statements.join("\n"));
-        console.log();
-        console.log("################################################################################# ");
-        console.log("##### showing create statements, NO execution (--create for real execution) ##### ");
-        console.log("################################################################################# ");
+        logOut();
+        logOut("###################################### ");
+        logOut("##### showing restore statements ##### ");
+        logOut("###################################### ");
+        logOut();
+        logOut(statements.join("\n"), { noSilent: main });
+        logOut();
+        logInfo("DRY RUN ! Nothing happend yet. Use -X to execute create.");
     }
 }   
 

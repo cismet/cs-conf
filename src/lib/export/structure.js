@@ -1,5 +1,5 @@
 import * as stmnts from './statements';
-import { clean } from '../tools/tools.js';
+import { clean, logWarn } from '../tools/tools.js';
 import zeroFill from 'zero-fill';
 import slug from 'slug';
 import striptags from 'striptags';
@@ -181,7 +181,7 @@ function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchild
     for (let node of allNodes.values()) {
         let nodeId = node.id;
         if (nodeId) {
-            console.log(util.format(" ↳ ignoring orphan node with id: %d", nodeId));
+            logWarn(util.format("ignoring orphan node with id: %d", nodeId));
             allNodes.delete(nodeId);
         }
     }

@@ -7,7 +7,7 @@ function normalizeUsergroups(usergroups) {
 
     if (usergroups !== undefined) {
         for (let usergroup of usergroups) {
-            if (usergroup.key == null) throw "missing key";
+            if (usergroup.key == null) throw "normalizeUsergroups: missing key";
 
             normalized.push(Object.assign({}, defaultUserGroup, usergroup, {
                 key: extendLocalDomain(usergroup.key),

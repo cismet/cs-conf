@@ -8,14 +8,15 @@ import exportClasses from './export/classes';
 import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
-import { getClientForConfig, getDomainFromConfig } from './tools/db';
+import { getDomainFromConfig } from './tools/db';
 import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
 import { simplifyConfig } from './simplify';
 import { reorganizeConfig } from './reorganize';
 import { normalizeConfig } from './normalize';
+import { createClient, extractDbInfo, logOut, logVerbose } from './tools/tools';
 
 async function createConfig(client, mainDomain) {
-    console.log("analyzing configuration attributes");
+    logVerbose(" ↳ exporting configuration attributes");
     let {
         userConfigAttrs,
         groupConfigAttrs,
@@ -23,37 +24,37 @@ async function createConfig(client, mainDomain) {
         xmlFiles
     } = await exportConfigAttributes(client);
 
-    console.log("analyzing domains");
+    logVerbose(" ↳ exporting domains");
     let { domains } = await exportDomains(client, mainDomain, domainConfigAttrs);
 
-    console.log("analyzing policy defaults");
+    logVerbose(" ↳ exporting policy defaults");
     let { policyRules } = await exportPolicyRules(client);
 
-    console.log("analyzing users and groups");
+    logVerbose(" ↳ exporting users and groups");
     let {
         usermanagement,
         usergroups
     } = await exportUserManagement(client, groupConfigAttrs, userConfigAttrs);
 
-    console.log("analyzing classes and attributes");
+    logVerbose(" ↳ exporting classes and attributes");
     let {
         classes,
         attributes
     } = await exportClasses(client);
 
-    console.log("analyzing class permissions");
+    logVerbose(" ↳ exporting class permissions");
     let {
         classPerms,
         classReadPerms,
         classWritePerms
     } = await exportClassPermissions(client, classes);
     
-    console.log("analyzing atrributes permissions");
+    logVerbose(" ↳ exporting atrributes permissions");
     let {
         attrPerms,
     } = await exportAttrPermissions(client, attributes, classReadPerms, classWritePerms);
 
-    console.log("analyzing structure");
+    logVerbose(" ↳ exporting structure");
     let {
         structure,
         structureSqlFiles,
@@ -81,32 +82,21 @@ async function csExport(options) {
     let  { configDir, schema, overwrite = false, runtimePropertiesFile, simplify = false, reorganize = false } = options;
 
     checkConfigFolders(configDir, overwrite);
+    let mainDomain = getDomainFromConfig(runtimePropertiesFile);
 
     let config = {};    
     let client;
     try {
-        if (options.client) {
-            client = options.client;
-        } else {
-            console.log(util.format("loading config %s", runtimePropertiesFile));
-            client = getClientForConfig(runtimePropertiesFile);
-
-            console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-            await client.connect();
-        }
-
-        let mainDomain = getDomainFromConfig(runtimePropertiesFile);
-
+        client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
+        logOut(util.format("Exporting configuration from '%s' ...", extractDbInfo(client)));
         config = await createConfig(client, mainDomain);
     } finally {
-        //close the connection -----------------------------------------------------------------------
-        if (!options.client && client != null) {
+        if (options.client == null && client != null) {
             await client.end();
         }
     }
 
     config = normalizeConfig(config);
-
     if (simplify) {
         config = simplifyConfig(config);
     }
@@ -114,7 +104,7 @@ async function csExport(options) {
         config = reorganizeConfig(config);
     }
 
-    console.log("writing config Files");
+    logOut(util.format(" ↳ writing configuration to %s", configDir));
     writeConfigFiles(config, configDir, overwrite);
 }
 

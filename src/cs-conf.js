@@ -15,11 +15,15 @@ import csPassword from './lib/password';
 import csNormalize from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
+import { clean, logDebug, logErr, logOut } from './lib/tools/tools';
+
+global.silent = false;
+global.verbose = false;
+global.debug = false;
 
 const runtimePropertiesOption = { 
-	flags: '-r, --runtime-properties <filepath>', 
+	flags: '-r, --runtimeProperties <filepath>', 
 	description: 'the runtime.properties to load the database connection informations from',
-	default: './runtime.properties'
 };
 const schemaOption = { 
 	flags: '-s, --schema <schema>', 
@@ -27,11 +31,20 @@ const schemaOption = {
 	default: 'public'
 };
 
-program.version('0.9.9');
+program
+	.version('0.9.9')
+	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
+	.option('-v, --verbose', 'enables verbose output')
+	.option('-_, --debug', 'enables debug output')
+;
 
+let commands = new Map();
+	
 program.command(' ');
 
-program.command('import').description('imports the (cs_*)meta-information from a configuration configDir into a database')
+commands.set('import', program.command('import'));
+commands.get('import')
+	.description('imports the (cs_*)meta-information from a configuration configDir into a database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
@@ -50,10 +63,12 @@ program.command('import').description('imports the (cs_*)meta-information from a
 			backupFolder: cmd.backupFolder,
 			schema: cmd.schema, 
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+		}, cmd);
 	});
 
-program.command('backup').description('backups the (cs_*)meta-information to a file')
+commands.set('backup', program.command('backup'));
+commands.get('backup')
+	.description('backups the (cs_*)meta-information to a file')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-c, --config <dirpath>', 'the folder to backup into', 'backups')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
@@ -62,10 +77,12 @@ program.command('backup').description('backups the (cs_*)meta-information to a f
 			configDir: cmd.config, 
 			prefix: cmd.prefix, 
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+		}, cmd);
 	});
  
-program.command('restore').description('restores the (cs_*)meta-information from a backup file')
+commands.set('restore', program.command('restore'));
+commands.get('restore')
+	.description('restores the (cs_*)meta-information from a backup file')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-f, --file <file>', 'the backup file to restore from', null)
 	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
@@ -74,10 +91,12 @@ program.command('restore').description('restores the (cs_*)meta-information from
 			file: cmd.file,
 			execute: cmd.restore,
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});	
+		}, cmd);
 	});
  
-program.command('diff').description('shows differences between (cs_*)meta-information and the given classes configuration')
+commands.set('diff', program.command('diff'));
+commands.get('diff')
+	.description('shows differences between (cs_*)meta-information and the given classes configuration')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
@@ -86,19 +105,20 @@ program.command('diff').description('shows differences between (cs_*)meta-inform
 	.option('-R, --reorganize', 'compare reorganized diffs')
 	.option('-N, --normaliz', 'compare normalized diffs') //for some reason "normalize" (with "e") does not work... ?!
 	.action(async (cmd) => {
-		console.log(cmd);
 		cs(csDiff, {
 			configDir: cmd.config, 
 			target: cmd.target, 
-			schema: cmd.schema, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
 			normalize: cmd.normaliz,
-		});
+			schema: cmd.schema, 
+		}, cmd);
 	});
  
-program.command('password').description('generates password hashes for the usermanagement')
+commands.set('password', program.command('password'));
+commands.get('password')
+	.description('generates password hashes for the usermanagement')
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
@@ -107,16 +127,19 @@ program.command('password').description('generates password hashes for the userm
 			loginName: cmd.user,
 			password: cmd.password,
 			salt: cmd.salt,
-		});		
+		}, cmd);
 	});
- 
-program.command('sync').description('synchronizes classes with the database')
+
+commands.set('sync', program.command('sync'));
+commands.get('sync')
+	.description('synchronizes classes with the database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder containing the classes configuration', '.')
+	.option('-c, --config <dirpath>', 'the folder containing the classes configuration')
 	.option('-p, --purge', 'activate all drop statements')
 	.option('-n, --noDiffs', 'disables comparision with current cs_* state')
-	.option('-S, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
+	.option('-S, --syncFile <filepath>', 'the file containing the sync-configuration (sync.json)')
+	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.action(async (cmd) => {
 		cs(csSync, { 
 			configDir: cmd.config,
@@ -125,44 +148,53 @@ program.command('sync').description('synchronizes classes with the database')
 			noDiffs: cmd.noDiffs,
 			schema: cmd.schema,
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+			syncFile: cmd.syncFile,
+		}, cmd);
 	});
 
 program.command(' ');
 
-program.command('normalize').description('normalizes the configuration in a given configDir')
+commands.set('normalize', program.command('normalize'));
+commands.get('normalize')
+	.description('normalizes the configuration in a given configDir')
 	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
 	.action(async (cmd) => {
 		cs(csNormalize, { 
 			configDir: cmd.config,
 			target: cmd.target,
-		});
+		}, cmd);
 	});
 
-program.command('reorganize').description('reorganizes the configuration in a given configDir')
+commands.set('reorganize', program.command('reorganize'));
+commands.get('reorganize')
+	.description('reorganizes the configuration in a given configDir')
 	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
 	.action(async (cmd) => {
 		cs(csReorganize, { 
 			configDir: cmd.config,
 			target: cmd.target,
-		});
+		}, cmd);
 	});
 	 
-program.command('simplify').description('simplifies the configuration in a given configDir')
+commands.set('simplify', program.command('simplify'));
+commands.get('simplify')
+	.description('simplifies the configuration in a given configDir')
 	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
 	.action(async (cmd) => {
 		cs(csSimplify, { 
 			configDir: cmd.config,
 			target: cmd.target,
-		});
+		}, cmd);
 	});
 	 	 
 program.command(' ');
 
-program.command('export').description('exports the (cs_*)meta-information of a database into a configDir')
+commands.set('export', program.command('export'));
+commands.get('export')
+	.description('exports the (cs_*)meta-information of a database into a configDir')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the folder where the config will be written', '.')
@@ -177,10 +209,12 @@ program.command('export').description('exports the (cs_*)meta-information of a d
 			runtimePropertiesFile: cmd.runtimeProperties,
 			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
-		});
+		}, cmd);
 	});
 
-program.command('create').description('creates and initializes cs_tables on a given database')
+commands.set('create', program.command('create'));
+commands.get('create')
+	.description('creates and initializes cs_tables on a given database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-p, --purge', 'purges before creating')
@@ -194,10 +228,12 @@ program.command('create').description('creates and initializes cs_tables on a gi
 			schema: cmd.schema,
 			silent: false,
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+		}, cmd);
 	});
 	
-program.command('truncate').description('truncates the cs_tables on a given database')
+commands.set('truncate', program.command('truncate'));
+commands.get('truncate')
+	.description('truncates the cs_tables on a given database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-i, --init', 'initializes some entries (for setting up a virgin database)')
 	.option('-X, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
@@ -207,10 +243,12 @@ program.command('truncate').description('truncates the cs_tables on a given data
 			init: cmd.init,
 			silent: false,
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+		}, cmd);
 	});
 
-program.command('purge').description('purges the cs_tables on a given database')
+commands.set('purge', program.command('purge'));
+commands.get('purge')
+	.description('purges the cs_tables on a given database')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.action(async (cmd) => {
@@ -218,30 +256,50 @@ program.command('purge').description('purges the cs_tables on a given database')
 			execute: cmd.purge,
 			silent: false,
 			runtimePropertiesFile: cmd.runtimeProperties,
-		});
+		}, cmd);
 	});
 
 program.command(' ');
 
-if (process.argv.slice(2).length == 0) {
-	// show help
-	program.outputHelp();	
+let execution = program.parse(process.argv);
+if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
+	logErr("command not found !");
+	program.outputHelp()
 	process.exit(1);
-} else {
-	program.parse(process.argv);
 }
 
 // ============================
 
-async function cs(csFunction, options) {
-	console.log(util.format("starting %s with these options:", csFunction.name));
-	console.table(options);
-	console.log();
-	try {
-		await csFunction(options);		
+async function cs(csFunction, options, cmd) {
+	let command = cmd != null ? cmd._name : null;
+	global.silent = cmd.parent.silent === true;
+	global.verbose = cmd.parent.verbose === true;
+	global.debug = cmd.parent.debug === true;
+
+	logDebug(util.format("starting %s with these options:", csFunction.name));
+	logDebug(clean(options));
+	logDebug("-".repeat(10));
+
+	try {		
+		await csFunction(Object.assign({}, options, { main: true }));
 		process.exit(0);
 	} catch (e) {
-		console.error(e); // 💩
+		let logTemplate = "Error while execution of %s:";
+		let logLength = logTemplate.length + command.length - 2;
+		
+		logErr("⚠".repeat(logLength));
+		logErr(util.format(logTemplate, command));
+		logErr();
+		logErr(e);
+		logErr("⚠".repeat(logLength));
+
+		if (!global.silent) {
+			if (command != null) {
+				commands.get(command).outputHelp();
+			} else {
+				program.outputHelp();
+			}
+		}
 		process.exit(1);
 	}	
 }

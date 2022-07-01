@@ -85,7 +85,6 @@ function expectEqualJson(normalized, expected, done) {
 
 function testEmpty() {
     for (let [ name, functions ] of Object.entries(allFunctions)) {
-        console.log(name);
         it(name, (done) => {
             expectEmptyArray(functions.normalize([]), done)
         });

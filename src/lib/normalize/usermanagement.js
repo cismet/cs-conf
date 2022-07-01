@@ -7,10 +7,10 @@ function normalizeUsermanagement(usermanagement) {
 
     if (usermanagement !== undefined) {
         for (let user of usermanagement) {
-            if (user.login_name == null) throw "missing login_name";
-            if (user.pw_hash == null) throw "missing pw_hash";
-            if (user.salt == null) throw "missing salt";
-            if (user.password != null) throw "password not allowed";
+            if (user.login_name == null) throw "normalizeUsermanagement: missing login_name";
+            if (user.pw_hash == null) throw "normalizeUsermanagement: missing pw_hash";
+            if (user.salt == null) throw "normalizeUsermanagement: missing salt";
+            if (user.password != null) throw "normalizeUsermanagement: password not allowed";
 
             normalized.push(Object.assign({}, defaultUser, user, {
                 groups: normalizeGroups(user.groups),

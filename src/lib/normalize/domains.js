@@ -9,12 +9,12 @@ function normalizeDomains(domains) {
         let main = null;
         let domainnames = [];
         for (let domain of domains) {
-            if (domain.domainname == null) throw "missing domainname";
-            if (domainnames.includes(domain.domainname)) throw util.format("domain '%s' already exists", domain.domainname);
+            if (domain.domainname == null) throw "normalizeDomains: missing domainname";
+            if (domainnames.includes(domain.domainname)) throw util.format("normalizeDomains: domain '%s' already exists", domain.domainname);
 
             if (domain.main === true || domains.length == 1) {
                 if (main != null) {
-                    throw util.format("can't set %s as main, %s is already main", domain.domainname, main.domainname);
+                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, main.domainname);
                 }
                 main = Object.assign(domain, { main: true });
             } else {

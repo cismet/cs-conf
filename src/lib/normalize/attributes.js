@@ -1,4 +1,5 @@
 import { defaultAttribute, defaultClass } from "../tools/defaultObjects";
+import { logWarn } from "../tools/tools";
 
 function normalizeAttributes(attributes, pk = defaultClass.pk) {
     let normalized = [];
@@ -7,7 +8,7 @@ function normalizeAttributes(attributes, pk = defaultClass.pk) {
     if (attributes !== undefined) {
         let pkMissing = true;
         for (let attribute of attributes) {
-            if (attribute.field == null) throw "missing field";
+            if (attribute.field == null) throw "normalizeAttributes: missing field";
 
             if (attribute.field != null) {
                 attribute.field = attribute.field.toLowerCase();
@@ -39,8 +40,8 @@ function normalizeAttributes(attributes, pk = defaultClass.pk) {
                 attribute.cidsType == null &&
                 attribute.oneToMany == null &&
                 attribute.manyToMany == null                
-            ) throw "either dbType or cidsType or oneToMany or manyToMany missing";
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw "precision and scale can only be set if dbType is set";
+            ) throw "normalizeAttributes: either dbType or cidsType or oneToMany or manyToMany missing";
+            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw "normalizeAttributes: precision and scale can only be set if dbType is set";
 
             normalized.push(Object.assign({}, defaultAttribute, attribute, {
                 name: attribute.name || attribute.field,
@@ -58,9 +59,7 @@ function normalizeAttributes(attributes, pk = defaultClass.pk) {
     }
 
     if (defaulValueWarning) {
-        console.log(" !!!!!!!!!!!!!!!");
-        console.log(" !!! WARNING !!! usage of typo 'defaulValue' in classes.js. This should by changed to the correct spelling 'defaultValue'. The typo is still interpreted though.");
-        console.log(" !!!!!!!!!!!!!!!");
+        logWarn("usage of typo 'defaulValue' in classes.js. This should by changed to the correct spelling 'defaultValue'. The typo is still interpreted though.");
     }
 
     return normalized;

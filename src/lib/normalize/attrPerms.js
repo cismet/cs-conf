@@ -6,7 +6,7 @@ function normalizeAttrPerms(attrPerms) {
     
     if (attrPerms !== undefined) {
         for (let attrPerm of attrPerms) {
-            if (attrPerm.key == null) throw "missing key";
+            if (attrPerm.key == null) throw "normalizeAttrPerms: missing key";
 
             normalized.push(Object.assign({}, defaultAttrPerm, attrPerm, {
                 key: attrPerm.key.toLowerCase(),
