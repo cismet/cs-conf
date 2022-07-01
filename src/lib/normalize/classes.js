@@ -7,9 +7,9 @@ function normalizeClasses(classes) {
     
     if (classes !== undefined) {
         for (let clazz of classes) {
-            if (clazz.table == null) throw "missing table for class";
+            if (clazz.table == null) throw "normalizeClasses: missing table for class";
             //if (clazz.table !== clazz.table.toUpperCase()) throw util.format("normalizeClasses: table '%s' has to be uppercase", clazz.table);
-            if (clazz.pk === null) throw util.format("normalizeClasses: pk of '%s' can't be null", clazz.table);
+            if (clazz.pk === null) throw util.format("normalizeClasses: [%s] pk of can't be null", clazz.table);
             //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk);
             //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType);
             //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany);
@@ -24,9 +24,9 @@ function normalizeClasses(classes) {
 
             normalized.push(Object.assign({}, defaultClass, clazz, {
                 name: clazz.name != null ? clazz.name : clazz.table,
-                toString: normalizeSpecial(clazz.toString),
-                editor: normalizeSpecial(clazz.editor),
-                renderer: normalizeSpecial(clazz.renderer),
+                toString: normalizeSpecial(clazz.toString, clazz.table),
+                editor: normalizeSpecial(clazz.editor, clazz.table),
+                renderer: normalizeSpecial(clazz.renderer, clazz.table),
                 attributes: normalizeAttributes(clazz.attributes, clazz.pk, clazz.table),
                 icon: null,
                 classIcon: clazz.classIcon || clazz.icon || null,
@@ -38,11 +38,11 @@ function normalizeClasses(classes) {
     return normalized;
 }
 
-function normalizeSpecial(special) {
+function normalizeSpecial(special, table) {
     // exclude toString()
     if (typeof special !== 'function' && special != null) {
-        if (special.type == null) throw "normalizeClasses: type missing" ;
-        if (special.class == null) throw "normalizeClasses: class missing";
+        if (special.type == null) throw util.format("normalizeClasses: [%s] type missing", table);
+        if (special.class == null) throw util.format("normalizeClasses: [%s] class missing", table);
         return {
             type: special.type,
             class: special.class,

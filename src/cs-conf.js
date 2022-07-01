@@ -16,6 +16,7 @@ import csNormalize from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
 import { clean, logDebug, logErr, logOut } from './lib/tools/tools';
+import csCheck from './lib/check';
 
 global.silent = false;
 global.verbose = false;
@@ -116,6 +117,56 @@ commands.get('diff')
 		}, cmd);
 	});
  
+program.command(' ');
+
+commands.set('check', program.command('check'));
+commands.get('check')
+	.description('checks configuration for errors')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
+	.action(async (cmd) => {
+		cs(csCheck, { 
+			configDir: cmd.config,
+		}, cmd);
+	});
+
+commands.set('normalize', program.command('normalize'));
+commands.get('normalize')
+	.description('normalizes the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
+	.action(async (cmd) => {
+		cs(csNormalize, { 
+			configDir: cmd.config,
+			target: cmd.target,
+		}, cmd);
+	});
+	
+commands.set('reorganize', program.command('reorganize'));
+commands.get('reorganize')
+	.description('reorganizes the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
+	.action(async (cmd) => {
+		cs(csReorganize, { 
+			configDir: cmd.config,
+			target: cmd.target,
+		}, cmd);
+	});
+	 
+commands.set('simplify', program.command('simplify'));
+commands.get('simplify')
+	.description('simplifies the configuration in a given configDir')
+	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
+	.action(async (cmd) => {
+		cs(csSimplify, { 
+			configDir: cmd.config,
+			target: cmd.target,
+		}, cmd);
+	});
+	 	 
+program.command(' ');
+
 commands.set('password', program.command('password'));
 commands.get('password')
 	.description('generates password hashes for the usermanagement')
@@ -158,44 +209,6 @@ commands.get('sync')
 		}, cmd);
 	});
 
-program.command(' ');
-
-commands.set('normalize', program.command('normalize'));
-commands.get('normalize')
-	.description('normalizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
-	.action(async (cmd) => {
-		cs(csNormalize, { 
-			configDir: cmd.config,
-			target: cmd.target,
-		}, cmd);
-	});
-
-commands.set('reorganize', program.command('reorganize'));
-commands.get('reorganize')
-	.description('reorganizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
-	.action(async (cmd) => {
-		cs(csReorganize, { 
-			configDir: cmd.config,
-			target: cmd.target,
-		}, cmd);
-	});
-	 
-commands.set('simplify', program.command('simplify'));
-commands.get('simplify')
-	.description('simplifies the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
-	.action(async (cmd) => {
-		cs(csSimplify, { 
-			configDir: cmd.config,
-			target: cmd.target,
-		}, cmd);
-	});
-	 	 
 program.command(' ');
 
 commands.set('export', program.command('export'));
