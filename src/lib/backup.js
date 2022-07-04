@@ -4,7 +4,7 @@ import zlib from 'zlib';
 import { createClient, extractDbInfo, logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csBackup(options) {
-    let { backupDir, prefix, runtimePropertiesFile } = options;
+    let { dir, prefix, runtimePropertiesFile } = options;
     
     let client;
     try {
@@ -24,7 +24,7 @@ async function csBackup(options) {
             prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
         }
         let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-        let fileName = util.format("%s/%s.%s.sql.gz", backupDir, prefix, formattedDate);
+        let fileName = util.format("%s/%s.%s.sql.gz", dir, prefix, formattedDate);
 
         logInfo(util.format("Writing backup to %s", fileName));
         fs.writeFileSync(fileName, zlib.gzipSync(queries), "utf8");

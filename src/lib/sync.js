@@ -380,16 +380,16 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncJson, skipBackup, backupPrefix, backupFolder, main } = options;
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
 
-    if (execute && !skipBackup && backupFolder == null) throw "backupFolder has to be set !";
+    if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
     let client;
     try {
         client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
 
         if (configDir != null && !noDiffs) {
-            let differences = await csDiff( { configDir, comparisionFolder: null, runtimePropertiesFile, schema, client, simplify: true, reorganize: true, normalize: false } );
+            let differences = await csDiff( { configDir, targetDir: null, runtimePropertiesFile, schema, client, simplify: true, reorganize: true, normalize: false } );
             if (differences.length > 0) {
                 throw "differences found, aborting sync !";
             }
@@ -397,7 +397,7 @@ async function csSync(options) {
         
         if (execute && !skipBackup) {
             await csBackup({
-                configDir: backupFolder, 
+                dir: backupDir, 
                 prefix: backupPrefix, 
                 runtimePropertiesFile,
                 client

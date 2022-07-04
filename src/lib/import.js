@@ -18,9 +18,9 @@ import { normalizeConfig } from './normalize';
 import { createClient, extractDbInfo, logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 
 async function csImport(options) {
-    let { configDir, recreate, execute, init, skipBackup, backupPrefix, backupFolder, schema, runtimePropertiesFile } = options;
+    let { configDir, recreate, execute, init, skipBackup, backupPrefix, backupDir, schema, runtimePropertiesFile } = options;
 
-    if (execute && !skipBackup && backupFolder == null) throw "backupFolder has to be set !";
+    if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
     logVerbose(util.format("Reading configuration from '%s'", configDir));
     let config = readConfigFiles(configDir);
@@ -61,7 +61,7 @@ async function csImport(options) {
             
             if (!skipBackup) {
                 await csBackup({
-                    configDir: backupFolder, 
+                    dir: backupDir, 
                     prefix: backupPrefix, 
                     runtimePropertiesFile,
                     client

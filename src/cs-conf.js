@@ -36,7 +36,7 @@ program
 	.version('0.9.9')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
-	.option('-_, --debug', 'enables debug output')
+	.option('--debug', 'enables debug output')
 ;
 
 let commands = new Map();
@@ -49,9 +49,9 @@ commands.get('import')
 	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
+	.option('-c, --config <dirpath>', 'the directory where the config is', '.')
+	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
 	.option('--no-backup', 'does not create backup before import')	
-	.option('--backup-folder <dirpath>', 'backup configDir')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
  	.action(async (cmd) => {
@@ -61,7 +61,7 @@ commands.get('import')
 			execute: cmd.import,
 			skipBackup: cmd.noBackup,
 			backupPrefix: cmd.backupPrefix,
-			backupFolder: cmd.backupFolder,
+			backupDir: cmd.backupDir,
 			schema: cmd.schema, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
@@ -71,11 +71,12 @@ commands.set('backup', program.command('backup'));
 commands.get('backup')
 	.description('backups the (cs_*)meta-information to a file')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
-	.option('-f, --folder <dirpath>', 'the folder to backup into')
+	.option('-d, --dir <dirpath>', 'the directory where the backups should be written')
+
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
 		cs(csBackup, {
-			backupDir: cmd.folder, 
+			backupDir: cmd.dir, 
 			prefix: cmd.prefix, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
@@ -100,8 +101,8 @@ commands.get('diff')
 	.description('shows differences between (cs_*)meta-information and the given classes configuration')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config is', '.')
-	.option('-t, --target <dirpath>', 'the folder to compare the config with. if null, the current configs are exported', null)
+	.option('-c, --config <dirpath>', 'the directory where the config is', '.')
+	.option('-t, --target <dirpath>', 'the directory to compare the config with. if null, the current configs are exported', null)
 	.option('-S, --simplify', 'compare simplified diffs')
 	.option('-R, --reorganize', 'compare reorganized diffs')
 	.option('-N, --normaliz', 'compare normalized diffs') //for some reason "normalize" (with "e") does not work... ?!
@@ -122,7 +123,7 @@ program.command(' ');
 commands.set('check', program.command('check'));
 commands.get('check')
 	.description('checks configuration for errors')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
+	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.action(async (cmd) => {
 		cs(csCheck, { 
 			configDir: cmd.config,
@@ -132,8 +133,8 @@ commands.get('check')
 commands.set('normalize', program.command('normalize'));
 commands.get('normalize')
 	.description('normalizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to normalize the config into', null)
+	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the directory to normalize the config into', null)
 	.action(async (cmd) => {
 		cs(csNormalize, { 
 			configDir: cmd.config,
@@ -144,8 +145,8 @@ commands.get('normalize')
 commands.set('reorganize', program.command('reorganize'));
 commands.get('reorganize')
 	.description('reorganizes the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to reorganize the config into', null)
+	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the directory to reorganize the config into', null)
 	.action(async (cmd) => {
 		cs(csReorganize, { 
 			configDir: cmd.config,
@@ -156,8 +157,8 @@ commands.get('reorganize')
 commands.set('simplify', program.command('simplify'));
 commands.get('simplify')
 	.description('simplifies the configuration in a given configDir')
-	.option('-c, --config <dirpath>', 'the folder containing the configuration files', '.')
-	.option('-t, --target <dirpath>', 'the folder to simplify the config into', null)
+	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
+	.option('-t, --target <dirpath>', 'the directory to simplify the config into', null)
 	.action(async (cmd) => {
 		cs(csSimplify, { 
 			configDir: cmd.config,
@@ -187,13 +188,13 @@ commands.get('sync')
 	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder containing the classes configuration')
+	.option('-c, --config <dirpath>', 'the directory containing the classes configuration')
+	.option('-b, --backup-dir <dirpath>', 'the directory where the config will be written')	
 	.option('-j, --sync-json <filepath>', 'the file containing the sync-configuration (sync.json)')
+	.option('-P, --purge', 'activate all drop statements')
 	.option('--no-diffs', 'disables comparision with current cs_* state')
 	.option('--no-backup', 'does not create backup before import')	
-	.option('--backup-folder <dirpath>', 'backup configDir')	
 	.option('--backup-prefix', 'backup file prefix', null)	
-	.option('-P, --purge', 'activate all drop statements')
 	.action(async (cmd) => {
 		cs(csSync, { 
 			configDir: cmd.config,
@@ -205,7 +206,7 @@ commands.get('sync')
 			syncJson: cmd.syncJson,
 			skipBackup: cmd.noBackup,
 			backupPrefix: cmd.backupPrefix,
-			backupFolder: cmd.backupFolder,
+			backupDir: cmd.backupDir,
 		}, cmd);
 	});
 
@@ -216,7 +217,7 @@ commands.get('export')
 	.description('exports the (cs_*)meta-information of a database into a configDir')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
-	.option('-c, --config <dirpath>', 'the folder where the config will be written', '.')
+	.option('-c, --config <dirpath>', 'the directory where the config will be written', '.')
 	.option('-O, --overwrite', 'overwrite existing config')
 	.option('-S, --simplify', 'simplify config')
 	.option('-R, --reorganize', 'reorganize config')

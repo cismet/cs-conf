@@ -9,14 +9,14 @@ import { reorganizeConfig } from './reorganize';
 import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csDiff(options) {
-    let { configDir, target, runtimePropertiesFile, simplify, reorganize, normalize, schema, main } = options;
+    let { configDir, targetDir, runtimePropertiesFile, simplify, reorganize, normalize, schema, main } = options;
 
     if (configDir == null) throw "'configDir' has to be set !";
-    if (target == null && runtimePropertiesFile == null) throw "Either 'target' or 'runtimePropertiesFile' has to be set !";
+    if (targetDir == null && runtimePropertiesFile == null) throw "Either 'target' or 'runtimePropertiesFile' has to be set !";
 
     let current;
-    if (target) {
-        current = target;
+    if (targetDir) {
+        current = targetDir;
     } else {    
         let client;
         try {
@@ -69,7 +69,7 @@ async function csDiff(options) {
         logInfo("no differences found");
     }
 
-    if (!target) {
+    if (!targetDir) {
         fs.rmSync(current, { recursive: true, force: true });
     }
 
