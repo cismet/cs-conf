@@ -122,7 +122,15 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                         scale: existingColumn.scale 
                                     };
 
-                                    let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: fieldName, primary : fieldName == pk, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.isNullable, oldDefault: existingColumn.default };
+                                    let statement = { 
+                                        action: "CHANGE COLUMN", 
+                                        table: cidsTableName, 
+                                        column: fieldName, 
+                                        primary : fieldName == pk, 
+                                        oldType: fullTypeFromAttribute(oldType), 
+                                        oldNull: existingColumn.isNullable, 
+                                        oldDefault: existingColumn.default 
+                                    };
                                                     
                                     if (fieldName == pk) {                
                                         pkFound = true;
@@ -130,42 +138,52 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
                                     // primitive column existing => altering if needed
 
+                                    let cidsAttributeDbType = cidsAttribute.dbType != null ? cidsTypeToDb(cidsAttribute.dbType).toUpperCase() : null;
+                                    let existingColumnDbType = existingColumn.dataType.toUpperCase();
+
+                                    let precisionIsRelevant = 
+                                        cidsAttributeDbType == "NUMERIC" ||
+                                        cidsAttributeDbType == "VARCHAR" ||
+                                        cidsAttributeDbType == "CHAR";
+                                    let scaleIsRelevant = cidsAttributeDbType == "NUMERIC";
                                     let typeIdentical = (
-                                            (cidsAttribute.manyToMany && existingColumn.dataType.toUpperCase() === 'INT4')
-                                            || cidsTypeToDb(cidsAttribute.dbType).toUpperCase() == existingColumn.dataType.toUpperCase()
+                                            (cidsAttribute.manyToMany && existingColumnDbType === 'INT4')
+                                            || cidsAttributeDbType == existingColumnDbType
                                         )                            
-                                        && (cidsAttribute.precision == existingColumn.precision)
-                                        && (cidsAttribute.scale == existingColumn.scale);
+                                        && (cidsAttribute.precision == existingColumn.precision || !precisionIsRelevant)
+                                        && (cidsAttribute.scale == existingColumn.scale || !scaleIsRelevant);
 
                                     if (!typeIdentical) {
-                                        // type changes detected => altering
                                         statement.type = fullTypeFromAttribute(cidsAttribute);
-                                        statement.null = !cidsAttribute.mandatory;
-                                        statement.default = (statement.type && cidsAttribute.defaultValue && isTextType(statement.type)) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
-                                    } else {
-                                        // attribute modifications if needed
-
-                                        let mandatory = false;
-                                        if (cidsAttribute.mandatory) {
-                                            mandatory = cidsAttribute.mandatory;
-                                        }
-                                        if (mandatory == existingColumn.isNullable) {
-                                            statement.null = !mandatory;
-                                        }
-
-                                        let normalizedDefaultValue = fieldName == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
-                                        let isText = isTextType(existingColumn.dataType);
-                                        let escapedExisting = cidsAttribute.defaultValue && isText ? normalizedDefaultValue : util.format("'%s'", normalizedDefaultValue);
-                                        if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
-                                            statement.default = existingColumn.dataType && cidsAttribute.defaultValue && isText ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
-                                        }
-
-                                        // special treatment if mandatory and default value is set => update data
-                                        if (statement.null || statement.default) {
-                                            statement.update = cidsAttribute.mandatory && existingColumn.isNullable && cidsAttribute.defaultValue;
-                                        }
                                     }
+
+                                    let mandatory = cidsAttribute.mandatory === true;
+                                    if (mandatory == existingColumn.isNullable) {
+                                        statement.null = !mandatory;
+                                    }
+
+                                    let normalizedDefaultValue = fieldName == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
+                                    let isText = isTextType(existingColumn.dataType);
+                                    let escapedExisting = cidsAttribute.defaultValue && isText ? normalizedDefaultValue : util.format("'%s'", normalizedDefaultValue);
+                                    if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
+                                        statement.default = existingColumn.dataType && cidsAttribute.defaultValue && isText ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                    }
+
+                                    // special treatment if mandatory and default value is set => update data
+                                    if ((statement.null || statement.default) && cidsAttribute.mandatory && existingColumn.isNullable && cidsAttribute.defaultValue) {
+                                        statement.update = true;
+                                    }
+
                                     if (statement.type !== undefined || statement.null !== undefined || statement.default !== undefined || statement.update !== undefined) {
+                                        if (statement.type === undefined) {
+                                            delete statement.oldType;
+                                        }
+                                        if (statement.null === undefined) {
+                                            delete statement.oldNull;
+                                        }
+                                        if (statement.default === undefined) {
+                                            delete statement.oldDefault;
+                                        }
                                         statements.push(statement);
                                     }
                                 }          
@@ -336,6 +354,7 @@ function queriesFromStatement(statement) {
             queries.push(util.format("-- START changing column %s.%s", statement.table, statement.column));
             if (statement.type !== undefined) {
                 queries.push(util.format("-- changing type from %s to %s", statement.oldType, statement.type));
+                /*
                 queries.push(util.format("ALTER TABLE %s RENAME COLUMN %s TO %s;", statement.table, statement.column, tmpColumn));
                 // ["\nBEGIN TRANSACTION;", ...queries, dryRun ? "-- because of dry-run\nROLLBACK TRANSACTION;" : "COMMIT TRANSACTION;" ]    
 
@@ -351,23 +370,29 @@ function queriesFromStatement(statement) {
                 queries.push(util.format("ALTER TABLE %s ADD COLUMN %s %s;", statement.table, statement.column, typeAndAttributes));
                 queries.push(util.format("UPDATE %s SET %s = %s;", statement.table, statement.column, tmpColumn));
                 queries.push(util.format("ALTER TABLE %s DROP COLUMN %s;", statement.table, tmpColumn));
-            } else {
-                if (statement.update !== undefined) {
-                    queries.push(util.format("UPDATE TABLE %s SET %s = '%s' WHERE %s IS NULL;", statement.table, statement.column, statement.defaultValue, statement.column));
-                    if (statement.default == null) {                
-                        queries.push("-- > WARNING, no default value for mandatory field. this may fail !")
-                    }
+                */
+                queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s TYPE %s;", statement.table, statement.column, statement.type));
+            }
+            if (statement.update !== undefined) {
+                queries.push(util.format("UPDATE TABLE %s SET %s = '%s' WHERE %s IS NULL;", statement.table, statement.column, statement.defaultValue, statement.column));
+                if (statement.default == null) {                
+                    queries.push("-- > WARNING, no default value for mandatory field. this may fail !")
                 }
-    
-                if (statement.default === null) {
+            }
+
+            if (statement.default !== undefined) {
+                if (statement.default == null) {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT;", statement.table, statement.column));    
-                } else if (statement.default !== undefined) {
+                } else {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s;", statement.table, statement.column, statement.default));    
                 }
-                if (statement.null !== undefined) {
-                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s %s %s;", statement.table, statement.column, statement.null ? "DROP" : "SET", "NOT NULL"));
+            }
+            if (statement.null !== undefined) {
+                if (statement.null) {
+                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL;", statement.table, statement.column));
+                } else {
+                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET NOT NULL;", statement.table, statement.column));
                 }
-    
             }
             queries.push("-- END");
         } break;
