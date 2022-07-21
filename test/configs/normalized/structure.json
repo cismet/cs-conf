@@ -1,0 +1,51 @@
+[
+    {
+        "name": "Node 1",
+        "table": "table1",
+        "derive_permissions_from_class": true,
+        "org": "Org.1",
+        "object_id": null,
+        "policy": "STANDARD",
+        "readPerms": [],
+        "writePerms": [],
+        "node_type": "N",
+        "dynamic_children_file": "node1.sql",
+        "children": [],
+        "key": null,
+        "link": null,
+        "comment": null
+    },
+    {
+        "name": "Node 2",
+        "table": "table1",
+        "derive_permissions_from_class": false,
+        "org": "Org.2",
+        "object_id": null,
+        "policy": null,
+        "readPerms": [],
+        "writePerms": [],
+        "node_type": "N",
+        "dynamic_children_file": null,
+        "children": [
+            {
+                "name": "Node 3",
+                "table": "table2",
+                "derive_permissions_from_class": false,
+                "org": null,
+                "object_id": null,
+                "policy": null,
+                "readPerms": [],
+                "writePerms": [],
+                "node_type": "N",
+                "dynamic_children_file": "node3.sql",
+                "children": [],
+                "key": null,
+                "link": null,
+                "comment": null
+            }
+        ],
+        "key": null,
+        "link": null,
+        "comment": null
+    }
+]

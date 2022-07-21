@@ -1,0 +1,35 @@
+[
+    {
+        "login_name": "User1",
+        "administrator": true,
+        "pw_hash": "HashyHash1",
+        "salt": "saltySalt1",
+        "groups": ["Group1@LOCAL", "Group2@LOCAL"],
+        "configurationAttributes": [ { "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null } ],
+        "comment": null
+    }, {
+        "login_name": "User2",
+        "administrator": false,
+        "pw_hash": "HashyHash2",
+        "salt": "saltySalt2",
+        "groups": ["Group3@LOCAL"],
+        "configurationAttributes": [],
+        "comment": null
+    }, {
+        "login_name": "User3",
+        "administrator": false,
+        "pw_hash": "HashyHash3",
+        "salt": "saltySalt3",
+        "groups": [],
+        "configurationAttributes": [],
+        "comment": null
+    }, {
+        "login_name": "User4",
+        "administrator": false,
+        "pw_hash": "HashyHash4",
+        "salt": "saltySalt4",
+        "groups": [],
+        "configurationAttributes": [],
+        "comment": null
+    }
+]

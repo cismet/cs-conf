@@ -1,8 +1,9 @@
 import cryptoRandomString from 'crypto-random-string';
 import md5 from 'md5';
 import util from 'util';
+import { logOut } from './tools/tools';
 
-export async function worker(options) {
+async function csPassword(options) {
     let { loginName, password, salt = cryptoRandomString({ length: 16 }) } = options;
     if (loginName == null && password == null) {
         throw "user and password are mandatory";
@@ -19,12 +20,8 @@ export async function worker(options) {
         pw_hash: hash,
         salt
     }
-    console.log("##########################################");
-    console.log(user);
-    console.log("##########################################");
+
+    logOut(JSON.stringify(user, null, 2));
 }   
 
-    
-
-
-
+export default csPassword;

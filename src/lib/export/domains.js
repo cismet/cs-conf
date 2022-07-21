@@ -1,19 +1,30 @@
+import { defaultDomain } from '../tools/defaultObjects';
 import * as stmnts from './statements';
 
-const exportDomains = async (client, domainConfigAttrs) => {
+async function exportDomains(client, mainDomain, domainConfigAttrs) {
     const {
-        rows: domainArray
+        rows: domains
     } = await client.query(stmnts.domains);
-    return analyzeAndPreprocess(domainArray, domainConfigAttrs);
+    return analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs);
 }
-export function analyzeAndPreprocess(domainArray, domainConfigAttrs) {
-    for (let domain of domainArray) {
+
+function analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs) {
+    let mainDomainFound = false
+    for (let domain of domains) {
         //add the configuration attributes
         let attributes = domainConfigAttrs.get(domain.domainname);
         if (attributes) {
-            domain.configurationAttributes = attributes;
+            domain.configurationAttributes = attributes;        
+        }
+        domain.main = domain.domainname == mainDomain;
+        if (domain.main) {
+            mainDomainFound = true;
         }
     }
-    return domainArray;
+    if (!mainDomainFound) {
+        domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain, main: true}));
+    }
+    return { domains };
 }
+
 export default exportDomains;

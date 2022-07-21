@@ -1,45 +1,20 @@
-import * as stmnts from './statements';
-import * as dbtools from '../tools/db';
-import * as cidstools from '../tools/cids';
-import util from 'util';
+import createPermsEntry from './perms';
 
-export function prepareData(classPerms) {
-    // cs_domain
-    let csClassPermEntries=[];
-    for (let p of classPerms) {
-        if (p.read) {
-            for (let groupkey of p.read) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "read"
-                    ]);
+function prepareClassPermissions(classPerms) {
+    let csClassPermEntries = [];
+    for (let classPerm of classPerms) {
+        if (classPerm.read) {
+            for (let groupkey of classPerm.read) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "read"));
             }
         }
-        if (p.write) {
-            for (let groupkey of p.write) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csClassPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "write"
-                    ]);
+        if (classPerm.write) {
+            for (let groupkey of classPerm.write) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "write"));
             }
         }  
     }
-
     return { csClassPermEntries };
 }
 
-const importClassPermissions = async (client, classPerms) => {
-    const { csClassPermEntries } = prepareData(classPerms);
-    console.log(util.format("importing class permission (%d)", csClassPermEntries.length));
-    await dbtools.nestedFiller(client,stmnts.complex_cs_class_permission, csClassPermEntries);
-}
-
-export default importClassPermissions;
+export default prepareClassPermissions;

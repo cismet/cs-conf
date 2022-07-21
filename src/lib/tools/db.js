@@ -3,7 +3,6 @@ import propertyParser from 'properties-file';
 import {
     Client
 } from 'pg'
-import util from 'util';
 import fs from 'fs';
 
 export async function nestedFiller(client, stmnt, rows) {
@@ -22,15 +21,19 @@ export async function singleRowFiller(client, stmnt, rows) {
     }
 }
 
-export async function getClientForConfig(config) {
-    const propFileContent=fs.readFileSync(config, {encoding: 'utf8'})
-    const props=propertyParser.parse(propFileContent);
-    const conUrl=props["connection.url"];
-    const conImportant=conUrl.split("//")[1];
-    const host=conImportant.split(":")[0];
-    const port=conImportant.split(":")[1].split("/")[0];
-    const dbname=conImportant.split(":")[1].split("/")[1];
-    const dbconfig={
+function getPropsFromConfig(config) {
+    let propFileContent = fs.readFileSync(config, {encoding: 'utf8'});
+    return propertyParser.parse(propFileContent);
+}
+
+export function getClientForConfig(config) {
+    let props = getPropsFromConfig(config);
+    let conUrl = props["connection.url"];
+    let conImportant = conUrl.split("//")[1];
+    let host = conImportant.split(":")[0];
+    let port = conImportant.split(":")[1].split("/")[0];
+    let dbname = conImportant.split(":")[1].split("/")[1];
+    let dbconfig = {
         user: props["connection.username"],
         host: host,
         database: dbname,
@@ -39,4 +42,16 @@ export async function getClientForConfig(config) {
     };
     //TODO make more bullet proof
     return new Client(dbconfig);
+}
+
+export function getDomainFromConfig(config) {
+    let props = getPropsFromConfig(config);
+    return props["serverName"];
+}
+
+export function setIdsFromOrder(rows) {
+    let index = 0;    
+    for(let row of rows) {
+        row.push(++index);
+    }
 }

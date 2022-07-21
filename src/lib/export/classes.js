@@ -1,9 +1,9 @@
 import * as stmnts from './statements';
-import clean from '../tools/deleteNullProperties.js';
+import { clean } from '../tools/tools.js';
 
-const exportClasses = async (client) => {
+async function exportClasses(client) {
     const {
-        rows: cidsClasses
+        rows: classes
     } = await client.query(stmnts.classes);
     const {
         rows: attributes
@@ -11,10 +11,10 @@ const exportClasses = async (client) => {
     const {
         rows: classattributes
     } = await client.query(stmnts.classAttributes);
-    return analyzeAndPreprocess(cidsClasses, attributes, classattributes);
+    return analyzeAndPreprocess(classes, attributes, classattributes);
 }
 
-export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
+function analyzeAndPreprocess(classes, attributes, classattributes) {
     let classAttrsPerTable = new Map(); {
         for (let ca of classattributes) {
             let currentCAs = classAttrsPerTable.get(ca.table);
@@ -81,34 +81,6 @@ export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
             delete a.extension_attr;
         }
 
-        //toString
-        if (a.tostringtype !== null && a.tostringclass != null) {
-            a.toString = {
-                type: a.tostringtype,
-                class: a.tostringclass
-            };
-        }
-        delete a.tostringtype;
-        delete a.tostringclass;
-        //editor
-        if (a.editortype !== null && a.editorclass != null) {
-            a.editor = {
-                type: a.editortype,
-                class: a.editorclass
-            };
-        }
-        delete a.editortype;
-        delete a.editorclass;
-        //renderer
-        if (a.complexeditortype !== null && a.complexeditorclass != null) {
-            a.complexEditor = {
-                type: a.complexeditortype,
-                class: a.complexeditorclass
-            };
-        }
-        delete a.complexeditortype;
-        delete a.complexeditorclass;
-
         //remove all fields that are not needed anymore
         delete a.foreign_key;
         delete a.foreignKeyTableId;
@@ -121,7 +93,7 @@ export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
         tableAttributes.push(a);
     }
 
-    for (let c of cidsClasses) {
+    for (let c of classes) {
         //clean up
         if (c.table === c.name) {
             delete c.name;
@@ -191,10 +163,7 @@ export function analyzeAndPreprocess(cidsClasses, attributes, classattributes) {
         }
 
     }
-    return {
-        cidsClasses,
-        attributes
-    };
+    return { classes, attributes };
 }
 
 export default exportClasses;

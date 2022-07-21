@@ -1,45 +1,20 @@
-import * as stmnts from './statements';
-import * as dbtools from '../tools/db';
-import * as cidstools from '../tools/cids';
-import util from 'util';
+import createPermsEntry from './perms';
 
-export function prepareData(attrPerms) {
-    // cs_domain
-    let csAttrPermEntries=[];
-    for (let p of attrPerms) {
-        if (p.read) {
-            for (let groupkey of p.read) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csAttrPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "read"
-                    ]);
+function prepareAttributePermissions(attrPerms) {
+    let csAttrPermEntries = [];
+    for (let attrPerm of attrPerms) {
+        if (attrPerm.read) {
+            for (let groupkey of attrPerm.read) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "read"));
             }
         }
-        if (p.write) {
-            for (let groupkey of p.write) {
-                const {group, domain} = cidstools.extractGroupAndDomain(groupkey);
-                csAttrPermEntries.push(
-                    [
-                        group,
-                        domain,
-                        p.table,
-                        "write"
-                    ]);
+        if (attrPerm.write) {
+            for (let groupkey of attrPerm.write) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "write"));
             }
         }  
     }
-
     return { csAttrPermEntries };
 }
 
-const importAttrPermissions = async (client, attrPerms) => {
-    const { csAttrPermEntries } = prepareData(attrPerms);
-    console.log(util.format("importing attribute permission (%d)", csAttrPermEntries.length));
-    await dbtools.nestedFiller(client,stmnts.complex_cs_attr_permission, csAttrPermEntries);
-}
-
-export default importAttrPermissions;
+export default prepareAttributePermissions;

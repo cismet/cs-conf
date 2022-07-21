@@ -1,21 +1,21 @@
 import * as stmnts from './statements';
-import clean from '../tools/deleteNullProperties.js';
+import { clean, logWarn } from '../tools/tools.js';
 import zeroFill from 'zero-fill';
 import slug from 'slug';
 import striptags from 'striptags';
 import util from 'util';
 
-const exportStructure = async (client) => {
-    const {
+async function exportStructure(client) {
+    let {
         rows: nodesResult
     } = await client.query(stmnts.nodes);
-    const {
+    let {
         rows: linksResult
     } = await client.query(stmnts.links);
-    const {
+    let {
         rows: nodePermResult
     } = await client.query(stmnts.nodePermissions);
-    const {
+    let {
         rows: dynchildhelpersResult
     } = await client.query(stmnts.dynchildhelpers);
     return analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult);
@@ -90,11 +90,11 @@ function visitingNodesByChildren2(nodes, allNodes, links, duplicates) {
     return childrenIdsVisited;
 }
 
-export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
-    let structureSqlDocuments = new Map();
+function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, dynchildhelpersResult) {
+    let structureSqlFiles = new Map();
     let dynchildhelpers = [];
-    let helperSqlDocuments = new Map();
-    let rootNodes = [];
+    let helperSqlFiles = new Map();
+    let structure = [];
 
     let nodeReadPerms = [];
     let nodeWritePerms = [];
@@ -134,7 +134,7 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
         clean(node);
         allNodes.set(node.id, node);
         if (node.is_root === true && node.node_type !== 'C') {
-            rootNodes.push(node);
+            structure.push(node);
         }
         delete node.is_root;
 
@@ -169,45 +169,52 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
 
     // visiting all nodes
     /*let nodesIdsVisited = [];
-    for (let node of rootNodes) {
+    for (let node of structure) {
         if (node) {
             nodesIdsVisited.push(... visitingNodesByChildren(node, allNodes, links));
         }
     }*/
 
-    visitingNodesByChildren2(rootNodes, allNodes, links, []);
+    visitingNodesByChildren2(structure, allNodes, links, []);
 
     // removing all orphan nodes
     for (let node of allNodes.values()) {
         let nodeId = node.id;
         if (nodeId) {
-            console.log(util.format(" ↳ ignoring orphan node with id: %d", nodeId));
+            logWarn(util.format("ignoring orphan node with id: %d", nodeId));
             allNodes.delete(nodeId);
         }
     }
 
-    let sortedNodes = Array.from(allNodes.values()).sort((a, b) => { 
+    let sortedNodes = false ? Array.from(allNodes.values()).sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + (a.dynamic_children ? a.dynamic_children : "");
         let bSimple = slug(striptags(b.name)).toLowerCase() + (b.dynamic_children ? b.dynamic_children : "");
         return aSimple.localeCompare(bSimple);
-    });
+    }): Array.from(allNodes.values());
     for (let node of sortedNodes) {        
         if (node.dynamic_children) {
-            let fileName = util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
-            structureSqlDocuments.set(fileName, node.dynamic_children);
+            let fileName = node.dynamic_children_filename != null ? node.dynamic_children_filename : util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
+            delete node.dynamic_children_filename;
+            structureSqlFiles.set(fileName, node.dynamic_children);
             node.dynamic_children_file = fileName;        
             delete node.dynamic_children;
         }
     }
 
-    let sortedDynchildhelpers = dynchildhelpersResult.sort((a, b) => { 
+    let sortedDynchildhelpers = false ? dynchildhelpersResult.sort((a, b) => { 
         let aSimple = slug(striptags(a.name)).toLowerCase() + a.code;
         let bSimple = slug(striptags(b.name)).toLowerCase() + b.code;
         return aSimple.localeCompare(bSimple);
-    });
+    }) : dynchildhelpersResult;
     for (let dynchildhelper of sortedDynchildhelpers) {
-        let fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
-        helperSqlDocuments.set(fileName, dynchildhelper.code);
+        let fileName;
+        if (dynchildhelper.filename != null) {
+            fileName = dynchildhelper.filename;
+        } else {
+            fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
+        }
+        delete dynchildhelper.filename;
+        helperSqlFiles.set(fileName, dynchildhelper.code);
         dynchildhelper.code_file = fileName;    
         delete dynchildhelper.id;
         delete dynchildhelper.code;
@@ -215,10 +222,11 @@ export function analyzeAndPreprocess(nodesResult, linksResult, nodePermResult, d
     }
 
     return {
-        rootNodes,
-        structureSqlDocuments,
+        structure,
+        structureSqlFiles,
         dynchildhelpers,
-        helperSqlDocuments
+        helperSqlFiles
     };
 }
+
 export default exportStructure;

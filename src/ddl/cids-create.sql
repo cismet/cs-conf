@@ -136,6 +136,7 @@ CREATE TABLE cs_cat_node (
     is_root BOOLEAN DEFAULT false NOT NULL,
     org TEXT,
     dynamic_children TEXT,
+    dynamic_children_filename TEXT,
     sql_sort BOOLEAN,
     policy INTEGER,
     derive_permissions_from_class BOOLEAN DEFAULT true,
@@ -690,7 +691,9 @@ CREATE SEQUENCE cs_config_attr_value_sequence
 
 CREATE TABLE cs_config_attr_value (
     id INTEGER PRIMARY KEY DEFAULT NEXTVAL('cs_config_attr_value_sequence'),
-    value TEXT );
+    value TEXT,
+    filename TEXT
+);
 
 -- cs_config_attr_type
 
@@ -833,7 +836,8 @@ CREATE TABLE cs_dynamic_children_helper
 (
     id INTEGER PRIMARY KEY DEFAULT NEXTVAL('cs_dynamic_children_helper_sequence'),
     name TEXT,
-    code TEXT
+    code TEXT,
+    filename TEXT
 )
 WITH (
   OIDS=FALSE

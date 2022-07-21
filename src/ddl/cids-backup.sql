@@ -65,7 +65,7 @@ begin
     end loop;
     
     for ref in SELECT 'ALTER TABLE ' || tc.table_schema || '.' ||  tc.table_name || ' ADD CONSTRAINT ' || tc.constraint_name 
-            || ' FOREIGN KEY (' || kcu.column_name || ') REFERENCES ' || ccu.table_schema || '.' || ccu.table_name || ' (' || ccu.column_name || ') MATCH SIMPLE ON UPDATE NO ACTION ON DELETE NO ACTION;' as st
+            || ' ' || pg_catalog.pg_get_constraintdef(co.oid, true) || ';' as st
         FROM 
             information_schema.table_constraints AS tc 
             JOIN information_schema.key_column_usage AS kcu
@@ -74,6 +74,11 @@ begin
             JOIN information_schema.constraint_column_usage AS ccu
               ON ccu.constraint_name = tc.constraint_name
               AND ccu.table_schema = tc.table_schema
+            JOIN pg_catalog.pg_namespace as na
+              ON na.nspname = ccu.table_schema
+            JOIN pg_catalog.pg_constraint AS co
+              ON co.connamespace = na.oid
+              AND co.conname = tc.constraint_name
         WHERE tc.constraint_type = 'FOREIGN KEY' AND ccu.table_name = any (tabs) and ccu.table_schema = 'public' loop
          return next ref.st;
     end loop;

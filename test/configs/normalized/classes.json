@@ -1,0 +1,62 @@
+[
+    {
+        "table": "table1",
+        "name": "Table 1",
+        "descr": "",
+        "pk": "id",
+        "substitute": false,
+        "extension_attr": false,
+        "indexed": false,
+        "icon": null,
+        "classIcon": null,
+        "objectIcon": null,
+        "array_link": false,
+        "policy": null,
+        "attribute_policy": null,
+        "toString": null,
+        "editor": null,
+        "renderer": null,                
+        "attributes": [
+            {
+                "field": "id",
+                "name": "id",
+                "descr": "",
+                "dbType": "INTEGER",
+                "extension_attr": false,
+                "precision": null,
+                "scale": null,
+                "cidsType": null,
+                "oneToMany": null,
+                "manyToMany": null,
+                "mandatory": true,
+                "substitute": false,
+                "defaultValue": "nextval('table1_seq')",
+                "hidden": false,
+                "indexed": false,
+                "arrayKey": null,
+                "comment": null
+            },
+            {
+                "field": "field1",
+                "name": "Field 1",
+                "descr": "",
+                "dbType": "TEXT",
+                "extension_attr": false,
+                "precision": null,
+                "scale": null,
+                "cidsType": null,
+                "oneToMany": null,
+                "manyToMany": null,
+                "mandatory": false,
+                "substitute": false,
+                "defaultValue": null,
+                "hidden": false,
+                "indexed": false,
+                "arrayKey": null,
+                "comment": null
+            }
+        ],
+        "additionalAttributes": null,
+        "comment": null
+    }          
+]

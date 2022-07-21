@@ -1,14 +1,15 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-const exportAttrPermissions = async (client, attributes, classReadPerms, classWritePerms) => {
+async function exportAttrPermissions(client, attributes, classReadPerms, classWritePerms) {
     const {
         rows: attrPermResult
     } = await client.query(stmnts.attributePermissions);
 
     return analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms);
 }
-export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms) {
+
+function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms) {
     let attrReadPerms = new Map();
     let attrWritePerms = new Map();
 
@@ -31,36 +32,39 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
             attrWritePermissions.push(ug);
         }
     }
-    let aPermByTable = [];
-    let normalizedAPerms = new Map();
+    let attrPerms = [];
+    //let normalizedAPerms = new Map();
     for (let a of attributes) {
         let key = util.format("%s.%s", a.table, a.field);
-        let attrReadPermissions = classReadPerms.get(key);
-        let attrWritePermissions = classWritePerms.get(key);
         let entry = {
             attribute: key
         }
-        let normKey = "";
+
+        //let normKey = "";
+
+        let attrReadPermissions = classReadPerms.get(key);
         if (attrReadPermissions) {
-            entry.read = attrReadPermissions.sort();
-            normKey += util.format("read:::%s", JSON.stringify(entry.read));
+            entry.read = attrReadPermissions;
+            //normKey += util.format("read:::%s", JSON.stringify(entry.read));
         }
+
+        let attrWritePermissions = classWritePerms.get(key);
         if (attrWritePermissions) {
-            entry.write = attrWritePermissions.sort();
-            normKey += util.format("write:::%s", JSON.stringify(entry.write));
+            entry.write = attrWritePermissions;
+            //normKey += util.format("write:::%s", JSON.stringify(entry.write));
         }
         if (attrReadPermissions || attrWritePermissions) {
-            let attrsForPermissions = normalizedAPerms.get(normKey);
-            if (!attrsForPermissions) {
-                attrsForPermissions = [];
-                normalizedAPerms.set(normKey, attrsForPermissions);
-            }
-            attrsForPermissions.push(t);
-            aPermByTable.push(entry);
+            //let attrsForPermissions = normalizedAPerms.get(normKey);
+            //if (!attrsForPermissions) {
+                //attrsForPermissions = [];
+                //normalizedAPerms.set(normKey, attrsForPermissions);
+            //}
+            //attrsForPermissions.push(t);
+            attrPerms.push(entry);
         }
     }
 
-    let normalizedAttrPermResult = [];
+    /*let normalizedAttrPerms = [];
     //normalized Permissions 
     normalizedAPerms.forEach((attributes) => {
         let entry = {
@@ -74,12 +78,14 @@ export function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms,
         if (wp) {
             entry.write = wp;
         }
-        normalizedAttrPermResult.push(entry);
-    });
+        normalizedAttrPerms.push(entry);
+    });*/
+    
 
     return {
-        aPermByTable,
-        normalizedAttrPermResult
+        attrPerms,
+        //normalizedAttrPerms
     };
 }
+
 export default exportAttrPermissions;

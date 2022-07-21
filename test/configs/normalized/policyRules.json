@@ -1,0 +1,8 @@
+[
+    {"policy": "SECURE", "permission": "read", "default_value": false, "comment": null},
+    {"policy": "SECURE", "permission": "write", "default_value": false, "comment": null},
+    {"policy": "STANDARD", "permission": "read", "default_value": true, "comment": null},
+    {"policy": "STANDARD", "permission": "write", "default_value": false, "comment": null},
+    {"policy": "WIKI", "permission": "read", "default_value": true, "comment": null},
+    {"policy": "WIKI", "permission": "write", "default_value": true, "comment": null}
+]

@@ -1,50 +1,37 @@
 import fs from 'fs';
 import util from 'util';
+import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
 
-import { getClientForConfig } from './tools/db';
-
-export async function worker(options) {
-    let { execute, silent, config } = options;
+async function csPurge(options) {
+    let { execute, silent, runtimePropertiesFile, main } = options;
     let statements = [];
     
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-drop.sql', __dirname), 'utf8'));
 
     if (execute) {
         let client;
-        if (options.client) {
-            client = options.client;
-        } else {    
-            console.log(util.format("loading config %s", config));
-            client = await getClientForConfig(config);
+        try {
+            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
     
-            console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-            await client.connect();
+            logOut("Purging ...");
+            await client.query(statements.join("\n"));
+            logVerbose(" ↳ done .");        
+        } finally {
+            if (options.client == null && client != null) {
+                await client.end();
+            }
         }
-    
-        console.log("purging ...");
-        await client.query(statements.join("\n"));
-        console.log(" ↳ done .");        
-
-        if (!options.client) {
-            //close the connection -----------------------------------------------------------------------
-            await client.end();
-        }
-    } else if (!silent) {            
-        console.log();
-        console.log("################################################################################### ");
-        console.log("##### showing purge statements, NO execution (--purge for real execution) ##### ");
-        console.log("################################################################################### ");
-        console.log();
-        console.log(statements.join("\n"));
-        console.log();
-        console.log("################################################################################### ");
-        console.log("##### showing purge statements, NO execution (--purge for real execution) ##### ");
-        console.log("################################################################################### ");
+    } else if (!silent) {           
+        logOut();
+        logOut("###################################### ");
+        logOut("##### showing restore statements ##### ");
+        logOut("###################################### ");
+        logOut();
+        logOut(statements.join("\n"), { noSilent: main });
+        logOut();
+        logInfo("DRY RUN ! Nothing happend yet. Use -X to execute purge.");
     }
     return statements.join("\n");
 }   
 
-    
-
-
-
+export default csPurge;

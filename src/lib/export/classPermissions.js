@@ -1,13 +1,14 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-const exportClassPermissions = async (client, cidsClasses) => {
-    const {
+async function exportClassPermissions(client, classes) {
+    let {
         rows: classPermResult
     } = await client.query(stmnts.classPermissions);
-    return analyzeAndPreprocess(classPermResult, cidsClasses);
+    return analyzeAndPreprocess(classPermResult, classes);
 }
-export function analyzeAndPreprocess(classPermResult, cidsClasses) {
+
+function analyzeAndPreprocess(classPermResult, classes) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
     for (let cp of classPermResult) {
@@ -28,35 +29,35 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
             tableWritePermissions.push(ug);
         }
     }
-    let cPermByTable = [];
+    let classPerms = [];
     let normalizedCPerms = new Map();
-    for (let c of cidsClasses) {
-        let t = c.table;
-        let tableReadPermissions = classReadPerms.get(c.table);
-        let tableWritePermissions = classWritePerms.get(c.table);
+    for (let c of classes) {
+        let table = c.table;
         let entry = {
-            table: t
+            table: table
         }
-        let normKey = "";
+        //let normKey = "";
+        let tableReadPermissions = classReadPerms.get(table);
         if (tableReadPermissions) {
-            entry.read = tableReadPermissions.sort();
-            normKey += "read:::" + JSON.stringify(entry.read);
+            entry.read = tableReadPermissions;
+            //normKey += "read:::" + JSON.stringify(entry.read);
         }
+        let tableWritePermissions = classWritePerms.get(table);
         if (tableWritePermissions) {
-            entry.write = tableWritePermissions.sort();
-            normKey += "write:::" + JSON.stringify(entry.write);
+            entry.write = tableWritePermissions;
+            //normKey += "write:::" + JSON.stringify(entry.write);
         }
         if (tableReadPermissions || tableWritePermissions) {
-            let tablesForPermissions = normalizedCPerms.get(normKey);
-            if (!tablesForPermissions) {
-                tablesForPermissions = [];
-                normalizedCPerms.set(normKey, tablesForPermissions);
-            }
-            tablesForPermissions.push(t);
-            cPermByTable.push(entry);
+            //let tablesForPermissions = normalizedCPerms.get(normKey);
+            //if (!tablesForPermissions) {
+                //tablesForPermissions = [];
+                //normalizedCPerms.set(normKey, tablesForPermissions);
+            //}
+            //tablesForPermissions.push(table);
+            classPerms.push(entry);
         }
     }
-    let normalizedClassPermResult = [];
+    /*let normalizedClassPerms = [];
     //normalized Permissions 
     normalizedCPerms.forEach((tables) => {
         let entry = {
@@ -70,14 +71,16 @@ export function analyzeAndPreprocess(classPermResult, cidsClasses) {
         if (wp) {
             entry.write = wp;
         }
-        normalizedClassPermResult.push(entry);
-    });
+        normalizedClassPerms.push(entry);
+    });*/
+
     return {
-        cPermByTable,
-        normalizedClassPermResult,
+        classPerms,
+        //normalizedClassPerms,
         classReadPerms,
         classWritePerms
     }
 
 }
+
 export default exportClassPermissions;

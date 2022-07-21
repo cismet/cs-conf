@@ -1,0 +1,15 @@
+[
+    {
+        "key": "class1.attr1",
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"],
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3"]
+    }, {
+        "key": "class1.attr2",
+        "read": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+    }, {
+        "key": "class2.attr1",
+        "write": ["group1@DOMAIN", "group2@DOMAIN", "group3@DOMAIN"]
+    }, {
+        "key": "class2.attr2"
+    }          
+]

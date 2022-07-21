@@ -1,21 +1,22 @@
 import * as stmnts from './statements';
 
-const exportUserManagement = async (client, groupConfigAttrs, userConfigAttrs) => {
-    const {
+async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs) {
+    let {
         rows: groupArray
     } = await client.query(stmnts.usergroups);
-    const {
+    let {
         rows: userArray
     } = await client.query(stmnts.users);
-    const {
+    let {
         rows: membership
     } = await client.query(stmnts.usergroupmembership);
 
-    return analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
+    let processed = analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
+    return processed;
 }
 
-export function analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs) {
-    let groups = [];
+function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
+    let usergroups = [];
     for (let group of groupArray) {
         let g = {
             key: group.name + (group.domain.toUpperCase() == 'LOCAL' ? '' : '@' + group.domain)
@@ -27,11 +28,10 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
         if (attributes) {
             g.configurationAttributes = attributes;
         }
-        groups.push(g);
+        usergroups.push(g);
     }
     // Users
 
-    console.log("attaching groups");
     let userGroupMap = new Map();
     for (let entry of membership) {
         let user = userGroupMap.get(entry.login_name);
@@ -43,11 +43,9 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
         }
     }
 
-    console.log("analyzing the membership info");
-
     //now change the original user store
     // Usermanagement -----------------------------------------------------------------------
-    for (let user of userArray) {
+    for (let user of usermanagement) {
         //add the usergroups
         let groups = userGroupMap.get(user.login_name);
         if (groups) {
@@ -71,9 +69,10 @@ export function analyzeAndPreprocess(groupArray, userArray, membership, groupCon
 
     }
     return {
-        userArray,
-        groups
+        usermanagement,
+        usergroups
     }
 
 }
+
 export default exportUserManagement;

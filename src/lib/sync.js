@@ -1,20 +1,20 @@
 import fs from 'fs';
 import util from 'util';
-import { getClientForConfig } from './tools/db';
 import wcmatch from 'wildcard-match';
-import * as csDiff from './diff';
+import csDiff from './diff';
+import normalizeClasses from './normalize/classes';
+import exportClasses from './export/classes';
+import { createClient, logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import csBackup from './backup';
 
-const createSyncStatements = async (client, existingData, allCidsClassesByTableName, tablesDone, cidsClass) => {
+async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
     let statements = [];
-    let cidsTableName = cidsClass.table.toLowerCase();
+    let cidsTableName = clazz.table.toLowerCase();
 
     if (!tablesDone.includes(cidsTableName) && !existingData.ignoredTables.includes(cidsTableName)) {
         tablesDone.push(cidsTableName);
 
-        let pk = "id";
-        if (cidsClass.pk) {
-            pk = cidsClass.pk.toLowerCase();
-        }
+        let pk = clazz.pk;
 
         if (!existingData.tables.hasOwnProperty(cidsTableName)) {
 
@@ -23,9 +23,9 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
             let sequenceName = util.format("%s_seq", cidsTableName);
             let columns = [];
 
-            if (cidsClass.attributes) {
-                for (let cidsAttribute of cidsClass.attributes) {
-                    let fieldName = cidsAttribute.field.toLowerCase();
+            if (clazz.attributes) {
+                for (let cidsAttribute of clazz.attributes) {
+                    let fieldName = cidsAttribute.field;
                     if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
 
                         // skipping extension- and 1-n- attributes
@@ -33,7 +33,7 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                             
                             // foreign key => recursion 
 
-                            let subCidsTableName = cidsAttribute.cidsType.toLowerCase();
+                            let subCidsTableName = cidsAttribute.cidsType;
                             let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                             // directly adding recursive results to statements-array for assuring
                             // that the most bottom table is created first
@@ -44,23 +44,23 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
 
                             if (cidsAttribute.manyToMany) {
                                     // array attribute => adding mandatory integer column
-                                columns.push({ name: fieldName, type: "integer", primary: fieldName == pk, null: false });
+                                columns.push({ name: fieldName, type: "integer", primary: false, null: false });
                             } else {
                                 // primitive attribute => adding column with attributes
                                 columns.push({ name: fieldName, type: fullTypeFromAttribute(cidsAttribute), primary: fieldName == pk, null: !cidsAttribute.mandatory, default: cidsAttribute.defaultValue});
                             }
 
-                            if (fieldName == pk) {
+                            /*if (fieldName == pk) {
                                 // no need to create a pk anymore, it was explicitly defined
                                 pk = null;
-                            }
+                            }*/
                         }
                     } 
                 } 
-                if (pk) {
+                /*if (pk) { 
                     // adding primary key (at the beginning)
                     columns.unshift({ name: pk, type: "integer", null: false, default: util.format("nextval('%s')", sequenceName) })
-                }
+                }*/
 
             }
 
@@ -71,13 +71,14 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
             // table already existing => altering
             let existingTable = existingData.tables[cidsTableName];
 
-            if (existingTable.tableType.toLowerCase() == 'base table') {
+            if (existingTable.tableType.toUpperCase() === 'BASE TABLE') {
 
                 // skipping views (f.e.)
 
+                let pkFound = false;
                 let columnsDone = [];
-                if (cidsClass.attributes) {
-                    for (let cidsAttribute of cidsClass.attributes) {
+                if (clazz.attributes) {
+                    for (let cidsAttribute of clazz.attributes) {
                         if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
                             let fieldName = cidsAttribute.field.toLowerCase();
                             columnsDone.push(fieldName);
@@ -87,7 +88,7 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
 
                                 // foreign key => recursion 
 
-                                let subCidsTableName = cidsAttribute.cidsType.toLowerCase();
+                                let subCidsTableName = cidsAttribute.cidsType;
                                 let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                                 // directly adding recursive results to statements-array for assuring
                                 // that the most bottom table is created first
@@ -108,12 +109,12 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                                     } else {
                                         let type = fullTypeFromAttribute(cidsAttribute);
                                         
-                                        let defaultValue = (type && cidsAttribute.defaultValue && (type.toLowerCase() == "text" || type.toLowerCase().startsWith("char") || type.toLowerCase().startsWith("varchar"))) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                        let defaultValue = (type && cidsAttribute.defaultValue && isTextType(type)) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
                                         statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: fullTypeFromAttribute(cidsAttribute), null: !cidsAttribute.mandatory, default: defaultValue});
                                     }
 
                                 } else {
-                                    let existingColumn = existingTable.columns[fieldName];                            
+                                    let existingColumn = existingTable.columns[fieldName];                                                                
 
                                     let oldType = { 
                                         dbType: existingColumn.dataType, 
@@ -121,48 +122,68 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                                         scale: existingColumn.scale 
                                     };
 
-                                    let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: fieldName, primary : fieldName == pk, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.null, oldDefault: existingColumn.default };
-        
-                                    if (fieldName == pk) {
-                                        pk = null;
+                                    let statement = { 
+                                        action: "CHANGE COLUMN", 
+                                        table: cidsTableName, 
+                                        column: fieldName, 
+                                        primary : fieldName == pk, 
+                                        oldType: fullTypeFromAttribute(oldType), 
+                                        oldNull: existingColumn.isNullable, 
+                                        oldDefault: existingColumn.default 
+                                    };
+                                                    
+                                    if (fieldName == pk) {                
+                                        pkFound = true;
                                     }
 
                                     // primitive column existing => altering if needed
 
+                                    let cidsAttributeDbType = cidsAttribute.dbType != null ? cidsTypeToDb(cidsAttribute.dbType).toUpperCase() : null;
+                                    let existingColumnDbType = existingColumn.dataType.toUpperCase();
+
+                                    let precisionIsRelevant = 
+                                        cidsAttributeDbType == "NUMERIC" ||
+                                        cidsAttributeDbType == "VARCHAR" ||
+                                        cidsAttributeDbType == "CHAR";
+                                    let scaleIsRelevant = cidsAttributeDbType == "NUMERIC";
                                     let typeIdentical = (
-                                            (cidsAttribute.manyToMany && existingColumn.dataType.toLowerCase() == 'int4')
-                                            || cidsTypeToDb(cidsAttribute.dbType).toLowerCase() == existingColumn.dataType.toLowerCase()
+                                            (cidsAttribute.manyToMany && existingColumnDbType === 'INT4')
+                                            || cidsAttributeDbType == existingColumnDbType
                                         )                            
-                                        && (cidsAttribute.precision == existingColumn.precision)
-                                        && (cidsAttribute.scale == existingColumn.scale);
+                                        && (cidsAttribute.precision == existingColumn.precision || !precisionIsRelevant)
+                                        && (cidsAttribute.scale == existingColumn.scale || !scaleIsRelevant);
 
                                     if (!typeIdentical) {
-                                        // type changes detected => altering
                                         statement.type = fullTypeFromAttribute(cidsAttribute);
-                                        statement.null = !cidsAttribute.mandatory;
-                                        statement.default = (statement.type && cidsAttribute.defaultValue && (statement.type.toLowerCase() == "text" || statement.type.toLowerCase().startsWith("char") || statement.type.toLowerCase().startsWith("varchar"))) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
-                                    } else {
-                                        // attribute modifications if needed
-
-                                        let mandatory = false;
-                                        if (cidsAttribute.mandatory) {
-                                            mandatory = cidsAttribute.mandatory;
-                                        }
-                                        if (mandatory == existingColumn.isNullable) {
-                                            statement.null = !mandatory;
-                                        }
-
-                                        let escapedExisting = cidsAttribute.defaultValue && (existingColumn.dataType.toLowerCase() == "text" || existingColumn.dataType.toLowerCase().startsWith("char") || existingColumn.dataType.toLowerCase().startsWith("varchar")) ? existingColumn.default : util.format("'%s'", existingColumn.default);
-                                        if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
-                                            statement.default = existingColumn.dataType && cidsAttribute.defaultValue && (existingColumn.dataType.toLowerCase() == "text" || existingColumn.dataType.toLowerCase().startsWith("char") || existingColumn.dataType.toLowerCase().startsWith("varchar")) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
-                                        }
-
-                                        // special treatment if mandatory and default value is set => update data
-                                        if (statement.null || statement.default) {
-                                            statement.update = cidsAttribute.mandatory && existingColumn.isNullable && cidsAttribute.defaultValue;
-                                        }
                                     }
+
+                                    let mandatory = cidsAttribute.mandatory === true;
+                                    if (mandatory == existingColumn.isNullable) {
+                                        statement.null = !mandatory;
+                                    }
+
+                                    let normalizedDefaultValue = fieldName == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
+                                    let isText = isTextType(existingColumn.dataType);
+                                    let escapedExisting = cidsAttribute.defaultValue && isText ? normalizedDefaultValue : util.format("'%s'", normalizedDefaultValue);
+                                    if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
+                                        statement.default = existingColumn.dataType && cidsAttribute.defaultValue && isText ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
+                                    }
+
+                                    // special treatment if mandatory and default value is set => update data
+                                    if ((statement.null || statement.default) && cidsAttribute.mandatory && existingColumn.isNullable && cidsAttribute.defaultValue) {
+                                        statement.update = true;
+                                    }
+
                                     if (statement.type !== undefined || statement.null !== undefined || statement.default !== undefined || statement.update !== undefined) {
+                                        if (statement.type === undefined) {
+                                            delete statement.oldType;
+                                        }
+                                        if (statement.null === undefined) {
+                                            delete statement.oldNull;
+                                        }
+                                        if (statement.default === undefined) {
+                                            delete statement.oldDefault;
+                                        }
                                         statements.push(statement);
                                     }
                                 }          
@@ -171,7 +192,7 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                     }
                 }
 
-                if (pk) {
+                if (!pkFound) {
                     // primary key => fixed attributes
 
                     let existingColumn = existingTable.columns[pk];                            
@@ -183,20 +204,20 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
                             scale: existingColumn.scale 
                         };
 
-                        let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: pk, primary : true, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.null, oldDefault: existingColumn.default };
+                        let statement = { action: "CHANGE COLUMN", table: cidsTableName, column: pk, primary : true, oldType: fullTypeFromAttribute(oldType), oldNull: existingColumn.isNullable, oldDefault: existingColumn.default };
 
                         if (existingColumn.isNullable) {
                             statement.oldNull = existingColumn.isNullable;
                         }
-                        if (existingColumn.defaulValue) {
-                            statement.oldDefault = existingColumn.defaulValue;
+                        if (existingColumn.defaultValue) {
+                            statement.oldDefault = existingColumn.defaultValue;
                         }
 
                         if (existingColumn.isNullable) {
                             statement.null = false;
                         }
                         if(existingColumn.default != util.format("nextval('%s_seq'::text)", cidsTableName) && existingColumn.default != util.format("nextval('%s_seq'::regclass)", cidsTableName)) {
-                            statement.default = util.format("nextval('%s_seq');", cidsTableName);
+                            statement.default = util.format("nextval('%s_seq')", cidsTableName);
                         }
                         if (statement.type !== undefined || statement.null !== undefined || statement.default !== undefined || statement.update !== undefined) {
                             statements.push(statement);
@@ -219,28 +240,34 @@ const createSyncStatements = async (client, existingData, allCidsClassesByTableN
     return statements;
 }
 
+function isTextType(type) {
+    return type.toLowerCase() === "text" || type.toLowerCase().startsWith("char") || type.toLowerCase().startsWith("varchar");
+}
+
 function cidsTypeToDb(type) {
-    if (type) {
+    if (type != null) {
         switch(type.toUpperCase()) {
             case "CHAR": return "bpchar";
             case "INTEGER": return "int4";
             case "CIDS_GEOMETRY": return "geometry";
             default: return type.toLowerCase();
         }
+    } else {
+        return null;
     }
 }
 
 function fullTypeFromAttribute(cidsAttribute) {
     let fullType = cidsTypeToDb(cidsAttribute.dbType);
-    if (fullType == "numeric" && cidsAttribute.precision) {
+    if (fullType === "numeric" && cidsAttribute.precision) {
         fullType += util.format("(%s", cidsAttribute.precision);
         if (cidsAttribute.scale) {
             fullType += util.format(", %s", cidsAttribute.scale);
         }
         fullType += ")";
-    } else if (fullType == "bpchar" && cidsAttribute.precision) {
+    } else if (fullType === "bpchar" && cidsAttribute.precision) {
         fullType += util.format("(%s)", cidsAttribute.precision);
-    } else if (fullType == "varchar" && cidsAttribute.precision) {
+    } else if (fullType === "varchar" && cidsAttribute.precision) {
         fullType += util.format("(%s)", cidsAttribute.precision);
     }    
     return fullType;
@@ -276,7 +303,7 @@ function queriesFromStatement(statement) {
                     }
                 }
                 if (column.default !== undefined) {
-                    if (column.type.toLowerCase() == "text" || column.type.toLowerCase().startsWith("char") || column.type.toLowerCase().startsWith("varchar")) {
+                    if (isTextType(column.type)) {
                         snippet += util.format(" DEFAULT '%s'", column.default);
                     } else {
                         snippet += util.format(" DEFAULT %s", column.default);
@@ -327,6 +354,7 @@ function queriesFromStatement(statement) {
             queries.push(util.format("-- START changing column %s.%s", statement.table, statement.column));
             if (statement.type !== undefined) {
                 queries.push(util.format("-- changing type from %s to %s", statement.oldType, statement.type));
+                /*
                 queries.push(util.format("ALTER TABLE %s RENAME COLUMN %s TO %s;", statement.table, statement.column, tmpColumn));
                 // ["\nBEGIN TRANSACTION;", ...queries, dryRun ? "-- because of dry-run\nROLLBACK TRANSACTION;" : "COMMIT TRANSACTION;" ]    
 
@@ -342,23 +370,29 @@ function queriesFromStatement(statement) {
                 queries.push(util.format("ALTER TABLE %s ADD COLUMN %s %s;", statement.table, statement.column, typeAndAttributes));
                 queries.push(util.format("UPDATE %s SET %s = %s;", statement.table, statement.column, tmpColumn));
                 queries.push(util.format("ALTER TABLE %s DROP COLUMN %s;", statement.table, tmpColumn));
-            } else {
-                if (statement.update !== undefined) {
-                    queries.push(util.format("UPDATE TABLE %s SET %s = '%s' WHERE %s IS NULL;", statement.table, statement.column, statement.defaultValue, statement.column));
-                    if (statement.default == null) {                
-                        queries.push("-- > WARNING, no default value for mandatory field. this may fail !")
-                    }
+                */
+                queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s TYPE %s;", statement.table, statement.column, statement.type));
+            }
+            if (statement.update !== undefined) {
+                queries.push(util.format("UPDATE TABLE %s SET %s = '%s' WHERE %s IS NULL;", statement.table, statement.column, statement.defaultValue, statement.column));
+                if (statement.default == null) {                
+                    queries.push("-- > WARNING, no default value for mandatory field. this may fail !")
                 }
-    
-                if (statement.default === null) {
+            }
+
+            if (statement.default !== undefined) {
+                if (statement.default == null) {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s DROP DEFAULT;", statement.table, statement.column));    
-                } else if (statement.default !== undefined) {
+                } else {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET DEFAULT %s;", statement.table, statement.column, statement.default));    
                 }
-                if (statement.null !== undefined) {
-                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s %s %s;", statement.table, statement.column, statement.null ? "DROP" : "SET", "NOT NULL"));
+            }
+            if (statement.null !== undefined) {
+                if (statement.null) {
+                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s DROP NOT NULL;", statement.table, statement.column));
+                } else {
+                    queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET NOT NULL;", statement.table, statement.column));
                 }
-    
             }
             queries.push("-- END");
         } break;
@@ -370,236 +404,244 @@ function queriesFromStatement(statement) {
     return queries;
 }
 
-export async function worker(options) {
-    let { folder, execute, purge, schema, noDiffs, config } = options;
+async function csSync(options) {
+    let { configDir, execute, purge, schema, noDiffs, runtimePropertiesFile, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
+
+    if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
+
     let client;
-    if (options.client) {
-        client = options.client;
-    } else {
-        console.log(util.format("loading config %s", config));
-        client = await getClientForConfig(config);
-
-        console.log(util.format("connecting to db %s@%s:%d/%s", client.user, client.host, client.port, client.database));
-        await client.connect();
-    }
-
-    if (!noDiffs) {
-        let differences = await csDiff.worker( { folder: folder, comparisionFolder: null, config: config, schema: schema, client: client } );
-        if (differences > 0) {
-            throw util.format("%d differences found, aborting sync !", differences);
-        }
-    }
-    
-    let classesJson = util.format("%s/classes.json", folder);
-    console.log(util.format("reading classes from %s", classesJson));
-    let classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));
-
-    let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     try {
-        let sync = JSON.parse(fs.readFileSync(util.format("%s/sync.json", folder), {encoding: 'utf8'}));        
-        ignoreRules.push(... sync.tablesToIgnore);
-    } catch (e) {
-        console.log("no sync.json found");
-    }
+        client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
 
-    let allCidsClasses = [...classes];
-    let allCidsClassesByTableName = {};
-
-    let attributesCount = 0;
-    let defaulValueDetected = false;
-    for (let singleCidsClass of allCidsClasses) {
-        if (singleCidsClass.table) {
-            allCidsClassesByTableName[singleCidsClass.table.toLowerCase()] = singleCidsClass;
-        }
-        if (singleCidsClass.attributes) {
-            for (let attribute of singleCidsClass.attributes) {
-                if(attribute.defaulValue) {
-                    attribute.defaultValue = attribute.defaulValue;
-                    defaulValueDetected = true;
-                    delete attribute.defaulValue;                    
-                }
-                attributesCount++;
+        if (configDir != null && !noDiffs) {
+            let differences = await csDiff( { configDir, targetDir: null, runtimePropertiesFile, schema, client, simplify: true, reorganize: true, normalize: false } );
+            if (differences.length > 0) {
+                throw "differences found, aborting sync !";
             }
         }
-    }
-    console.log(util.format(" ↳ %d attributes found in %d classes.", attributesCount, classes.length));
-
-    if (defaulValueDetected) {
-        console.log("!!!!!!!!!!!!!!!");
-        console.log("!!! WARNING !!! Typo 'defaulValue' detected. Continuing by fixing it in memory. This should by changed to the correct spelling 'defaultValue'.");
-        console.log("!!!!!!!!!!!!!!!");
-        console.log("");
-    }
-
-    let existingData = {
-        tables : {},
-        sequences : []
-    };
-
-    console.log("analysing existing sequences ...");
-    let sequencesQuery = "SELECT sequence_name FROM information_schema.sequences ORDER BY sequence_name;";
-    let { rows : sequencesResults } = await client.query(sequencesQuery);
-    for (let result of sequencesResults) {
-        let sequenceKey = result.sequence_name.toLowerCase();
-        existingData.sequences.push(sequenceKey);
-    }        
-    console.log(util.format(" ↳ %d sequences found.", existingData.sequences.length));
-
-    console.log("analysing existing tables ...");
-    let tablesQuery = "SELECT tables.table_schema AS table_schema, tables.table_type AS table_type, tables.table_name AS table_name, columns.column_name AS column_name, CASE WHEN columns.column_default ILIKE '%::' || columns.data_type THEN substring(columns.column_default, 0, length(columns.column_default) - length(columns.data_type) - 1) ELSE columns.column_default END AS column_default, columns.is_nullable = 'YES' AS column_is_nullable, columns.udt_name AS column_data_type, CASE WHEN columns.udt_name = 'bpchar' OR columns.udt_name = 'varchar' THEN columns.character_maximum_length WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_precision ELSE NULL END AS column_precision, CASE WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_scale ELSE NULL END AS column_scale FROM information_schema.tables LEFT JOIN information_schema.columns ON tables.table_name = columns.table_name AND tables.table_schema = columns.table_schema;";
-    let { rows: tablesResults } = await client.query(tablesQuery);
-    
-    let ignoredTables = [];
-    let ignoredSequences = [];
-
-    for (let tablesResult of tablesResults) {
-        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name).toLowerCase();
-
-        let ignoreTable = false;
-        for (let ignoreRule of ignoreRules) {
-            if (!ignoredTables.includes(tableKey) && wcmatch(ignoreRule)(tableKey)) {
-                if (!ignoredTables.includes(tableKey)) {
-                    ignoredTables.push(tableKey);
-
-                    let sequenceKey = util.format("%s_seq", tableKey);
-                    if (existingData.sequences.includes(sequenceKey)) {
-                        existingData.sequences = existingData.sequences.filter((value) => {
-                            if (value == sequenceKey) {
-                                ignoredSequences.push(sequenceKey);
-                            }
-                            return value != sequenceKey;
-                        });
-                    }
-                }
-                ignoreTable = true;
-                break;                    
-            }
-        }
-        if (ignoreTable) {
-            continue;
-        }
-
-        if (!existingData.tables.hasOwnProperty(tableKey)) {
-            existingData.tables[tableKey] = { 
-                name: tablesResult.table_name,
-                tableType: tablesResult.table_type,
-                schema: tablesResult.table_schema,
-                columns: {}
-            };
-        }
-        let columnKey = tablesResult.column_name.toLowerCase();
-        existingData.tables[tableKey].columns[columnKey] = {
-            name: tablesResult.column_name,
-            default: tablesResult.column_default,
-            isNullable: tablesResult.column_is_nullable,
-            dataType: tablesResult.column_data_type,
-            precision: tablesResult.column_precision,
-            scale: tablesResult.column_scale
-        };
-    }      
-    
-    console.log(util.format(" ↳ %d columns found in %d tables.", tablesResults.length, Object.keys(existingData.tables).length));
-    console.log("applying ignore rules:");
-    console.table(ignoreRules);
-    console.log(" ↳ ignoring tables:");
-    console.table(ignoredTables);
-    console.log(" ↳ ignoring sequences:");
-    console.table(ignoredSequences);
-
-
-    existingData.ignoredTables = ignoredTables;
-    existingData.ignoredSequences = ignoredSequences;
-
-    // start statements creation recursion
-
-    console.log("preparing sync statements ...");
-    let statements = [];
-    let tablesDone = [];
-    while(allCidsClasses.length > 0) {
-        let cidsClass = allCidsClasses.pop();
-        statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass));
-    }    
-    if (statements.length > 0) {
-        console.table(statements);
-    }
-
-    // dropping unused tables
-
-    for (let tableDone of tablesDone) {
-        delete existingData.tables[tableDone];
-    }
-    Object.keys(existingData.tables).forEach(function(key) {
-        if (!ignoredTables.includes(key)) {
-            var tableData = existingData.tables[key];
-            if (tableData.tableType.toLowerCase() == "base table" && tableData.schema.toLowerCase() == "public") {
-                let sequenceKey = util.format("%s_seq", key);
-                statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
-            }
-        }
-    });
-
-    // printing all statements
-
-    if (statements.length > 0) {
-
-        let skipped = [];
-        let subQueries = [];
         
-        for (let statement of statements) {
-            if (purge !== true && statement.action.startsWith("DROP ")) {
-                skipped.push(... queriesFromStatement(statement));
-            } else {
-                subQueries.push(... queriesFromStatement(statement));
-            }
-        }
-
-        if (subQueries.length > 0) {
-            let query = "\n";
-            query += "-- ########################################\n";
-            query += "-- ### BEGIN OF SYNCHRONISATION QUERIES ###\n";
-            query += "-- ########################################\n";
-            query += subQueries.join("\n");
-            query += "\n\n";
-            query += "-- ######################################\n";
-            query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
-            query += "-- ######################################\n";
-
-            if (execute) {
-                console.log(util.format("\nstart syncing (%d queries)...", subQueries.filter((value) => {
-                    return value.trim() != "" && !value.trim().startsWith("--");
-                }).length));
-                await client.query(query);
-            } else {
-                console.log(util.format("\nresulting sync queries:"));
-                console.log(query);
-            }
-            console.log(util.format(" ↳ syncing successfull"));
+        if (execute && !skipBackup) {
+            await csBackup({
+                dir: backupDir, 
+                prefix: backupPrefix, 
+                runtimePropertiesFile,
+                client
+            });
         } else {
-            console.log("nothing to sync. done.");
+            logVerbose("Skipping backup.");
         }
 
-        if (skipped.length > 0)  {
-            console.log("======================");
-            console.log(util.format("%d Skipped statements:", skipped.filter((value) => {
-                return value.trim() != "";
-            }).length));
-            console.log("----------------------");
-            console.log(skipped.join("\n"));
-            console.log("======================");
+        let classes;
+        if (configDir == null) {
+            ({ classes } = await exportClasses(client));
+        } else {
+            let classesJson = util.format("%s/classes.json", configDir);
+            logOut(util.format("Reading classes from %s ...", classesJson));
+            classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));    
+
+            if (syncJson == null) {
+                syncJson = util.format("%s/sync.json", configDir);
+            }
         }
-    } else {
-        console.log("nothing to sync. done.");
-    }
+        
+        let normalized = normalizeClasses(classes);
 
-    // ----
+        let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
+        if (syncJson != null) {
+            try {
+                let sync = JSON.parse(fs.readFileSync(syncJson, {encoding: 'utf8'}));        
+                ignoreRules.push(... sync.tablesToIgnore);
+            } catch (e) {
+                throw util.format("could not load syncJson %s: %s", syncJson, e);
+            }
+        } else {
+            logInfo("no sync.json found");
+        }
 
-    if (!options.client) {
-        //close the connection -----------------------------------------------------------------------
-        await client.end();
+        let allCidsClasses = [...normalized];
+        let allCidsClassesByTableName = {};
+
+        let attributesCount = 0;
+        for (let singleCidsClass of allCidsClasses) {
+            if (singleCidsClass.table) {
+                allCidsClassesByTableName[singleCidsClass.table] = singleCidsClass;
+            }
+            if (singleCidsClass.attributes) {
+                attributesCount += singleCidsClass.attributes.length;
+            }
+        }
+        logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.length));
+
+        let existingData = {
+            tables : {},
+            sequences : []
+        };
+
+        logVerbose("Analysing existing sequences ...");
+        let sequencesQuery = "SELECT sequence_name FROM information_schema.sequences ORDER BY sequence_name;";
+        let { rows : sequencesResults } = await client.query(sequencesQuery);
+        for (let result of sequencesResults) {
+            let sequenceKey = result.sequence_name.toLowerCase();
+            existingData.sequences.push(sequenceKey);
+        }        
+        logVerbose(util.format(" ↳ %d sequences found.", existingData.sequences.length));
+
+        logVerbose("Analysing existing tables ...");
+        let tablesQuery = "SELECT tables.table_schema AS table_schema, tables.table_type AS table_type, tables.table_name AS table_name, columns.column_name AS column_name, CASE WHEN columns.column_default ILIKE '%::' || columns.data_type THEN substring(columns.column_default, 0, length(columns.column_default) - length(columns.data_type) - 1) ELSE columns.column_default END AS column_default, columns.is_nullable = 'YES' AS column_is_nullable, columns.udt_name AS column_data_type, CASE WHEN columns.udt_name = 'bpchar' OR columns.udt_name = 'varchar' THEN columns.character_maximum_length WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_precision ELSE NULL END AS column_precision, CASE WHEN columns.udt_name ILIKE 'numeric' THEN columns.numeric_scale ELSE NULL END AS column_scale FROM information_schema.tables LEFT JOIN information_schema.columns ON tables.table_name = columns.table_name AND tables.table_schema = columns.table_schema;";
+        let { rows: tablesResults } = await client.query(tablesQuery);
+        
+        let ignoredTables = [];
+        let ignoredSequences = [];
+
+        for (let tablesResult of tablesResults) {
+            let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
+
+            let ignoreTable = false;
+            for (let ignoreRule of ignoreRules) {
+                if (!ignoredTables.includes(tableKey) && wcmatch(ignoreRule)(tableKey)) {
+                    if (!ignoredTables.includes(tableKey)) {
+                        ignoredTables.push(tableKey);
+
+                        let sequenceKey = util.format("%s_seq", tableKey);
+                        if (existingData.sequences.includes(sequenceKey)) {
+                            existingData.sequences = existingData.sequences.filter((value) => {
+                                if (value == sequenceKey) {
+                                    ignoredSequences.push(sequenceKey);
+                                }
+                                return value != sequenceKey;
+                            });
+                        }
+                    }
+                    ignoreTable = true;
+                    break;                    
+                }
+            }
+            if (ignoreTable) {
+                continue;
+            }
+
+            if (!existingData.tables.hasOwnProperty(tableKey)) {
+                existingData.tables[tableKey] = { 
+                    name: tablesResult.table_name,
+                    tableType: tablesResult.table_type,
+                    schema: tablesResult.table_schema,
+                    columns: {}
+                };
+            }
+            let columnKey = tablesResult.column_name;
+            existingData.tables[tableKey].columns[columnKey] = {
+                name: tablesResult.column_name,
+                default: tablesResult.column_default,
+                isNullable: tablesResult.column_is_nullable,
+                dataType: tablesResult.column_data_type,
+                precision: tablesResult.column_precision,
+                scale: tablesResult.column_scale
+            };
+        }      
+        
+        logVerbose(util.format(" ↳ %d columns found in %d tables.", tablesResults.length, Object.keys(existingData.tables).length));
+
+        logVerbose("Applying ignore rules ...");
+        logVerbose(ignoreRules, { table: true });
+        logDebug(" ↳ ignoring tables:");
+        logDebug(ignoredTables, { table: true });
+        logVerbose(" ↳ ignoring sequences:");
+        logVerbose(ignoredSequences, { table: true });
+
+        existingData.ignoredTables = ignoredTables;
+        existingData.ignoredSequences = ignoredSequences;
+
+        // start statements creation recursion
+
+        logVerbose("Preparing sync statements ...");
+        let statements = [];
+        let tablesDone = [];
+        while(allCidsClasses.length > 0) {
+            let cidsClass = allCidsClasses.pop();
+            statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass));
+        }    
+        if (statements.length > 0) {
+            logVerbose(statements, { table: true });
+        }
+
+        // dropping unused tables
+
+        for (let tableDone of tablesDone) {
+            delete existingData.tables[tableDone];
+        }
+        Object.keys(existingData.tables).forEach(function(key) {
+            if (!ignoredTables.includes(key)) {
+                var tableData = existingData.tables[key];
+                if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === "public") {
+                    let sequenceKey = util.format("%s_seq", key);
+                    statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
+                }
+            }
+        });
+
+        // printing all statements
+
+        if (statements.length > 0) {
+
+            let skipped = [];
+            let subQueries = [];
+            
+            for (let statement of statements) {
+                if (purge !== true && statement.action.startsWith("DROP ")) {
+                    skipped.push(... queriesFromStatement(statement));
+                } else {
+                    subQueries.push(... queriesFromStatement(statement));
+                }
+            }
+
+            if (skipped.length > 0)  {
+                logOut("======================");
+                logOut(util.format("%d Skipped statements:", skipped.filter((value) => {
+                    return value.trim() != "";
+                }).length));
+                logOut("----------------------");
+                logOut(skipped.join("\n"));
+                logOut("======================");
+            }
+
+            if (subQueries.length > 0) {
+                let query = "\n";
+                query += "-- ########################################\n";
+                query += "-- ### BEGIN OF SYNCHRONISATION QUERIES ###\n";
+                query += "-- ########################################\n";
+                query += subQueries.join("\n");
+                query += "\n\n";
+                query += "-- ######################################\n";
+                query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
+                query += "-- ######################################\n";
+
+                if (execute) {
+                    logOut(util.format("\nstart syncing (%d queries) ...", subQueries.filter((value) => {
+                        return value.trim() != "" && !value.trim().startsWith("--");
+                    }).length));
+                    await client.query(query);
+                } else {
+                    logVerbose("\nresulting sync queries:");
+                    logOut(query, { noSilent: main });
+                }
+                if (execute) {
+                    logInfo(" ↳ syncing successfull");
+                } else {
+                    logOut(" ↳ syncing successfull");
+                    logOut();
+                    logWarn("DRY RUN nothing has really happend yet. '-X|--sync' for execution");
+                }
+            } else {
+                logInfo(" ↳ nothing to sync. done.");
+            }
+        } else {
+            logInfo(" ↳ nothing to sync. done.");
+        }
+    } finally {
+        if (options.client == null && client != null) {
+            await client.end();
+        }
     }
 }   
 
-    
-
-
-
+export default csSync;

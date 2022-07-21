@@ -1,109 +1,105 @@
-import * as stmnts from './statements';
-import * as dbtools from '../tools/db';
-import * as cidstools from '../tools/cids';
 import util from 'util';
+import { extractGroupAndDomain } from '../tools/cids';
 
-export function prepareData(domains, usergroups, usermanagement, xmlConfigs) {    
-    // cs_config_attr_key
-    let csConfigAttrKeyEntries=[]
-    let csConfigAttrValueEntries=new Set();
-    let csConfigAttrValues4A=[]; //only action attrs
-    let csConfigAttrValues4CandX=[]; //normal configuration attrs and xml attributes
+function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
+    let csConfigAttrKeyEntries = []
+    let csConfigAttrValueEntries = new Map();
+    let csConfigAttrValues4A = []; //only action attrs
+    let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
     
-    let allConfigurationAttributes=[];
-    for (let d of domains) {
-        if (d.configurationAttributes){
-            for (let ca of d.configurationAttributes){
-                ca.domain=d.domainname;
-                allConfigurationAttributes.push(ca);
+    let allConfigurationAttributes = [];
+    for (let domain of domains) {
+        if (domain.configurationAttributes != null) {
+            for (let configurationAttribute of domain.configurationAttributes) {
+                configurationAttribute.domain = domain.domainname;
+                allConfigurationAttributes.push(configurationAttribute);
             } 
         }
     }
 
-    for (let g of usergroups) {
-        if (g.configurationAttributes){
-            const {group, domain} = cidstools.extractGroupAndDomain(g.key);
-            for (let ca of g.configurationAttributes){
-                ca.group=group;
-                ca.domain=domain;
-                allConfigurationAttributes.push(ca);
-            }
-        }
-
-    }
-
-    for (let u of usermanagement) {
-        if (u.configurationAttributes){
-            const {group, domain} = cidstools.extractGroupAndDomain(u.groups[0]);
-            for (let ca of u.configurationAttributes){
-                ca.user=u.login_name;
-                ca.group=group;
-                ca.domain=domain;
-                allConfigurationAttributes.push(ca);
+    for (let group of usergroups) {
+        if (group.configurationAttributes != null) {
+            let groupKey = group.key;
+            let configurationAttributes = group.configurationAttributes;
+            let groupAndDomain = extractGroupAndDomain(groupKey);
+            for (let configurationAttribute of configurationAttributes) {
+                configurationAttribute.group = groupAndDomain.group;
+                configurationAttribute.domain = groupAndDomain.domain;
+                allConfigurationAttributes.push(configurationAttribute);
             }
         }
     }
 
-    let duplicateKeyFinder=new Set();
-    for (let ca of allConfigurationAttributes){
+    for (let user of usermanagement) {
+        if (user.configurationAttributes != null) {
+            for (let configurationAttribute of user.configurationAttributes) {
+                if (configurationAttribute.groups != null && configurationAttribute.groups.length > 0) {
+                    for (let group of configurationAttribute.groups) {
+                        let groupAndDomain = extractGroupAndDomain(group);                        
+                        allConfigurationAttributes.push(Object.assign({}, configurationAttribute, {
+                            user: user.login_name,
+                            group: groupAndDomain.group,
+                            domain: groupAndDomain.domain,
+                        }));
+                    }
+                } else {
+                    configurationAttribute.user = user.login_name;
+                    allConfigurationAttributes.push(configurationAttribute);
+                }
+            }
+        }
+    }
+
+    let id = 1;
+    let duplicateKeyFinder = new Set();
+    for (let allConfigurationAttribute of allConfigurationAttributes) {
         let type;
-        if (ca.value != null) {
-            type='C';
-        }
-        else if (ca.xmlfile != null) {
-            type='X';
-        }
-        else {
-            type='A';
+        if (allConfigurationAttribute.value != null) {
+            type = 'C';
+        } else if (allConfigurationAttribute.xmlfile != null) {
+            type = 'X';
+        } else {
+            type = 'A';
         }
         
-        let fullKey = util.format("%s.%s", ca.key, ca.keygroup);
+        let fullKey = util.format("%s.%s", allConfigurationAttribute.key, allConfigurationAttribute.keygroup);
         if (!duplicateKeyFinder.has(fullKey)) {
-            csConfigAttrKeyEntries.push([ca.key, ca.keygroup]);
+            csConfigAttrKeyEntries.push([
+                allConfigurationAttribute.key, 
+                allConfigurationAttribute.keygroup
+            ]);
             duplicateKeyFinder.add(fullKey);
         }
-        let value;
-        if (type==='X' ||type==='C'){
-            if (type==='X') {
-                //hier xml file einladen
-                value=xmlConfigs.get(ca.xmlfile);
 
-            }
-            else {
-                value=ca.value;
-            }
-            csConfigAttrValueEntries.add(value);
-            csConfigAttrValues4CandX.push([ca.domain, ca.group, ca.user, ca.key, type, value ]);
-        }
-        else {
-            csConfigAttrValues4A.push([ca.domain, ca.group, ca.user, ca.key]);
+        if (type === 'X' || type === 'C') {
+            let value = (type === 'X') ? xmlFiles.get(allConfigurationAttribute.xmlfile) : allConfigurationAttribute.value;
+            let filename = (type === 'X') ? allConfigurationAttribute.xmlfile : null;
+            csConfigAttrValueEntries.set(value, [ 
+                value, 
+                filename 
+            ]);
+            csConfigAttrValues4CandX.push([
+                allConfigurationAttribute.domain, 
+                allConfigurationAttribute.group, 
+                allConfigurationAttribute.user, 
+                allConfigurationAttribute.key, 
+                type, 
+                value,
+                id++, 
+            ]);
+        } else {
+            csConfigAttrValues4A.push([
+                allConfigurationAttribute.domain, 
+                allConfigurationAttribute.group, 
+                allConfigurationAttribute.user, 
+                allConfigurationAttribute.key,
+                id++, 
+            ]);
         }   
     }
-    var csConfigAttrValueEntriesArray = [];
-    csConfigAttrValueEntries.forEach( x => csConfigAttrValueEntriesArray.push([x]) );
+    let csConfigAttrValueEntriesArray = Array.from(csConfigAttrValueEntries.values());
 
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
 }
 
-const importConfigAttrs = async (client, domains, usergroups, usermanagement, xmlConfigs) => {
-    const { 
-        csConfigAttrKeyEntries, 
-        csConfigAttrValues4A, 
-        csConfigAttrValues4CandX , 
-        csConfigAttrValueEntriesArray} = prepareData(domains, usergroups, usermanagement, xmlConfigs);
-    console.log(util.format("importing config attribute keys (%d)", csConfigAttrKeyEntries.length));
-    await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
-
-    console.log(util.format("importing config attributes values (%d)", csConfigAttrValueEntriesArray.length));
-    await dbtools.singleRowFiller(client,stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
-
-    if (csConfigAttrValues4A.length>0){
-        console.log(util.format("importing action attributes  (%d)", csConfigAttrValues4A.length));
-        await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
-    }
-        
-     console.log(util.format("importing config attributes  (%d)", csConfigAttrValues4CandX.length));
-     await dbtools.nestedFiller(client,stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
-}
-
-export default importConfigAttrs;
+export default prepareConfigAttrs;
