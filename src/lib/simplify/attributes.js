@@ -13,8 +13,10 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
                 let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttribute, {
                     field: attribute.field,
                     name: attribute.field,
+                    descr: "Primärschlüssel",
                     dbType: "INTEGER",
                     mandatory: true,
+                    hidden: true,
                 }));
                 if (
                     simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table) ||

@@ -8,9 +8,11 @@ function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
     if (attributes !== undefined) {
         let pkMissing = true;
         let pkDummy = Object.assign({}, defaultAttribute, {
+            descr: "Primärschlüssel",
             dbType: "INTEGER",
             mandatory: true,
             defaultValue: util.format("nextval('%s_seq')", table),
+            hidden: true,
         });
         for (let attribute of attributes) {
             if (attribute.field == null) throw util.format("normalizeAttributes: [%s] missing field for attribute", table);
@@ -40,6 +42,7 @@ function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 
                 normalized.push(Object.assign({}, pkDummy, attribute, {
                     defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
+                    name: attribute.name || attribute.field,
                 }));    
             } else {
                 let types = [];
