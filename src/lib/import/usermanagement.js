@@ -7,7 +7,8 @@ function prepareUsermanagement(usermanagement) {
             user.login_name, 
             user.administrator === true, 
             user.pw_hash, 
-            user.salt 
+            user.salt,
+            csUserEntries.length + 1,
         ]);
         if (user.groups) {
             for (let group of user.groups) {
@@ -15,12 +16,12 @@ function prepareUsermanagement(usermanagement) {
                 csUgMembershipEntries.push([
                     groupAndDomain[0], 
                     user.login_name, 
-                    groupAndDomain[1]
+                    groupAndDomain[1],
+                    csUgMembershipEntries.length + 1,
                 ]);
             }
         }
     }
-
     return { csUserEntries, csUgMembershipEntries };
 }
 

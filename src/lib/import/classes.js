@@ -91,7 +91,8 @@ function prepareClasses(classes) {
             rendererType,
             array_link,
             policy,
-            attributePolicy
+            attributePolicy,
+            csClassEntries.length + 1,
         ]);
 
         //For Types
@@ -218,7 +219,8 @@ function prepareClasses(classes) {
                 csClassAttrEntries.push([
                     table,
                     additionalAttributes,
-                    clazz.additionalAttributes[additionalAttributes]
+                    clazz.additionalAttributes[additionalAttributes],
+                    csClassAttrEntries.length + 1,
                 ]);
             }
         }

@@ -8,7 +8,8 @@ function prepareUsergroups(usergroups) {
             groupAndDomain[0], 
             descr, 
             groupAndDomain[1], 
-            prioCounter 
+            prioCounter,
+            csUgEntries.length + 1,
         ]);
         prioCounter += 10;
     }

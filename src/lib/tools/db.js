@@ -48,10 +48,3 @@ export function getDomainFromConfig(config) {
     let props = getPropsFromConfig(config);
     return props["serverName"];
 }
-
-export function setIdsFromOrder(rows) {
-    let index = 0;    
-    for(let row of rows) {
-        row.push(++index);
-    }
-}

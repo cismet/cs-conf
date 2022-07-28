@@ -23,6 +23,7 @@ function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
             dynchildhelper.name, 
             helperSqlFiles.get(dynchildhelper.code_file),
             dynchildhelper.code_file,
+            csDynamicChildrenHelperEntries.length + 1,
         ]);
     }
     return csDynamicChildrenHelperEntries;

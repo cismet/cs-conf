@@ -13,7 +13,7 @@ import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
 import { readConfigFiles } from './tools/configFiles';
-import { setIdsFromOrder, singleRowFiller, nestedFiller } from './tools/db';
+import { singleRowFiller, nestedFiller } from './tools/db';
 import { normalizeConfig } from './normalize';
 import { createClient, extractDbInfo, logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 
@@ -272,18 +272,6 @@ export function prepareImport(config) {
         csDynamicChildrenHelperEntries
     } = prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles);
         
-    setIdsFromOrder(csDomainEntries);
-    setIdsFromOrder(csPolicyRulesEntries);
-    setIdsFromOrder(csUgEntries);
-    setIdsFromOrder(csUserEntries);
-    setIdsFromOrder(csClassEntries);
-    setIdsFromOrder(csClassAttrEntries);
-    setIdsFromOrder(csClassPermEntries);
-    setIdsFromOrder(csAttrPermEntries);
-    setIdsFromOrder(csDynamicChildrenHelperEntries);
-    setIdsFromOrder(csUgMembershipEntries);
-    //setIdsFromOrder(csCatNodeEntries);
-
     return {
         csDomainEntries, 
         csPolicyRulesEntries, 
