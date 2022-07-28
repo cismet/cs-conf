@@ -244,7 +244,7 @@ export function prepareImport(config) {
         csConfigAttrValueEntriesArray
     } = prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles);
 
-    logVerbose(util.format(" ↳ preparing classes (%d)", domains.length));
+    logVerbose(util.format(" ↳ preparing classes (%d)", classes.length));
     let { csTypeEntries, 
         csJavaClassEntries, 
         csIconEntries, 
