@@ -76,7 +76,7 @@ commands.get('backup')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
 		cs(csBackup, {
-			backupDir: cmd.dir, 
+			dir: cmd.dir, 
 			prefix: cmd.prefix, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
