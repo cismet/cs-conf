@@ -1,5 +1,6 @@
 [
     {
+        "enforcedId": null,
         "table": "table1",
         "name": "Table 1",
         "descr": "",
@@ -20,7 +21,7 @@
             {
                 "field": "id",
                 "name": "id",
-                "descr": "",
+                "descr": "Primärschlüssel",
                 "dbType": "INTEGER",
                 "extension_attr": false,
                 "precision": null,
@@ -31,7 +32,7 @@
                 "mandatory": true,
                 "substitute": false,
                 "defaultValue": "nextval('table1_seq')",
-                "hidden": false,
+                "hidden": true,
                 "indexed": false,
                 "arrayKey": null,
                 "comment": null

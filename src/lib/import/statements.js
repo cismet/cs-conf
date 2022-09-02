@@ -158,8 +158,42 @@ INSERT INTO cs_class (name, descr, class_icon_id, object_icon_id, table_name, pr
         UNNEST($14::bool[]), 
         UNNEST($15::text[]), 
         UNNEST($16::text[]),
-        UNNEST($17::integer[])
-    ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap, tid)
+        UNNEST($17::integer[]),
+        UNNEST($18::boolean[])
+    ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap, tid, ide)
+    LEFT OUTER JOIN cs_icon class_icons ON (ci=class_icons.file_name)
+    LEFT OUTER JOIN cs_icon object_icons ON (oi=object_icons.file_name)
+    LEFT OUTER JOIN cs_java_class toStringClasses ON (tsc=toStringClasses.qualifier AND tst=toStringClasses.type)
+    LEFT OUTER JOIN cs_java_class editorClasses ON (ec=editorClasses.qualifier AND et=editorClasses.type)
+    LEFT OUTER JOIN cs_java_class rendererClasses ON (rc=rendererClasses.qualifier AND rt=rendererClasses.type)
+    LEFT OUTER JOIN cs_policy class_policy ON (p=class_policy.name)
+    LEFT OUTER JOIN cs_policy attribute_policy ON (ap=attribute_policy.name)
+;
+`;
+
+export const complex_cs_class_with_enforced_id = `
+INSERT INTO cs_class (name, descr, class_icon_id, object_icon_id, table_name, primary_key_field, indexed, tostring, editor, renderer, array_link, policy, attribute_policy, id, id_enforced) 
+    SELECT n , d, class_icons.id, object_icons.id, t, pk, i, toStringClasses.id, editorClasses.id, rendererClasses.id, a, class_policy.id, attribute_policy.id, tid, ide
+    FROM (SELECT 
+        UNNEST($1::text[]), 
+        UNNEST($2::text[]), 
+        UNNEST($3::text[]),         
+        UNNEST($4::text[]), 
+        UNNEST($5::text[]), 
+        UNNEST($6::text[]), 
+        UNNEST($7::bool[]), 
+        UNNEST($8::text[]), 
+        UNNEST($9::text[]), 
+        UNNEST($10::text[]), 
+        UNNEST($11::text[]), 
+        UNNEST($12::text[]), 
+        UNNEST($13::text[]), 
+        UNNEST($14::bool[]), 
+        UNNEST($15::text[]), 
+        UNNEST($16::text[]),
+        UNNEST($17::integer[]),
+        UNNEST($18::boolean[])
+    ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap, tid, ide)
     LEFT OUTER JOIN cs_icon class_icons ON (ci=class_icons.file_name)
     LEFT OUTER JOIN cs_icon object_icons ON (oi=object_icons.file_name)
     LEFT OUTER JOIN cs_java_class toStringClasses ON (tsc=toStringClasses.qualifier AND tst=toStringClasses.type)

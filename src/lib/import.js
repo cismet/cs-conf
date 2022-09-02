@@ -44,6 +44,7 @@ async function csImport(options) {
             csIconEntries, 
             csClassAttrEntries, 
             csClassEntries, 
+            csClassEntriesContainsEnforcedId,
             csTypeEntries,
             csAttrDbTypeEntries, 
             csAttrCidsTypeEntries, 
@@ -142,7 +143,11 @@ async function csImport(options) {
             }
             if (csClassEntries.length > 0) {                
                 logVerbose(util.format(" ↳ importing classes (%d)", csClassEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
+                if (csClassEntriesContainsEnforcedId) {
+                    await nestedFiller(client, stmnts.complex_cs_class_with_enforced_id, csClassEntries);
+                } else {
+                    await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
+                }
             }
             if (csTypeEntries.length > 0) {                
                 logVerbose(util.format(" ↳ importing types (%d)", csTypeEntries.length));
@@ -250,6 +255,7 @@ export function prepareImport(config) {
         csIconEntries, 
         csClassAttrEntries,
         csClassEntries,
+        csClassEntriesContainsEnforcedId,
         csAttrDbTypeEntries,
         csAttrCidsTypeEntries
     } = prepareClasses(classes);
@@ -286,6 +292,7 @@ export function prepareImport(config) {
         csIconEntries, 
         csClassAttrEntries, 
         csClassEntries, 
+        csClassEntriesContainsEnforcedId,
         csTypeEntries,
         csAttrDbTypeEntries, 
         csAttrCidsTypeEntries, 

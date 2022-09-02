@@ -10,7 +10,21 @@ function prepareClasses(classes) {
     let csAttrCidsTypeEntries = [];        
     let javaClasses = new Set();
 
+    let enforcedIds = [];
     for (let clazz of classes) {
+        if (clazz.enforcedId != null) {
+            if (enforcedIds.includes(clazz.enforcedId)) {
+                throw util.format("duplicate enforceId %d", clazz.enforcedId);
+            }
+            enforcedIds.push(clazz.enforcedId);
+        }
+    }
+    let classIdOffset = enforcedIds.length > 0 ? Math.max(...enforcedIds) + 1 : 1;
+
+    let csClassEntriesContainsEnforcedId = false;
+
+    for (let clazz of classes) {
+        let enforcedId = clazz.enforcedId;
         let name = clazz.name;
         let table = clazz.table;
         let descr = clazz.descr;
@@ -75,6 +89,7 @@ function prepareClasses(classes) {
             }
         }
 
+        let containsEnforcedId = enforcedId != null;
         csClassEntries.push([
             name, 
             descr, 
@@ -92,7 +107,8 @@ function prepareClasses(classes) {
             array_link,
             policy,
             attributePolicy,
-            csClassEntries.length + 1,
+            containsEnforcedId ? enforcedId : csClassEntries.length + classIdOffset,
+            containsEnforcedId,
         ]);
 
         //For Types
@@ -213,6 +229,7 @@ function prepareClasses(classes) {
                     xx
                 ]);            
             }
+            csClassEntriesContainsEnforcedId |= containsEnforcedId;
         }
         if (clazz.additionalAttributes){
             for (let additionalAttributes in clazz.additionalAttributes) {
@@ -239,6 +256,7 @@ function prepareClasses(classes) {
         csIconEntries, 
         csClassAttrEntries,
         csClassEntries,
+        csClassEntriesContainsEnforcedId,
         csAttrDbTypeEntries,
         csAttrCidsTypeEntries
      };

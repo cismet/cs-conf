@@ -37,6 +37,7 @@ export const defaultAttribute = {
 
 // classes
 export const defaultClass = {
+    enforcedId: null,
     table: null,
     name: null,
     descr: '',

@@ -63,13 +63,24 @@ ORDER BY id
 
 export const classes = `
 SELECT 
-    c.table_name "table", c.name,c.descr,c.primary_key_field pk,c.indexed,
-    ci.file_name "classIcon", oi.file_name "objectIcon", null as icon,
-    jcs.type toStringType, jcs.qualifier toStringClass,
-    jce.type editorType, jce.qualifier editorClass,
-    jcr.type rendererType, jcr.qualifier rendererClass,
+    c.table_name "table", 
+    c.name,
+    c.descr,
+    c.primary_key_field pk,
+    c.indexed,
+    ci.file_name "classIcon", 
+    oi.file_name "objectIcon", 
+    null as icon,
+    jcs.type toStringType, 
+    jcs.qualifier toStringClass,
+    jce.type editorType, 
+    jce.qualifier editorClass,
+    jcr.type rendererType, 
+    jcr.qualifier rendererClass,
     c.array_link,
-    cp.name "policy", ap.name attribute_policy
+    cp.name "policy", 
+    ap.name attribute_policy,
+    CASE WHEN optionalColumnValue('cs_class', 'id_enforced', 'FALSE', 'id', c.id::TEXT)::BOOLEAN THEN c.id ELSE NULL END AS "enforcedId"
 FROM 
     cs_class c 
     LEFT OUTER JOIN cs_icon ci ON (c.class_icon_id=ci.id)
