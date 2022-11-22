@@ -35,6 +35,18 @@ INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator, pw_has
 );
 `;
 
+export const update_cs_usr_passwords = `
+UPDATE cs_usr SET 
+    password = '*', 
+    last_pwd_change = CURRENT_TIMESTAMP, 
+    administrator = $2, 
+    pw_hash = $3, 
+    salt = $4,
+    last_pw_hash = pw_hash, 
+    last_salt = salt
+WHERE login_name = $1 AND $5 = $5;
+`;
+
 export const nested_cs_ug_membership = `
 INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain, id) 
     SELECT cs_ug.id, cs_usr.id, cs_ug.domain, t.id FROM (SELECT 

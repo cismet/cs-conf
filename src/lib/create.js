@@ -16,28 +16,28 @@ async function csCreate(options) {
         statements.push(fs.readFileSync(util.format('%s/../ddl/cids-prepare.sql', __dirname), 'utf8'));
     }
 
-    if (execute) {
-        let client;
-        try {
-            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
+    let client;
+    try {
+        client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile, execute);
 
+        if (execute) {
             logOut("Creating ...");
             await client.query(statements.join("\n"));
             logVerbose(" ↳ done.");
-        } finally {
-            if (options.client == null && client != null) {
-                await client.end();
-            }
+        } else if (!silent) {
+            logOut();
+            logOut("###################################### ");
+            logOut("##### showing restore statements ##### ");
+            logOut("###################################### ");
+            logOut();
+            logOut(statements.join("\n"), { noSilent: main });
+            logOut();
+            logInfo("DRY RUN ! Nothing happend yet. Use -X to execute create.");
         }
-    } else if (!silent) {
-        logOut();
-        logOut("###################################### ");
-        logOut("##### showing restore statements ##### ");
-        logOut("###################################### ");
-        logOut();
-        logOut(statements.join("\n"), { noSilent: main });
-        logOut();
-        logInfo("DRY RUN ! Nothing happend yet. Use -X to execute create.");
+    } finally {
+        if (options.client == null && client != null) {
+            await client.end();
+        }
     }
 }   
 

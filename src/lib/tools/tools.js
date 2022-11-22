@@ -56,12 +56,14 @@ export function logDebug(text, options = {}) {
     logOut(text, Object.assign(options, { debugging: true }));
 }
 
-export async function createClient(runtimePropertiesFile) {
+export async function createClient(runtimePropertiesFile, connect = true) {
     logVerbose(util.format("Loading properties %s ...", runtimePropertiesFile));
     let client = getClientForConfig(runtimePropertiesFile);
 
     logVerbose(util.format("Connecting to %s ...", extractDbInfo(client)));
-    await client.connect();
+    if (connect) {
+        await client.connect();
+    }
     return client;    
 }
 

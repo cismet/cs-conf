@@ -49,9 +49,10 @@ commands.get('import')
 	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+	.option('-P, --permissions-update-only', 'only update permission relevant informations such as password and configuration attributes')
 	.option('-c, --config <dirpath>', 'the directory where the config is', '.')
 	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
-	.option('--no-backup', 'does not create backup before import')	
+	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
  	.action(async (cmd) => {
@@ -59,13 +60,37 @@ commands.get('import')
 			configDir: cmd.config, 
 			recreate: cmd.recreate, 
 			execute: cmd.import,
-			skipBackup: cmd.noBackup,
+			permissionsUpdateOnly: cmd.permissionsUpdateOnly,
+			skipBackup: cmd.skipBackup,
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,
 			schema: cmd.schema, 
 			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
+
+	commands.set('updatePermissions', program.command('updatePermissions'));
+	commands.get('updatePermissions')
+		.description('only update permission relevant informations such as password and configuration attributes')
+		.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
+		.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
+		.option(schemaOption.flags, schemaOption.description, schemaOption.default)
+		.option('-c, --config <dirpath>', 'the directory where the config is', '.')
+		.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
+		.option('--skip-backup', 'does not create backup before import')	
+		.option('--backup-prefix', 'backup file prefix', null)	
+		 .action(async (cmd) => {
+			cs(csImport, {
+				configDir: cmd.config, 
+				execute: cmd.import,
+				permissionsUpdateOnly: true,
+				skipBackup: cmd.skipBackup,
+				backupPrefix: cmd.backupPrefix,
+				backupDir: cmd.backupDir,
+				schema: cmd.schema, 
+				runtimePropertiesFile: cmd.runtimeProperties,
+			}, cmd);
+		});	
 
 commands.set('backup', program.command('backup'));
 commands.get('backup')
@@ -192,19 +217,19 @@ commands.get('sync')
 	.option('-b, --backup-dir <dirpath>', 'the directory where the config will be written')	
 	.option('-j, --sync-json <filepath>', 'the file containing the sync-configuration (sync.json)')
 	.option('-P, --purge', 'activate all drop statements')
-	.option('--no-diffs', 'disables comparision with current cs_* state')
-	.option('--no-backup', 'does not create backup before import')	
+	.option('--skip-diffs', 'disables comparision with current cs_* state')
+	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.action(async (cmd) => {
 		cs(csSync, { 
 			configDir: cmd.config,
 			execute: cmd.sync,
 			purge: cmd.purge,
-			noDiffs: cmd.noDiffs,
+			skipDiffs: cmd.skipDiffs,
 			schema: cmd.schema,
 			runtimePropertiesFile: cmd.runtimeProperties,
 			syncJson: cmd.syncJson,
-			skipBackup: cmd.noBackup,
+			skipBackup: cmd.skipBackup,
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,
 		}, cmd);

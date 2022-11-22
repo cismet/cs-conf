@@ -11,7 +11,7 @@ async function csRestore(options) {
     logOut(util.format("Reading statements from %s", file));
     
     let statements = [];
-    statements.push(await csTruncate({ execute: false, init: true, silent: true, runtimePropertiesFile }));
+    statements.push(await csTruncate({ execute: false, init: true, silent: true, runtimePropertiesFile, client: options.client }));
     if(file.endsWith(".gz")){
         statements.push(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
     } else {

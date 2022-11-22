@@ -38,8 +38,13 @@ export function normalizeConfig({
     helperSqlFiles,
     structureSqlFiles,
     xmlFiles,
-}) {
-    return {
+}, permissionsUpdateOnly = false) {    
+    return permissionsUpdateOnly ? {
+        domains: normalizeDomains(domains), 
+        usergroups: normalizeUsergroups(usergroups), 
+        usermanagement: normalizeUsermanagement(usermanagement), 
+        xmlFiles,
+    } : {
         attrPerms: normalizeAttrPerms(attrPerms), 
         classes: normalizeClasses(classes), 
         classPerms: normalizeClassPerms(classPerms), 
