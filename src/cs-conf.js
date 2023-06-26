@@ -72,7 +72,7 @@ commands.get('import')
 	commands.set('updatePermissions', program.command('updatePermissions'));
 	commands.get('updatePermissions')
 		.description('only update permission relevant informations such as password and configuration attributes')
-		.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
+		.option('-X, --update', 'activates the real update (expected for avoiding unintended update)')
 		.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 		.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 		.option('-c, --config <dirpath>', 'the directory where the config is', '.')
@@ -82,7 +82,7 @@ commands.get('import')
 		 .action(async (cmd) => {
 			cs(csImport, {
 				configDir: cmd.config, 
-				execute: cmd.import,
+				execute: cmd.update,
 				permissionsUpdateOnly: true,
 				skipBackup: cmd.skipBackup,
 				backupPrefix: cmd.backupPrefix,
