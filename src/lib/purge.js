@@ -1,26 +1,17 @@
 import fs from 'fs';
 import util from 'util';
-import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
+import { logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csPurge(options) {
-    let { execute, silent, runtimePropertiesFile, main } = options;
+    let { client, execute, silent, main } = options;
     let statements = [];
     
     statements.push(fs.readFileSync(util.format('%s/../ddl/cids-drop.sql', __dirname), 'utf8'));
 
     if (execute) {
-        let client;
-        try {
-            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
-    
-            logOut("Purging ...");
-            await client.query(statements.join("\n"));
-            logVerbose(" ↳ done .");        
-        } finally {
-            if (options.client == null && client != null) {
-                await client.end();
-            }
-        }
+        logOut("Purging ...");
+        await client.query(statements.join("\n"));
+        logVerbose(" ↳ done .");        
     } else if (!silent) {           
         logOut();
         logOut("###################################### ");

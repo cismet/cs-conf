@@ -8,12 +8,12 @@ import exportClasses from './export/classes';
 import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
-import { getDomainFromConfig } from './tools/db';
 import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
 import { simplifyConfig } from './simplify';
 import { reorganizeConfig } from './reorganize';
 import { normalizeConfig } from './normalize';
-import { createClient, extractDbInfo, logOut, logVerbose } from './tools/tools';
+import { logOut, logVerbose } from './tools/tools';
+import { extractDbInfo } from './tools/db';
 
 async function createConfig(client, mainDomain) {
     logVerbose(" ↳ exporting configuration attributes");
@@ -79,22 +79,13 @@ async function createConfig(client, mainDomain) {
 }
 
 async function csExport(options) {
-    let  { configDir, schema, overwrite = false, runtimePropertiesFile, simplify = false, reorganize = false } = options;
+    let  { client, configDir, schema, overwrite = false, mainDomain, simplify = false, reorganize = false } = options;
 
     checkConfigFolders(configDir, overwrite);
-    let mainDomain = getDomainFromConfig(runtimePropertiesFile);
 
     let config = {};    
-    let client;
-    try {
-        client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
-        logOut(util.format("Exporting configuration from '%s' ...", extractDbInfo(client)));
-        config = await createConfig(client, mainDomain);
-    } finally {
-        if (options.client == null && client != null) {
-            await client.end();
-        }
-    }
+    logOut(util.format("Exporting configuration from '%s' ...", extractDbInfo(client)));
+    config = await createConfig(client, mainDomain);
 
     config = normalizeConfig(config);
     if (simplify) {

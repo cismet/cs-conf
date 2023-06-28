@@ -1,9 +1,9 @@
 import fs from 'fs';
 import util from 'util';
-import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
+import { logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csTruncate(options) {
-    let { execute, init, permissionsUpdateOnly = false, silent, runtimePropertiesFile, main } = options;
+    let { client, execute, init, permissionsUpdateOnly = false, silent, main } = options;
     let statements = [];
     
     if (permissionsUpdateOnly) {
@@ -15,27 +15,19 @@ async function csTruncate(options) {
         }
     }
 
-    try {
-        let client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
-                    
-        if (execute) {
-            logOut("Truncating ...");            
-            await client.query(statements.join("\n"));
-            logVerbose(" ↳ done.");
-        } else if (!silent) {
-            logOut();
-            logOut("###################################### ");
-            logOut("##### showing restore statements ##### ");
-            logOut("###################################### ");
-            logOut();
-            logOut(statements.join("\n"), { noSilent: main });
-            logOut();
-            logInfo("DRY RUN ! Nothing happend yet. Use -X to execute truncate.");
-        }
-    } finally {
-        if (options.client == null && client != null) {
-            await client.end();
-        }
+    if (execute) {
+        logOut("Truncating ...");            
+        await client.query(statements.join("\n"));
+        logVerbose(" ↳ done.");
+    } else if (!silent) {
+        logOut();
+        logOut("###################################### ");
+        logOut("##### showing restore statements ##### ");
+        logOut("###################################### ");
+        logOut();
+        logOut(statements.join("\n"), { noSilent: main });
+        logOut();
+        logInfo("DRY RUN ! Nothing happend yet. Use -X to execute truncate.");
     }
 
     return statements.join("\n");

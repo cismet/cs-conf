@@ -15,8 +15,14 @@ import csPassword from './lib/password';
 import csNormalize from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
-import { clean, logDebug, logErr, logOut } from './lib/tools/tools';
+import { extractDbInfo } from './lib/tools/db';
+import { clean, logDebug, logErr, logVerbose } from './lib/tools/tools';
 import csCheck from './lib/check';
+import propertyParser from 'properties-file';
+import {
+    Client
+} from 'pg'
+import fs from 'fs';
 
 global.silent = false;
 global.verbose = false;
@@ -57,6 +63,7 @@ commands.get('import')
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
  	.action(async (cmd) => {
 		cs(csImport, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			configDir: cmd.config, 
 			recreate: cmd.recreate, 
 			execute: cmd.import,
@@ -65,7 +72,6 @@ commands.get('import')
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,
 			schema: cmd.schema, 
-			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
 
@@ -81,6 +87,7 @@ commands.get('import')
 		.option('--backup-prefix', 'backup file prefix', null)	
 		 .action(async (cmd) => {
 			cs(csImport, {
+				client: getClientForConfig(cmd.runtimeProperties),
 				configDir: cmd.config, 
 				execute: cmd.update,
 				permissionsUpdateOnly: true,
@@ -88,7 +95,6 @@ commands.get('import')
 				backupPrefix: cmd.backupPrefix,
 				backupDir: cmd.backupDir,
 				schema: cmd.schema, 
-				runtimePropertiesFile: cmd.runtimeProperties,
 			}, cmd);
 		});	
 
@@ -101,9 +107,9 @@ commands.get('backup')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
 		cs(csBackup, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			dir: cmd.dir, 
 			prefix: cmd.prefix, 
-			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
  
@@ -115,9 +121,9 @@ commands.get('restore')
 	.option('-f, --file <file>', 'the backup file to restore from', null)
 	.action(async (cmd) => {
 		cs(csRestore, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			file: cmd.file,
 			execute: cmd.restore,
-			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
  
@@ -133,9 +139,9 @@ commands.get('diff')
 	.option('-N, --normaliz', 'compare normalized diffs') //for some reason "normalize" (with "e") does not work... ?!
 	.action(async (cmd) => {
 		cs(csDiff, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			configDir: cmd.config, 
 			target: cmd.target, 
-			runtimePropertiesFile: cmd.runtimeProperties,
 			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
 			normalize: cmd.normaliz,
@@ -222,12 +228,12 @@ commands.get('sync')
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.action(async (cmd) => {
 		cs(csSync, { 
+			client: getClientForConfig(cmd.runtimeProperties),
 			configDir: cmd.config,
 			execute: cmd.sync,
 			purge: cmd.purge,
 			skipDiffs: cmd.skipDiffs,
 			schema: cmd.schema,
-			runtimePropertiesFile: cmd.runtimeProperties,
 			syncJson: cmd.syncJson,
 			skipBackup: cmd.skipBackup,
 			backupPrefix: cmd.backupPrefix,
@@ -246,14 +252,16 @@ commands.get('export')
 	.option('-O, --overwrite', 'overwrite existing config')
 	.option('-S, --simplify', 'simplify config')
 	.option('-R, --reorganize', 'reorganize config')
-	.action(async (cmd) => {
+	.action(async (cmd) => {		
 		cs(csExport, {
+			client: getClientForConfig(cmd.runtimeProperties),
+			mainDomain: getDomainFromConfig(cmd.runtimeProperties),
 			configDir: cmd.config, 
 			schema: cmd.schema, 
 			overwrite: cmd.overwrite,
-			runtimePropertiesFile: cmd.runtimeProperties,
 			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
+			execute: true,
 		}, cmd);
 	});
 
@@ -267,12 +275,11 @@ commands.get('create')
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
 		cs(csCreate, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			purge: cmd.purge,
 			init: cmd.init,
 			execute: cmd.create,
 			schema: cmd.schema,
-			silent: false,
-			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
 	
@@ -284,10 +291,9 @@ commands.get('truncate')
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
 		cs(csTruncate, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			execute: cmd.truncate,
 			init: cmd.init,
-			silent: false,
-			runtimePropertiesFile: cmd.runtimeProperties,
 		}, cmd);
 	});
 
@@ -297,11 +303,10 @@ commands.get('purge')
 	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.action(async (cmd) => {
-		cs(csPurge, {
+		await cs(csPurge, {
+			client: getClientForConfig(cmd.runtimeProperties),
 			execute: cmd.purge,
-			silent: false,
-			runtimePropertiesFile: cmd.runtimeProperties,
-		}, cmd);
+		}, cmd);	
 	});
 
 program.command(' ');
@@ -315,17 +320,27 @@ if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
 
 // ============================
 
-async function cs(csFunction, options, cmd) {
+async function cs(csFunction, options, cmd ) {
 	let command = cmd != null ? cmd._name : null;
 	global.silent = cmd.parent.silent === true;
 	global.verbose = cmd.parent.verbose === true;
 	global.debug = cmd.parent.debug === true;
+	let { client, execute } = options;
 
 	logDebug(util.format("starting %s with these options:", csFunction.name));
 	logDebug(clean(options));
 	logDebug("-".repeat(10));
 
 	try {		
+		if (client != null) {
+			if (execute) {
+				logVerbose(util.format("Connecting to %s ...", extractDbInfo(client)));
+				await client.connect();
+			} else {
+				logVerbose(util.format("Connection would go to %s ...", extractDbInfo(client)));
+			}
+		}
+		
 		await csFunction(Object.assign({}, options, { main: true }));
 		process.exit(0);
 	} catch (e) {
@@ -346,5 +361,37 @@ async function cs(csFunction, options, cmd) {
 			}
 		}
 		process.exit(1);
-	}	
+	} finally {
+		await client.end();
+	}
+}
+
+function getPropsFromConfig(config) {
+    let propFileContent = fs.readFileSync(config, {encoding: 'utf8'});
+    return propertyParser.parse(propFileContent);
+}
+
+function getClientForConfig(config) {
+    logVerbose(util.format("Loading properties %s ...", config));
+
+    let props = getPropsFromConfig(config);
+    let conUrl = props["connection.url"];
+    let conImportant = conUrl.split("//")[1];
+    let host = conImportant.split(":")[0];
+    let port = conImportant.split(":")[1].split("/")[0];
+    let dbname = conImportant.split(":")[1].split("/")[1];
+    let dbconfig = {
+        user: props["connection.username"],
+        host: host,
+        database: dbname,
+        password: props["connection.password"],
+        port: port,
+    };
+    //TODO make more bullet proof
+    return new Client(dbconfig);
+}
+
+function getDomainFromConfig(config) {
+    let props = getPropsFromConfig(config);
+    return props["serverName"];
 }

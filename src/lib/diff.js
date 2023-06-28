@@ -6,32 +6,23 @@ import { readConfigFiles } from './tools/configFiles';
 import { normalizeConfig } from './normalize';
 import { simplifyConfig } from './simplify';
 import { reorganizeConfig } from './reorganize';
-import { createClient, logInfo, logOut, logVerbose } from './tools/tools';
+import { logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csDiff(options) {
-    let { configDir, targetDir, runtimePropertiesFile, simplify, reorganize, normalize, schema, main } = options;
+    let { client, configDir, targetDir, simplify, reorganize, normalize, schema, main } = options;
 
     if (configDir == null) throw "'configDir' has to be set !";
-    if (targetDir == null && runtimePropertiesFile == null) throw "Either 'target' or 'runtimePropertiesFile' has to be set !";
+    if (targetDir == null) throw "'target' has to be set !";
 
     let current;
     if (targetDir) {
         current = targetDir;
     } else {    
-        let client;
-        try {
-            client = (options.client != null) ? options.client : await createClient(runtimePropertiesFile);
+        let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
+        let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
+        current = util.format("/tmp/diff_%s.%s", prefix, formattedDate);
 
-            let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
-            let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-            current = util.format("/tmp/diff_%s.%s", prefix, formattedDate);
-
-            await csExport({ configDir: current, schema, runtimePropertiesFile, client });
-        } finally {
-            if (options.client == null && client != null) {
-                await client.end();
-            }
-        }
+        await csExport({ client, configDir: current, schema, client });
     }
 
     logVerbose("Preparing configurations for comparision ...")

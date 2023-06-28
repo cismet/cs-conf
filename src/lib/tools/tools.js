@@ -1,6 +1,5 @@
 import util from 'util';
 import chalk from 'chalk';
-import { getClientForConfig } from './db';
 
 export function clean(obj) {
     for (var propName in obj) {
@@ -54,19 +53,4 @@ export function logInfo(text, options = {}) {
 
 export function logDebug(text, options = {}) {
     logOut(text, Object.assign(options, { debugging: true }));
-}
-
-export async function createClient(runtimePropertiesFile, connect = true) {
-    logVerbose(util.format("Loading properties %s ...", runtimePropertiesFile));
-    let client = getClientForConfig(runtimePropertiesFile);
-
-    logVerbose(util.format("Connecting to %s ...", extractDbInfo(client)));
-    if (connect) {
-        await client.connect();
-    }
-    return client;    
-}
-
-export function extractDbInfo(client) {
-    return util.format("%s@%s:%d/%s", client.user, client.host, client.port, client.database);
 }
