@@ -1,4 +1,3 @@
-import util from 'util';
 import chalk from 'chalk';
 
 export function clean(obj) {

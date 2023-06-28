@@ -83,9 +83,8 @@ async function csExport(options) {
 
     checkConfigFolders(configDir, overwrite);
 
-    let config = {};    
     logOut(util.format("Exporting configuration from '%s' ...", extractDbInfo(client)));
-    config = await createConfig(client, mainDomain);
+    let config = await createConfig(client, mainDomain);
 
     config = normalizeConfig(config);
     if (simplify) {

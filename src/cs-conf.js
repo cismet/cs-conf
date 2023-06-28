@@ -1,5 +1,6 @@
 #!/usr/bin/babel-node --
 
+import fs from 'fs';
 import util from 'util';
 import program from 'commander';
 import csExport from './lib/export';
@@ -15,6 +16,7 @@ import csPassword from './lib/password';
 import csNormalize from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
+import { readConfigFiles } from './lib/tools/configFiles';
 import { extractDbInfo } from './lib/tools/db';
 import { clean, logDebug, logErr, logVerbose } from './lib/tools/tools';
 import csCheck from './lib/check';
@@ -22,7 +24,6 @@ import propertyParser from 'properties-file';
 import {
     Client
 } from 'pg'
-import fs from 'fs';
 
 global.silent = false;
 global.verbose = false;
@@ -51,7 +52,7 @@ program.command(' ');
 
 commands.set('import', program.command('import'));
 commands.get('import')
-	.description('imports the (cs_*)meta-information from a configuration configDir into a database')
+	.description('imports the (cs_*)meta-information from a configuration directory into a database')
 	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
@@ -62,9 +63,10 @@ commands.get('import')
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
  	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csImport, {
 			client: getClientForConfig(cmd.runtimeProperties),
-			configDir: cmd.config, 
+			config: readConfigFiles(cmd.config),
 			recreate: cmd.recreate, 
 			execute: cmd.import,
 			permissionsUpdateOnly: cmd.permissionsUpdateOnly,
@@ -86,9 +88,10 @@ commands.get('import')
 		.option('--skip-backup', 'does not create backup before import')	
 		.option('--backup-prefix', 'backup file prefix', null)	
 		 .action(async (cmd) => {
+			setGlobals(cmd);
 			cs(csImport, {
 				client: getClientForConfig(cmd.runtimeProperties),
-				configDir: cmd.config, 
+				config: readConfigFiles(cmd.config, ["accessControl"]),
 				execute: cmd.update,
 				permissionsUpdateOnly: true,
 				skipBackup: cmd.skipBackup,
@@ -106,6 +109,7 @@ commands.get('backup')
 
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csBackup, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			dir: cmd.dir, 
@@ -120,6 +124,7 @@ commands.get('restore')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-f, --file <file>', 'the backup file to restore from', null)
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csRestore, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			file: cmd.file,
@@ -138,10 +143,12 @@ commands.get('diff')
 	.option('-R, --reorganize', 'compare reorganized diffs')
 	.option('-N, --normaliz', 'compare normalized diffs') //for some reason "normalize" (with "e") does not work... ?!
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csDiff, {
+			config: readConfigFiles(cmd.config), 			
 			client: getClientForConfig(cmd.runtimeProperties),
-			configDir: cmd.config, 
-			target: cmd.target, 
+			mainDomain: getDomainFromConfig(cmd.runtimeProperties),
+			targetDir: cmd.target, 
 			simplify: cmd.simplify,
 			reorganize: cmd.reorganize,
 			normalize: cmd.normaliz,
@@ -156,44 +163,48 @@ commands.get('check')
 	.description('checks configuration for errors')
 	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csCheck, { 
-			configDir: cmd.config,
+			config: readConfigFiles(cmd.config),
 		}, cmd);
 	});
 
 commands.set('normalize', program.command('normalize'));
 commands.get('normalize')
-	.description('normalizes the configuration in a given configDir')
+	.description('normalizes the configuration in a given directory')
 	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the directory to normalize the config into', null)
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csNormalize, { 
-			configDir: cmd.config,
-			target: cmd.target,
+			config: readConfigFiles(cmd.config),
+			targetDir: cmd.target ? cmd.target : cmd.config,
 		}, cmd);
 	});
 	
 commands.set('reorganize', program.command('reorganize'));
 commands.get('reorganize')
-	.description('reorganizes the configuration in a given configDir')
+	.description('reorganizes the configuration in a given directory')
 	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the directory to reorganize the config into', null)
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csReorganize, { 
-			configDir: cmd.config,
-			target: cmd.target,
+			config: readConfigFiles(cmd.config),
+			targetDir: cmd.target ? cmd.target : cmd.config,
 		}, cmd);
 	});
 	 
 commands.set('simplify', program.command('simplify'));
 commands.get('simplify')
-	.description('simplifies the configuration in a given configDir')
+	.description('simplifies the configuration in a given directory')
 	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the directory to simplify the config into', null)
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csSimplify, { 
-			configDir: cmd.config,
-			target: cmd.target,
+			config: readConfigFiles(cmd.config),
+			targetDir: cmd.target ? cmd.target : cmd.config,
 		}, cmd);
 	});
 	 	 
@@ -206,6 +217,7 @@ commands.get('password')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csPassword, {
 			loginName: cmd.user,
 			password: cmd.password,
@@ -227,9 +239,10 @@ commands.get('sync')
 	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csSync, { 
 			client: getClientForConfig(cmd.runtimeProperties),
-			configDir: cmd.config,
+			config: readConfigFiles(cmd.config, ["sync"]),
 			execute: cmd.sync,
 			purge: cmd.purge,
 			skipDiffs: cmd.skipDiffs,
@@ -245,7 +258,7 @@ program.command(' ');
 
 commands.set('export', program.command('export'));
 commands.get('export')
-	.description('exports the (cs_*)meta-information of a database into a configDir')
+	.description('exports the (cs_*)meta-information of a database into a configuration directory')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-c, --config <dirpath>', 'the directory where the config will be written', '.')
@@ -253,6 +266,7 @@ commands.get('export')
 	.option('-S, --simplify', 'simplify config')
 	.option('-R, --reorganize', 'reorganize config')
 	.action(async (cmd) => {		
+		setGlobals(cmd);
 		cs(csExport, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			mainDomain: getDomainFromConfig(cmd.runtimeProperties),
@@ -274,6 +288,7 @@ commands.get('create')
 	.option('-P, --purge', 'purges before creating')
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csCreate, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			purge: cmd.purge,
@@ -290,6 +305,7 @@ commands.get('truncate')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.action(async (cmd) => {
+		setGlobals(cmd);
 		cs(csTruncate, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			execute: cmd.truncate,
@@ -303,7 +319,8 @@ commands.get('purge')
 	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.action(async (cmd) => {
-		await cs(csPurge, {
+		setGlobals(cmd);
+		cs(csPurge, {
 			client: getClientForConfig(cmd.runtimeProperties),
 			execute: cmd.purge,
 		}, cmd);	
@@ -320,11 +337,14 @@ if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
 
 // ============================
 
-async function cs(csFunction, options, cmd ) {
-	let command = cmd != null ? cmd._name : null;
+function setGlobals(cmd) {
 	global.silent = cmd.parent.silent === true;
 	global.verbose = cmd.parent.verbose === true;
 	global.debug = cmd.parent.debug === true;
+}
+
+async function cs(csFunction, options, cmd ) {
+	let command = cmd != null ? cmd._name : null;
 	let { client, execute } = options;
 
 	logDebug(util.format("starting %s with these options:", csFunction.name));
@@ -333,7 +353,7 @@ async function cs(csFunction, options, cmd ) {
 
 	try {		
 		if (client != null) {
-			if (execute) {
+			if (execute === undefined || execute) {
 				logVerbose(util.format("Connecting to %s ...", extractDbInfo(client)));
 				await client.connect();
 			} else {

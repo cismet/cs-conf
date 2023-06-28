@@ -7,19 +7,16 @@ import reorganizePolicyRules from "./reorganize/policyRules";
 import reorganizeStructure from "./reorganize/structure";
 import reorganizeUsergroups from "./reorganize/usergroups";
 import reorganizeUsermanagement from "./reorganize/usermanagement";
-import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+import { writeConfigFiles } from "./tools/configFiles";
 
 async function csReorganize(options) {
-    let { configDir, target } = options;
-    if (configDir == null) throw "configDir not set";
+    let { config, targetDir } = options;
+    if (config == null) throw "config not set";
 
-    let config = readConfigFiles(configDir);    
     let reorganized = reorganizeConfig(config);
 
-    if (target != null) {
-        writeConfigFiles(reorganized, target, true);
-    } else {
-        writeConfigFiles(reorganized, configDir, true);
+    if (targetDir != null) {
+        writeConfigFiles(reorganized, targetDir, true);
     }
     return reorganized;
 }

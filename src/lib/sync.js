@@ -3,7 +3,6 @@ import util from 'util';
 import wcmatch from 'wildcard-match';
 import csDiff from './diff';
 import normalizeClasses from './normalize/classes';
-import exportClasses from './export/classes';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 import csBackup from './backup';
 
@@ -405,12 +404,12 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { client, configDir, execute, purge, schema, skipDiffs, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
+    let { client, config, execute, purge, schema, skipDiffs, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
-    if (configDir != null && !skipDiffs) {
-        let differences = await csDiff( { client, configDir, targetDir: null, schema, client, simplify: true, reorganize: true, normalize: false } );
+    if (config != null && !skipDiffs) {
+        let differences = await csDiff( { client, config, schema, simplify: true, reorganize: true, normalize: false } );
         if (differences.length > 0) {
             throw "differences found, aborting sync !";
         }
@@ -427,28 +426,17 @@ async function csSync(options) {
         logVerbose("Skipping backup.");
     }
 
-    let classes;
-    if (configDir == null) {
-        ({ classes } = await exportClasses(client));
-    } else {
-        let classesJson = util.format("%s/classes.json", configDir);
-        logOut(util.format("Reading classes from %s ...", classesJson));
-        classes = JSON.parse(fs.readFileSync(classesJson, {encoding: 'utf8'}));    
+    let { classes, sync } = config;    
 
-        if (syncJson == null) {
-            syncJson = util.format("%s/sync.json", configDir);
-        }
-    }
-    
     let normalized = normalizeClasses(classes);
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
-    if (syncJson != null) {
+    if (sync != null) {
         try {
-            let sync = JSON.parse(fs.readFileSync(syncJson, {encoding: 'utf8'}));        
+            let sync = JSON.parse(fs.readFileSync(sync, {encoding: 'utf8'}));        
             ignoreRules.push(... sync.tablesToIgnore);
         } catch (e) {
-            throw util.format("could not load syncJson %s: %s", syncJson, e);
+            throw util.format("could not load sync.json %s: %s", sync, e);
         }
     } else {
         logInfo("no sync.json found");

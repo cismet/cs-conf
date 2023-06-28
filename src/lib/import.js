@@ -12,19 +12,16 @@ import prepareStructure from './import/structure';
 import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
-import { readConfigFiles } from './tools/configFiles';
 import { singleRowFiller, nestedFiller } from './tools/db';
 import { normalizeConfig } from './normalize';
 import { extractDbInfo } from './tools/db';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 
 async function csImport(options) {
-    let { client, backupDir, backupPrefix, configDir, execute, init, permissionsUpdateOnly, recreate, schema, skipBackup } = options;
+    let { client, config, backupDir, backupPrefix, execute, init, permissionsUpdateOnly, recreate, schema, skipBackup } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
-    logVerbose(util.format("Reading configuration from '%s'", configDir));
-    let config = readConfigFiles(configDir);
     logOut("Preparing import ...");
     let prepared = prepareImport(config, permissionsUpdateOnly);
 

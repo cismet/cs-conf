@@ -7,20 +7,16 @@ import normalizePolicyRules from "./normalize/policyRules";
 import normalizeStructure from "./normalize/structure";
 import normalizeUsergroups from "./normalize/usergroups";
 import normalizeUsermanagement from "./normalize/usermanagement";
-import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+import { writeConfigFiles } from "./tools/configFiles";
 
 async function csNormalize(options) {
-    let { configDir, target } = options;
-    if (configDir == null) throw "configDir not set";
+    let { config, targetDir } = options;
+    if (config == null) throw "config not set";
 
-    let config = readConfigFiles(configDir);    
     let normalized = normalizeConfig(config);
     
-    if (target != null) {
-        writeConfigFiles(normalized, target, true);
-    } else {
-        writeConfigFiles(normalized, configDir, true);
-
+    if (targetDir != null) {
+        writeConfigFiles(normalized, targetDir, true);
     }
     return normalized;
 }

@@ -8,19 +8,16 @@ import simplifyPolicyRules from "./simplify/policyRules";
 import simplifyStructure from "./simplify/structure";
 import simplifyUsergroups from "./simplify/usergroups";
 import simplifyUsermanagement from "./simplify/usermanagement";
-import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+import { writeConfigFiles } from "./tools/configFiles";
 
 async function csSimplify(options) {
-    let { configDir, target } = options;
-    if (configDir == null) throw "configDir not set";
+    let { config, targetDir } = options;
+    if (config == null) throw "config not set";
 
-    let config = readConfigFiles(configDir);    
     let simplified = simplifyConfig(config);
 
-    if (target != null) {
-        writeConfigFiles(simplified, target, true);
-    } else {
-        writeConfigFiles(simplified, configDir, true);
+    if (targetDir != null) {
+        writeConfigFiles(simplified, targetDir, true);
     }
     return simplified;
 }

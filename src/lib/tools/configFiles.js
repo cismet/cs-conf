@@ -3,54 +3,64 @@ import util from 'util';
 import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
 import * as constants from './constants.js';
+import { logVerbose } from './tools';
 
-export function readConfigFile(file) {
+export function readConfigFile(file, sub) {    
+    logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "sReading", file));
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : []
 }
 
-export function readConfigFiles(configDir) {
+export function readConfigFiles(configDir, topics) {
+    logVerbose(util.format("Reading config directory '%s' ...", configDir));
     if (!fs.existsSync(configDir)) {
         throw util.format("readConfigFiles: %s does not exist", configDir);
     }
 
-    let domains = readConfigFile(util.format("%s/domains.json", configDir));
-    let policyRules = readConfigFile(util.format("%s/policyRules.json", configDir));
-    let usergroups = readConfigFile(util.format("%s/usergroups.json", configDir));
-    let usermanagement = readConfigFile(util.format("%s/usermanagement.json", configDir));
-    let classes = readConfigFile(util.format("%s/classes.json", configDir));
-    let classPerms = readConfigFile(util.format("%s/classPerms.json", configDir));
-    let attrPerms = readConfigFile(util.format("%s/attrPerms.json", configDir));
-    let structure = readConfigFile(util.format("%s/structure.json", configDir));
-    let dynchildhelpers = readConfigFile(util.format("%s/dynchildhelpers.json", configDir));
-
+    let domains = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/domains.json", configDir), true) : null;
+    let usergroups = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configDir), true) : null;
+    let usermanagement = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configDir), true) : null;
     let xmlFiles = new Map();
-    let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
-    if (fs.existsSync(confAttrXmlSnippetsFolder)) {
-        for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
-            if (extname(file) == ".xml") {
-                xmlFiles.set(file, fs.readFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
+    if (topics == null || topics.include("accessControl")) {
+        let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
+        if (fs.existsSync(confAttrXmlSnippetsFolder)) {
+            for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
+                if (extname(file) == ".xml") {
+                    xmlFiles.set(file, fs.readFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, file), {encoding: 'utf8'}));    
+                }
+            }    
+        }
     }
+
+    let policyRules = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/policyRules.json", configDir), true) : null;
+    let classPerms = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/classPerms.json", configDir), true) : null;
+    let attrPerms = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/attrPerms.json", configDir), true) : null;
+    let classes = topics == null || topics.include("classes") || topics.include("classes") ? readConfigFile(util.format("%s/classes.json", configDir), true) : null;
+    let sync = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/sync.json", configDir), true) : null;
+
+    let structure = topics == null || topics.include("structure") ? readConfigFile(util.format("%s/structure.json", configDir), true) : null;
+    let dynchildhelpers = topics == null || topics.include("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configDir), true) : null;
 
     let structureSqlFiles=new Map();
-    let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
-    if (fs.existsSync(structureDynamicChildrenFolder)) {
-        for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
-            if (extname(file) == ".sql") {
-                structureSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureDynamicChildrenFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
-    }
-
     let helperSqlFiles=new Map();
-    let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
-    if (fs.existsSync(structureHelperStatementsFolder)) {
-        for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
-            if (extname(file) == ".sql") {
-                helperSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureHelperStatementsFolder, file), {encoding: 'utf8'}));    
-            }
-        }    
+
+    if (topics == null || topics.include("structure")) {
+        let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
+        if (fs.existsSync(structureDynamicChildrenFolder)) {
+            for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
+                if (extname(file) == ".sql") {
+                    structureSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureDynamicChildrenFolder, file), {encoding: 'utf8'}));    
+                }
+            }    
+        }
+
+        let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
+        if (fs.existsSync(structureHelperStatementsFolder)) {
+            for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
+                if (extname(file) == ".sql") {
+                    helperSqlFiles.set(file, fs.readFileSync(util.format("%s/%s", structureHelperStatementsFolder, file), {encoding: 'utf8'}));    
+                }
+            }    
+        }
     }
 
     return {
@@ -65,7 +75,8 @@ export function readConfigFiles(configDir) {
         dynchildhelpers,
         xmlFiles,
         structureSqlFiles,
-        helperSqlFiles
+        helperSqlFiles,
+        sync
     }
 }
 
