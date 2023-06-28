@@ -12,7 +12,7 @@ async function csDiff(options) {
     let { client, configDir, targetDir, simplify, reorganize, normalize, schema, main } = options;
 
     if (configDir == null) throw "'configDir' has to be set !";
-    if (targetDir == null) throw "'target' has to be set !";
+    if (targetDir == null && client == null) throw "Either 'targetDir' or 'client' has to be set !";
 
     let current;
     if (targetDir) {
