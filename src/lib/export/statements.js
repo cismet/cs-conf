@@ -162,7 +162,7 @@ SELECT
     node.artificial_id
 FROM
     cs_cat_node AS node
-    LEFT OUTER JOIN cs_class AS class ON node.class_id = class.id
+    LEFT OUTER JOIN cs_class AS class ON node.class_key ILIKE class.table_name
     LEFT OUTER JOIN cs_policy AS policy ON node.policy = policy.id
 ORDER BY node.id
 ;`;

@@ -385,7 +385,7 @@ export const complex_cs_cat_node = `
 INSERT INTO cs_cat_node (
     name, 
     url, 
-    class_id, 
+    class_key, 
     object_id, 
     node_type, 
     is_root, 
@@ -401,7 +401,7 @@ INSERT INTO cs_cat_node (
     id
 ) 
     SELECT     
-        n, d, cs_class.id, oid, nt,
+        n, d, t, oid, nt,
         ir, o, dc, dcfn, ss, cs_policy.id, 
         dpc, null, i, aid, tid
     FROM (SELECT
@@ -422,7 +422,6 @@ INSERT INTO cs_cat_node (
         UNNEST($15::text[]), -- artificial_id
         UNNEST($16::integer[]) -- id
     ) AS t(n, d, t, oid, nt, ir, o, dc, dcfn, ss, p, dpc, if, i, aid, tid)
-    LEFT OUTER JOIN  cs_class ON (t = cs_class.table_name)
     LEFT OUTER JOIN cs_policy ON (p = cs_policy.name)
 ;
 `;
