@@ -1,44 +1,41 @@
 -- cs_attr_object
 
 CREATE TABLE cs_attr_object (
-    class_id INTEGER NOT NULL,
+    class_key TEXT NOT NULL,
     object_id INTEGER NOT NULL,
-    attr_class_id INTEGER NOT NULL,
+    attr_class_key TEXT NOT NULL,
     attr_object_id INTEGER NOT NULL
 );
 
 CREATE INDEX attr_object_index
   ON cs_attr_object
   USING btree
-  (class_id, object_id, attr_class_id, attr_object_id);
+  (class_key, object_id, attr_class_key, attr_object_id);
 
 -- cs_attr_object_derived
 
 CREATE TABLE cs_attr_object_derived
 (
-  class_id INTEGER NOT NULL,
+  class_key TEXT NOT NULL,
   object_id INTEGER NOT NULL,
-  attr_class_id INTEGER NOT NULL,
+  attr_class_key TEXT NOT NULL,
   attr_object_id INTEGER NOT NULL
-)
-WITH (
-  OIDS=FALSE
 );
 
 CREATE INDEX attr_object_derived_index
   ON cs_attr_object_derived
   USING btree
-  (class_id, object_id, attr_class_id, attr_object_id);
+  (class_key, object_id, attr_class_key, attr_object_id);
 
 CREATE INDEX attr_object_derived_index_acid_aoid
   ON cs_attr_object_derived
   USING btree
-  (attr_class_id, attr_object_id);
+  (attr_class_key, attr_object_id);
 
 CREATE INDEX attr_object_derived_index_cid_oid
   ON cs_attr_object_derived
   USING btree
-  (class_id, object_id);
+  (class_key, object_id);
 
 -- cs_attr
 
@@ -80,18 +77,18 @@ ALTER TABLE ONLY cs_attr
 -- cs_attr_string
 
 CREATE TABLE cs_attr_string (
-    class_id INTEGER NOT NULL,
+    class_key TEXT NOT NULL,
     attr_id INTEGER NOT NULL,
     object_id INTEGER NOT NULL,
     string_val TEXT NOT NULL
 );
 
-CREATE INDEX i_cs_attr_string_aco_id ON cs_attr_string USING btree (attr_id, class_id, object_id);
+CREATE INDEX i_cs_attr_string_aco_id ON cs_attr_string USING btree (attr_id, class_key, object_id);
 
 CREATE INDEX cs_attr_string_class_idx
   ON cs_attr_string
   USING btree
-  (class_id);
+  (class_key);
 
 CREATE INDEX cs_attr_string_object_idx
   ON cs_attr_string
@@ -130,7 +127,7 @@ CREATE TABLE cs_cat_node (
     name TEXT NOT NULL,
     descr INTEGER DEFAULT 1,
     url TEXT,
-    class_id INTEGER,
+    class_key TEXT,
     object_id INTEGER,
     node_type CHARACTER(1) DEFAULT 'N'::bpchar NOT NULL,
     is_root BOOLEAN DEFAULT false NOT NULL,
@@ -264,7 +261,7 @@ CREATE SEQUENCE cs_locks_seq
     CACHE 1;
 
 CREATE TABLE cs_locks (
-    class_id INTEGER,
+    class_key TEXT,
     object_id INTEGER,
     user_string TEXT,
     additional_info TEXT,
@@ -758,10 +755,10 @@ CREATE TABLE cs_config_attr_exempt (
 
 CREATE TABLE cs_changed
 (
-  class_id INTEGER NOT NULL,
+  class_key TEXT NOT NULL,
   object_id INTEGER NOT NULL,
   "time" TIMESTAMP with time zone DEFAULT now(),
-  CONSTRAINT cs_changed_primary_key PRIMARY KEY (class_id, object_id)
+  CONSTRAINT cs_changed_primary_key PRIMARY KEY (class_key, object_id)
 );
 
 -- cs_scheduled_serveractions
@@ -814,14 +811,11 @@ CREATE TABLE cs_history (
 
 CREATE TABLE cs_cache
 (
-  class_id INTEGER NOT NULL,
+  class_key TEXT NOT NULL,
   object_id INTEGER NOT NULL,
   stringrep TEXT,
   lightweight_json TEXT,
-  CONSTRAINT cid_oid PRIMARY KEY (class_id , object_id )
-)
-WITH (
-  OIDS=FALSE
+  CONSTRAINT cid_oid PRIMARY KEY (class_key , object_id )
 );
 
 -- cs_dynamic_children_helper
@@ -847,108 +841,48 @@ WITH (
 
 --- views die von der suche gebraucht werden
 
-CREATE
-    VIEW textsearch
-    (
-        class_id,
-        object_id,
-        name,
-        string_val
-    ) AS
-SELECT DISTINCT
-    x.class_id,
+CREATE VIEW public.textsearch
+ AS
+ SELECT DISTINCT x.class_key,
     x.object_id,
     c.name,
     x.string_val
-FROM
-    (cs_attr_string x
-LEFT JOIN
-    cs_cat_node c
-    ON
-    (
-        (
-            (
-                x.class_id = c.class_id
-            )
-            AND
-            (
-                x.object_id = c.object_id
-            )
-        )
-    )
-    )
-ORDER BY
-    x.class_id,
-    x.object_id,
-    c.name,
-    x.string_val;
+   FROM cs_attr_string x
+     LEFT JOIN cs_cat_node c ON x.class_key = c.class_key AND x.object_id = c.object_id
+  ORDER BY x.class_key, x.object_id, c.name, x.string_val;
 
-
-CREATE
-    VIEW geosuche
-    (
-        class_id,
-        object_id,
-        name,
-        geo_field
-    ) AS
-SELECT DISTINCT
-    x.class_id,
+CREATE VIEW public.geosuche2
+ AS
+ SELECT DISTINCT x.class_key,
     x.object_id,
-    c.name,
     x.geo_field
-FROM
-    (
-        (
-        SELECT DISTINCT
-            cs_attr_object.class_id,
+   FROM ( SELECT DISTINCT cs_attr_object.class_key,
             cs_attr_object.object_id,
             geom.geo_field
-        FROM
-            geom,
+           FROM geom,
             cs_attr_object
-        WHERE
-            (
-                (
-                    cs_attr_object.attr_class_id = (SELECT id FROM cs_class WHERE table_name = 'GEOM')
-                )
-                AND
-                (
-                    cs_attr_object.attr_object_id = geom.id
-                )
-            )
-        ORDER BY
-            cs_attr_object.class_id,
-            cs_attr_object.object_id,
-            geom.geo_field
-        )
-        x
-    LEFT JOIN
-        cs_cat_node c
-        ON
-        (
-            (
-                (
-                    x.class_id = c.class_id
-                )
-                AND
-                (
-                    x.object_id = c.object_id
-                )
-            )
-        )
-    )
-ORDER BY
-    x.class_id,
-    x.object_id,
-    c.name,
-    x.geo_field;
+          WHERE cs_attr_object.attr_class_key = (( SELECT cs_class.table_name
+                   FROM cs_class
+                  WHERE cs_class.table_name::text = 'geom'::text)) AND cs_attr_object.attr_object_id = geom.id
+          ORDER BY cs_attr_object.class_key, cs_attr_object.object_id, geom.geo_field) x
+  ORDER BY x.class_key, x.object_id, x.geo_field;
 
-
-CREATE VIEW cs_class_hierarchy AS 
- SELECT father_child.father, father_child.child
-   FROM ( SELECT a.foreign_key_references_to AS child, a.class_id AS father, c.primary_key_field AS pk, c.table_name, a.field_name, a.isarray
-           FROM cs_attr a, cs_class c
+CREATE VIEW public.cs_class_hierarchy
+ AS
+ SELECT father_child.father,
+    father_child.child,
+	father_table,
+	child_table
+   FROM ( SELECT a.foreign_key_references_to AS child,
+            a.class_id AS father,
+            c.primary_key_field AS pk,
+            c.table_name,
+			(select table_name from cs_class where id = a.foreign_key_references_to) AS child_table,
+		 	(select table_name from cs_class where id = a.class_id) as father_table,
+            a.field_name,
+            a.isarray
+           FROM cs_attr a,
+            cs_class c
           WHERE a.foreign_key = true AND a.class_id = c.id AND a.indexed = true) father_child;
 
 
@@ -956,294 +890,192 @@ CREATE VIEW cs_class_hierarchy AS
 
 select addgeometrycolumn(''::TEXT, 'public'::TEXT,'cs_cache'::TEXT,'geometry'::TEXT, -1,'GEOMETRY'::TEXT,2);
 
-CREATE OR REPLACE FUNCTION insert_cache_entry(classid INTEGER, objectId INTEGER)
-  RETURNS void AS
-'
-begin
-    BEGIN
-        EXECUTE ''INSERT into cs_cache (class_id,object_id,''|| fields.attr_value ||'') select ''||packer.class_id||'',''||packer.attr_value || 
-               CASE WHEN packer.attr_value ilike ''%where%'' THEN '' AND '' ELSE '' where '' END || cs_class.table_name || ''.id''||''=''||  objectId 
+CREATE OR REPLACE FUNCTION public.insert_cache_entry(
+	classkey text,
+	objectid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+		EXECUTE 'INSERT into cs_cache (class_key,object_id,'|| fields.attr_value ||') select distinct '''||cs_class.table_name||''','||packer.attr_value || 
+               CASE WHEN packer.attr_value ilike '%where%' THEN ' AND ' ELSE ' where ' END || cs_class.table_name || '.id'||'='||  objectId 
         FROM    cs_class_attr fields, 
             cs_class_attr packer, 
             cs_class 
         where   fields.class_id=packer.class_id and 
-            fields.attr_key=''caching'' and 
-            packer.attr_key=''cachepacker'' and 
+            fields.attr_key='caching' and 
+            packer.attr_key='cachepacker' and 
             fields.class_id=cs_class.id and 
-            cs_Class.id=classId;
+            cs_Class.table_name=classkey;
     END;
-end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
 
+CREATE OR REPLACE FUNCTION public.insert_cache_entry(
+	classkey text,
+	objectid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+BEGIN
+		EXECUTE 'INSERT into cs_cache (class_key,object_id,'|| fields.attr_value ||') select distinct '''||cs_class.table_name||''','||packer.attr_value || 
+               CASE WHEN packer.attr_value ilike '%where%' THEN ' AND ' ELSE ' where ' END || cs_class.table_name || '.id'||'='||  objectId 
+        FROM    cs_class_attr fields, 
+            cs_class_attr packer, 
+            cs_class 
+        where   fields.class_id=packer.class_id and 
+            fields.attr_key='caching' and 
+            packer.attr_key='cachepacker' and 
+            fields.class_id=cs_class.id and 
+            cs_Class.table_name=classkey;
+    END;
+$BODY$;
 
---start: create the postgres 9 or postgres 10 version of the update_cache_entry function
-
-CREATE OR REPLACE FUNCTION public.createFunction(
-	_command TEXT)
-    RETURNS TEXT
+CREATE OR REPLACE FUNCTION public.recreate_cache(
+	classKey text)
+    RETURNS void
     LANGUAGE 'plpgsql'
 
     COST 100
-    VOLATILE 
+    VOLATILE PARALLEL UNSAFE
 AS $BODY$
-
-DECLARE _r int;
-BEGIN
-EXECUTE _command;
-    RETURN 'Yes: ' || _command || ' executed';
-EXCEPTION
-    WHEN OTHERS THEN
-    RETURN 'No:  ' || _command || ' failed';
-END;
-
-$BODY$;
-  
-
-select case when substring(version(), position(' ' in version()) + 1,  (position('.' in version()) - position(' ' in version()) - 1) )::INTEGER < 10 then
-createFunction('CREATE OR REPLACE FUNCTION update_cache_entry(classid INTEGER, objectId INTEGER)
-  RETURNS void AS
-''
-begin
-    declare
-        affectedRows INTEGER;
-    BEGIN
-        execute ''''UPDATE cs_cache SET (''''|| fields.attr_value ||'''')=(''''||''''f.''''||replace(fields.attr_value,'''','''','''',f.'''')||'''') FROM  (SELECT ''''||packer.attr_value || 
-        CASE WHEN packer.attr_value ilike ''''%where%'''' THEN '''' AND '''' ELSE '''' where '''' END || cs_class.table_name || ''''.id'''' ||''''=''''|| objectid ||'''') AS f(id,''''|| fields.attr_value ||'''') WHERE class_id=''''||fields.class_id||''''  AND object_id=''''|| objectid 
-        FROM    cs_class_attr fields,
-            cs_class_attr packer,     
-            cs_class 
-        WHERE   fields.class_id=packer.class_id  AND 
-            fields.attr_key=''''caching'''' AND 
-            packer.attr_key=''''cachepacker'''' AND 
-            fields.class_id=cs_class.id AND 
-            cs_class.id=classid;
-        GET DIAGNOSTICS affectedRows = ROW_COUNT;
-        if affectedRows = 0 then
-            raise exception ''''no row affected by the update statement'''';
-        end if;
-    END;
-end
-''
-  LANGUAGE plpgsql VOLATILE
-  COST 100;'::TEXT)
-else 
-createFunction ('CREATE OR REPLACE FUNCTION update_cache_entry(classid INTEGER, objectId INTEGER)
-  RETURNS void AS
-''
-begin
-    declare
-        affectedRows INTEGER;
-    BEGIN
-        execute ''''UPDATE cs_cache SET (''''|| fields.attr_value ||'''')=ROW(''''||''''f.''''||replace(fields.attr_value,'''','''','''',f.'''')||'''') FROM  (SELECT ''''||packer.attr_value || 
-        CASE WHEN packer.attr_value ilike ''''%where%'''' THEN '''' AND '''' ELSE '''' where '''' END || cs_class.table_name || ''''.id'''' ||''''=''''|| objectid ||'''') AS f(id,''''|| fields.attr_value ||'''') WHERE class_id=''''||fields.class_id||''''  AND object_id=''''|| objectid 
-        FROM    cs_class_attr fields,
-            cs_class_attr packer,     
-            cs_class 
-        WHERE   fields.class_id=packer.class_id  AND 
-            fields.attr_key=''''caching'''' AND 
-            packer.attr_key=''''cachepacker'''' AND 
-            fields.class_id=cs_class.id AND 
-            cs_class.id=classid;
-        GET DIAGNOSTICS affectedRows = ROW_COUNT;
-        if affectedRows = 0 then
-            raise exception ''''no row affected by the update statement'''';
-        end if;
-    END;
-end
-''
-  LANGUAGE plpgsql VOLATILE
-  COST 100;'::TEXT)
-
-end;
-
-DROP FUNCTION createFunction(TEXT);
-
---end: create the postgres 9 or postgres 10 version of the update_cache_entry function
-
-
-CREATE OR REPLACE FUNCTION recreate_cache()
-  RETURNS void AS
-'
-declare
-    ids INTEGER;
-begin
-    FOR ids IN SELECT c.id FROM cs_class c, cs_class_attr a where c.id = a.class_id and a.attr_key=''cachepacker'' LOOP
-        RAISE NOTICE ''reindex %'', ids;
-        PERFORM recreate_cache(ids);
-    END LOOP;
-end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-
-
-CREATE OR REPLACE FUNCTION recreate_cache(classid INTEGER)
-  RETURNS void AS
-'
+declare 
+	tt text;
 begin
     BEGIN
-        delete from cs_cache where class_id = classid;
-        execute ''insert into cs_cache (class_id,object_id,''|| fields.attr_value ||'') select ''||packer.class_id||'',''||packer.attr_value FROM cs_class_attr fields,
-        cs_class_attr packer WHERE fields.class_id=packer.class_id AND fields.attr_key=''caching'' AND packer.attr_key=''cachepacker'' and fields.class_id = classid;
+        delete from cs_cache where class_key = classKey;
+--		select 'insert into cs_cache (class_key,object_id,'|| fields.attr_value ||') select distinct '''||cl.table_name||''','||packer.attr_value into tt FROM cs_class_attr fields,
+--       	cs_class_attr packer join cs_class cl on (cl.id = packer.class_id) WHERE fields.class_id=packer.class_id AND fields.attr_key='caching' AND packer.attr_key='cachepacker' and cl.table_name = classKey;
+--		raise notice '%', tt;
+
+        execute 'insert into cs_cache (class_key,object_id,'|| fields.attr_value ||') select distinct '''||cl.table_name||''','||packer.attr_value FROM cs_class_attr fields,
+        cs_class_attr packer join cs_class cl on (cl.id = packer.class_id) WHERE fields.class_id=packer.class_id AND fields.attr_key='caching' AND packer.attr_key='cachepacker' and cl.table_name = classKey;
+
     EXCEPTION WHEN SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION OR DATA_EXCEPTION OR PROGRAM_LIMIT_EXCEEDED THEN
-        RAISE WARNING ''Error occurs while recreating the cache for class %.'', classid;
-        RAISE WARNING ''% %'', SQLERRM, SQLSTATE;
+        RAISE WARNING 'Error occurs while recreating the cache for class %.', classKey;
+        RAISE WARNING '% %', SQLERRM, SQLSTATE;
         RETURN;
     END;
 end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
 
 
-CREATE OR REPLACE FUNCTION recreate_cache(tablename TEXT)
-  RETURNS void AS
-'
-begin
+CREATE OR REPLACE FUNCTION public.recreate_cache(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
 declare
-    classId INTEGER;
-    BEGIN
-        select id into classId from cs_class where lower(table_name) = lower(tablename);
-        if classId is not null then
-            perform recreate_cache(classId) from cs_class where lower(table_name) = lower(tablename);
-        else
-            raise exception ''table % not found'', tablename;
-        end if;
-    END;
+    keys text;
+begin
+    FOR keys IN SELECT c.table_name FROM cs_class c, cs_class_attr a where c.id = a.class_id and a.attr_key='cachepacker' LOOP
+        RAISE NOTICE 'recreate cache %', keys;
+        PERFORM recreate_cache(keys);
+    END LOOP;
 end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
 
 
 
-CREATE OR REPLACE FUNCTION insert_cache_entry(tableName TEXT, objectId INTEGER)
-  RETURNS void AS
-'
-begin
+CREATE OR REPLACE FUNCTION public.reindex(
+	)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
 declare
-    classId INTEGER;
-    BEGIN
-        select id into classId from cs_class where lower(table_name) = lower(tablename);
-        if classId is not null then
-            perform insert_cache_entry(classId, objectId) from cs_class where lower(table_name) = lower(tablename);
-        else
-            raise exception ''table % not found'', tablename;
-        end if;
-    END;
-end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-
-
-
-CREATE OR REPLACE FUNCTION update_cache_entry(tableName TEXT, objectId INTEGER)
-  RETURNS void AS
-'
+	keys Text;
 begin
-declare
-    classId INTEGER;
-    BEGIN
-        select id into classId from cs_class where lower(table_name) = lower(tablename);
-        if classId is not null then
-            perform update_cache_entry(classId, objectId) from cs_class where lower(table_name) = lower(tablename);
-        else
-            raise exception ''table % not found'', tablename;
-        end if;
-    END;
-end
-'
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+	delete from cs_attr_object;
+	delete from cs_attr_string;
+	delete from cs_attr_object_derived;
 
-
-CREATE OR REPLACE FUNCTION reindexpure(classid INTEGER)
-  RETURNS void AS
-$BODY$
-declare
-	attr cs_attr%ROWTYPE;
-	obj RECORD;
-	ids RECORD;
-	objects RECORD;
-	class cs_class%ROWTYPE;
-	query TEXT;
-	secQuery TEXT;
-	attrClass cs_class%ROWTYPE;
-	attrFieldName TEXT;
-	objectCount INTEGER;
-	foreignFieldName TEXT;
-	backreference TEXT;
-	
-begin
-	CREATE TEMP TABLE cs_attr_object_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
-	CREATE TEMP TABLE cs_attr_string_temp (class_id INTEGER, attr_id INTEGER, object_id INTEGER, string_val TEXT);
-	
-	SELECT * INTO class FROM cs_class WHERE id = classId;
-
-	FOR attr IN SELECT * FROM cs_attr WHERE class_id = classId LOOP	
-		--RAISE NOTICE '%     %', attr.field_name, class.table_name ;
-		IF attr.indexed THEN
-			IF attr.foreign_key_references_to < 0 THEN
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as TEXT) AS fName FROM ' || class.table_name;
-			ELSE
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as TEXT) AS fName FROM ' || class.table_name;
-			END IF;
-			FOR obj IN EXECUTE query LOOP
-				IF attr.foreign_key THEN
-					SELECT cs_class.* INTO attrClass FROM cs_class, cs_type WHERE cs_type.class_id = cs_class.id AND cs_type.id = attr.type_id;
-					IF attr.foreign_key_references_to < 0 THEN
-						select field_name into backreference from cs_attr where class_id = abs(attr.foreign_key_references_to) and foreign_key_references_to = attr.class_id limit 1;
-						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || backreference  || ' =  ' || obj.pField;
-						FOR ids IN EXECUTE secQuery LOOP
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, ids.id);
-						END LOOP;
-					ELSEIF attrClass.array_link THEN
-						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || attr.array_key  || ' =  ' || obj.pField;
-						FOR ids IN EXECUTE secQuery LOOP
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, ids.id);
-						END LOOP;
-					ELSE
-						secQuery = 'select ' || class.table_name || '.' || attr.field_name || ' as fieldName from ' || class.table_name || ', ' || attrclass.table_name || ' WHERE ' || class.table_name || '.' || class.primary_key_field || ' = ' || obj.pField || ' AND ' || class.table_name || '.' || attr.field_name || ' = ' || attrClass.table_name || '.' || attrClass.primary_key_field;
-						EXECUTE secQuery into objects;
-						GET DIAGNOSTICS objectCount = ROW_COUNT;
-						IF objectCount = 1 THEN
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, objects.fieldName);
-						ELSE
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrclass.id, -1);
-						END IF;
-					END IF;
-				ELSE 
-					IF obj.fName is not null THEN
-						INSERT INTO cs_attr_string_temp (class_id, attr_id, object_id, string_val) VALUES (classId, attr.id, obj.pField, obj.fName);
-					END IF;
-				END IF;
-			END LOOP;
-		END IF;
+	FOR keys IN SELECT table_name FROM cs_class LOOP
+		RAISE NOTICE 'reindex %', keys;
+		PERFORM reindexPure(keys);
 	END LOOP;
 
-	DELETE FROM cs_attr_object WHERE class_id = class.id;
-	DELETE FROM cs_attr_string WHERE class_id = class.id;
-	INSERT INTO cs_attr_object ( class_id, object_id, attr_class_id, attr_object_id) (SELECT class_id, object_id, attr_class_id, attr_object_id FROM cs_attr_object_temp);
-	INSERT INTO cs_attr_string ( class_id, attr_id, object_id, string_val) (SELECT class_id, attr_id, object_id, string_val FROM cs_attr_string_temp);
-	DROP TABLE cs_attr_object_temp;
-	DROP TABLE cs_attr_string_temp;
-	
+	FOR keys IN SELECT table_name FROM cs_class where indexed LOOP
+		RAISE NOTICE 'reindexDerived %', keys;
+		PERFORM reindexDerivedObjects(keys);
+	END LOOP;
 end
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
+
+CREATE OR REPLACE FUNCTION public.reindex(
+	classkey text)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+	keys text;
+begin
+	FOR keys IN WITH recursive derived_child(father_table,child_table,depth) AS
+                    ( SELECT father_table,
+                            father_table ,
+                            0
+                    FROM    cs_class_hierarchy
+                    WHERE   father_table IN (classkey)
+                    
+                    UNION ALL
+                    
+                    SELECT ch.father_table,
+                           ch.child_table ,
+                           dc.depth+1
+                    FROM   derived_child dc,
+                           cs_class_hierarchy ch
+                    WHERE  ch.father_table=dc.child_table
+                    )
+             SELECT DISTINCT child_table
+             FROM            derived_child LIMIT 100 LOOP
+		RAISE NOTICE 'reindex  %', keys ;
+		PERFORM reindexPure(keys);
+	END LOOP;
+
+	FOR keys IN WITH recursive derived_child(father_table,child_table,depth) AS
+                    ( SELECT father_table,
+                            father_table ,
+                            0
+                    FROM    cs_class_hierarchy
+                    WHERE   father_table IN (classkey)
+                    
+                    UNION ALL
+                    
+                    SELECT ch.father_table,
+                           ch.child_table ,
+                           dc.depth+1
+                    FROM   derived_child dc,
+                           cs_class_hierarchy ch
+                    WHERE  ch.father_table=dc.child_table
+                    )
+             SELECT DISTINCT child_table
+             FROM            derived_child dc join cs_class cc on (cc.table_name = dc.child_table) where cc.indexed LIMIT 100 LOOP
+		RAISE NOTICE 'reindexDerivedObjects  %', keys ;
+		PERFORM reindexDerivedObjects(keys);
+	END LOOP;
+end
+$BODY$;
 
 
-CREATE OR REPLACE FUNCTION reindexderivedobjects(classid INTEGER)
-  RETURNS void AS
-$BODY$
+CREATE OR REPLACE FUNCTION public.reindexderivedobjects(
+	classkey text)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
 declare
 	ids INTEGER;
 begin
-	CREATE TEMP TABLE cs_attr_object_derived_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
+	CREATE TEMP TABLE cs_attr_object_derived_temp (class_key text, object_id integer, attr_class_key text, attr_object_id integer);
 	INSERT INTO   cs_attr_object_derived_temp WITH recursive derived_index
 	       (
 		      xocid,
@@ -1255,28 +1087,28 @@ begin
 		      depth
 	       )
 	       AS
-	       ( SELECT class_id,
+	       ( SELECT class_key,
 		       object_id,
-		       class_id ,
+		       class_key ,
 		       object_id,
-		       class_id ,
+		       class_key ,
 		       object_id,
 		       0
 	       FROM    cs_attr_object
-	       WHERE   class_id=classId
+	       WHERE   class_key=classKey
 	       
 	       UNION ALL
 	       
 	       SELECT di.xocid          ,
 		      di.xoid           ,
-		      aam.class_id      ,
+		      aam.class_key      ,
 		      aam.object_id     ,
-		      aam.attr_class_id ,
+		      aam.attr_class_key ,
 		      aam.attr_object_id,
 		      di.depth+1
 	       FROM   cs_attr_object aam,
 		      derived_index di
-	       WHERE  aam.class_id =di.acid
+	       WHERE  aam.class_key =di.acid
 	       AND    aam.object_id=di.aid
 	       )
 	SELECT DISTINCT xocid,
@@ -1285,100 +1117,21 @@ begin
 			aid
 	FROM            derived_index
 	ORDER BY        1,2,3,4 limit 1000000000;
-	DELETE FROM cs_attr_object_derived WHERE class_id = classid;
-	INSERT INTO cs_attr_object_derived ( class_id, object_id, attr_class_id, attr_object_id) (SELECT class_id, object_id, attr_class_id, attr_object_id FROM cs_attr_object_derived_temp);
+	DELETE FROM cs_attr_object_derived WHERE class_key = classkey;
+	INSERT INTO cs_attr_object_derived ( class_key, object_id, attr_class_key, attr_object_id) (SELECT class_key, object_id, attr_class_key, attr_object_id FROM cs_attr_object_derived_temp);
 	DROP TABLE cs_attr_object_derived_temp;
 end
-$BODY$
-  LANGUAGE 'plpgsql' VOLATILE
-  COST 100;
-
-
-CREATE OR REPLACE FUNCTION "reindex"()
-  RETURNS void AS
-$BODY$
-declare
-	ids INTEGER;
-begin
-	delete from cs_attr_object;
-	delete from cs_attr_string;
-	delete from cs_attr_object_derived;
-
-	FOR ids IN SELECT id FROM cs_class LOOP
-		RAISE NOTICE 'reindex %', ids;
-		PERFORM reindexPure(ids);
-	END LOOP;
-
-	FOR ids IN SELECT id FROM cs_class where indexed LOOP
-		RAISE NOTICE 'reindexDerived %', ids;
-		PERFORM reindexDerivedObjects(ids);
-	END LOOP;
-end
-$BODY$
-  LANGUAGE 'plpgsql' VOLATILE
-  COST 100;
+$BODY$;
 
 
 
-CREATE OR REPLACE FUNCTION reindex(class_id INTEGER)
-  RETURNS void AS
-$BODY$
-declare
-	ids INTEGER;
-begin
-	FOR ids IN WITH recursive derived_child(father,child,depth) AS
-                    ( SELECT father,
-                            father ,
-                            0
-                    FROM    cs_class_hierarchy
-                    WHERE   father IN (class_id)
-                    
-                    UNION ALL
-                    
-                    SELECT ch.father,
-                           abs(ch.child) ,
-                           dc.depth+1
-                    FROM   derived_child dc,
-                           cs_class_hierarchy ch
-                    WHERE  ch.father=dc.child
-                    )
-             SELECT DISTINCT child
-             FROM            derived_child LIMIT 100 LOOP
-		RAISE NOTICE 'reindex  %', abs(ids) ;
-		PERFORM reindexPure(abs(ids));
-	END LOOP;
-
-	FOR ids IN WITH recursive derived_child(father,child,depth) AS
-                    ( SELECT father,
-                            father ,
-                            0
-                    FROM    cs_class_hierarchy
-                    WHERE   father IN (class_id)
-                    
-                    UNION ALL
-                    
-                    SELECT ch.father,
-                           abs(ch.child) ,
-                           dc.depth+1
-                    FROM   derived_child dc,
-                           cs_class_hierarchy ch
-                    WHERE  ch.father=dc.child
-                    )
-             SELECT DISTINCT child
-             FROM            derived_child dc join cs_class cc on (cc.id = dc.child) where cc.indexed LIMIT 100 LOOP
-		RAISE NOTICE 'reindexDerivedObjects  %', abs(ids) ;
-		PERFORM reindexDerivedObjects(abs(ids));
-	END LOOP;
-end
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-
-
-
-CREATE OR REPLACE FUNCTION reindexpure(classid INTEGER, objectid INTEGER)
-  RETURNS void AS
-$BODY$
+CREATE OR REPLACE FUNCTION public.reindexpure(
+	classkey text)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
 declare
 	attr cs_attr%ROWTYPE;
 	obj RECORD;
@@ -1394,18 +1147,98 @@ declare
 	backreference TEXT;
 	
 begin
-	CREATE TEMP TABLE cs_attr_object_temp (class_id INTEGER, object_id INTEGER, attr_class_id INTEGER, attr_object_id INTEGER);
-	CREATE TEMP TABLE cs_attr_string_temp (class_id INTEGER, attr_id INTEGER, object_id INTEGER, string_val TEXT);
+	CREATE TEMP TABLE cs_attr_object_temp (class_key text, object_id integer, attr_class_key text, attr_object_id integer);
+	CREATE TEMP TABLE cs_attr_string_temp (class_key text, attr_id integer, object_id integer, string_val text);
 	
-	SELECT * INTO class FROM cs_class WHERE id = classId;
+	SELECT * INTO class FROM cs_class WHERE table_name = classkey;
 
-	FOR attr IN SELECT * FROM cs_attr WHERE class_id = classId LOOP	
+	FOR attr IN SELECT a.* FROM cs_attr a join cs_class c on (a.class_id = c.id) WHERE c.table_name = classkey LOOP	
 		--RAISE NOTICE '%     %', attr.field_name, class.table_name ;
 		IF attr.indexed THEN
 			IF attr.foreign_key_references_to < 0 THEN
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as TEXT) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as text) AS fName FROM ' || class.table_name;
 			ELSE
-				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as TEXT) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as text) AS fName FROM ' || class.table_name;
+			END IF;
+			FOR obj IN EXECUTE query LOOP
+				IF attr.foreign_key THEN
+					SELECT cs_class.* INTO attrClass FROM cs_class, cs_type WHERE cs_type.class_id = cs_class.id AND cs_type.id = attr.type_id;
+					IF attr.foreign_key_references_to < 0 THEN
+						select field_name into backreference from cs_attr where class_id = abs(attr.foreign_key_references_to) and foreign_key_references_to = attr.class_id limit 1;
+						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || backreference  || ' =  ' || obj.pField;
+						FOR ids IN EXECUTE secQuery LOOP
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, ids.id);
+						END LOOP;
+					ELSEIF attrClass.array_link THEN
+						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || attr.array_key  || ' =  ' || obj.pField;
+						FOR ids IN EXECUTE secQuery LOOP
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, ids.id);
+						END LOOP;
+					ELSE
+						secQuery = 'select ' || class.table_name || '.' || attr.field_name || ' as fieldName from ' || class.table_name || ', ' || attrclass.table_name || ' WHERE ' || class.table_name || '.' || class.primary_key_field || ' = ' || obj.pField || ' AND ' || class.table_name || '.' || attr.field_name || ' = ' || attrClass.table_name || '.' || attrClass.primary_key_field;
+						EXECUTE secQuery into objects;
+						GET DIAGNOSTICS objectCount = ROW_COUNT;
+						IF objectCount = 1 THEN
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, objects.fieldName);
+						ELSE
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrclass.table_name, -1);
+						END IF;
+					END IF;
+				ELSE 
+					IF obj.fName is not null THEN
+						INSERT INTO cs_attr_string_temp (class_key, attr_id, object_id, string_val) VALUES (classkey, attr.id, obj.pField, obj.fName);
+					END IF;
+				END IF;
+			END LOOP;
+		END IF;
+	END LOOP;
+
+	DELETE FROM cs_attr_object WHERE class_key = class.table_name;
+	DELETE FROM cs_attr_string WHERE class_key = class.table_name;
+	INSERT INTO cs_attr_object ( class_key, object_id, attr_class_key, attr_object_id) (SELECT class_key, object_id, attr_class_key, attr_object_id FROM cs_attr_object_temp);
+	INSERT INTO cs_attr_string ( class_key, attr_id, object_id, string_val) (SELECT class_key, attr_id, object_id, string_val FROM cs_attr_string_temp);
+	DROP TABLE cs_attr_object_temp;
+	DROP TABLE cs_attr_string_temp;
+	
+end
+$BODY$;
+
+
+CREATE OR REPLACE FUNCTION public.reindexpure(
+	classkey text,
+	objectid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+	attr cs_attr%ROWTYPE;
+	obj RECORD;
+	ids RECORD;
+	objects RECORD;
+	class cs_class%ROWTYPE;
+	query TEXT;
+	secQuery TEXT;
+	attrClass cs_class%ROWTYPE;
+	attrFieldName TEXT;
+	objectCount INTEGER;
+	foreignFieldName TEXT;
+	backreference TEXT;
+	
+begin
+	CREATE TEMP TABLE cs_attr_object_temp (class_key text, object_id integer, attr_class_key text, attr_object_id integer);
+	CREATE TEMP TABLE cs_attr_string_temp (class_key text, attr_id integer, object_id integer, string_val text);
+	
+	SELECT * INTO class FROM cs_class WHERE table_name = classkey;
+
+	FOR attr IN SELECT a.* FROM cs_attr a join cs_class c on (a.class_id = c.id) WHERE c.table_name = classkey LOOP	
+		--RAISE NOTICE '%     %', attr.field_name, class.table_name ;
+		IF attr.indexed THEN
+			IF attr.foreign_key_references_to < 0 THEN
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  class.primary_key_field || ' as text) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
+			ELSE
+				query = 'SELECT ' || class.primary_key_field || ' AS pField, cast(' ||  attr.field_name || ' as text) AS fName FROM ' || class.table_name || ' where id = ' || objectid;
 			END IF;
 			FOR obj IN EXECUTE query LOOP
 				IF attr.foreign_key THEN
@@ -1414,43 +1247,132 @@ begin
 						select field_name into backreference from cs_attr where class_id = abs(attr.foreign_key_references_to) and foreign_key_references_to = attr.class_id;
 						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || backreference  || ' =  ' || obj.pField;
 						FOR ids IN EXECUTE secQuery LOOP
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, ids.id);
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, ids.id);
 						END LOOP;
 					ELSEIF attrClass.array_link THEN
 						secQuery = 'SELECT id as id FROM ' || attrClass.table_name || ' WHERE ' || attr.array_key  || ' =  ' || obj.pField;
 						FOR ids IN EXECUTE secQuery LOOP
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, ids.id);
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, ids.id);
 						END LOOP;
 					ELSE
 						secQuery = 'select ' || class.table_name || '.' || attr.field_name || ' as fieldName from ' || class.table_name || ', ' || attrclass.table_name || ' WHERE ' || class.table_name || '.' || class.primary_key_field || ' = ' || obj.pField || ' AND ' || class.table_name || '.' || attr.field_name || ' = ' || attrClass.table_name || '.' || attrClass.primary_key_field;
 						EXECUTE secQuery into objects;
 						GET DIAGNOSTICS objectCount = ROW_COUNT;
 						IF objectCount = 1 THEN
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrClass.id, objects.fieldName);
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrClass.table_name, objects.fieldName);
 						ELSE
-							insert into cs_attr_object_temp (class_id, object_id, attr_class_id, attr_object_id) values (class.id, obj.pField, attrclass.id, -1);
+							insert into cs_attr_object_temp (class_key, object_id, attr_class_key, attr_object_id) values (class.table_name, obj.pField, attrclass.table_name, -1);
 						END IF;
 					END IF;
 				ELSE 
 					IF obj.fName is not null THEN
-						INSERT INTO cs_attr_string_temp (class_id, attr_id, object_id, string_val) VALUES (classId, attr.id, obj.pField, obj.fName);
+						INSERT INTO cs_attr_string_temp (class_key, attr_key, object_id, string_val) VALUES (classKey, attr.id, obj.pField, obj.fName);
 					END IF;
 				END IF;
 			END LOOP;
 		END IF;
 	END LOOP;
 
-	DELETE FROM cs_attr_object WHERE class_id = class.id and object_id = objectid;
-	DELETE FROM cs_attr_string WHERE class_id = class.id and object_id = objectid;
-	INSERT INTO cs_attr_object ( class_id, object_id, attr_class_id, attr_object_id) (SELECT class_id, object_id, attr_class_id, attr_object_id FROM cs_attr_object_temp);
-	INSERT INTO cs_attr_string ( class_id, attr_id, object_id, string_val) (SELECT class_id, attr_id, object_id, string_val FROM cs_attr_string_temp);
+	DELETE FROM cs_attr_object WHERE class_key = class.table_name and object_id = objectid;
+	DELETE FROM cs_attr_string WHERE class_key = class.table_name and object_id = objectid;
+	INSERT INTO cs_attr_object ( class_key, object_id, attr_class_key, attr_object_id) (SELECT class_key, object_id, attr_class_key, attr_object_id FROM cs_attr_object_temp);
+	INSERT INTO cs_attr_string ( class_key, attr_id, object_id, string_val) (SELECT class_key, attr_id, object_id, string_val FROM cs_attr_string_temp);
 	DROP TABLE cs_attr_object_temp;
 	DROP TABLE cs_attr_string_temp;
 	
 end
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
+$BODY$;
+
+
+CREATE OR REPLACE FUNCTION public.reindexpure(
+	classid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+	
+begin
+	perform reindexpure((select table_name from cs_class where id = class_id));
+	
+end
+$BODY$;
+
+
+CREATE OR REPLACE FUNCTION public.reindexpure(
+	classid integer,
+	objectid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+		
+begin
+		perform reindexpure((select table_name from cs_class where id = class_id), objectid);
+	
+end
+$BODY$;
+
+
+    
+CREATE OR REPLACE FUNCTION public.reindexderivedobjects(
+	classid integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+begin
+	perform reindexderivedobjects((select table_name from cs_class where id = class_id));
+end
+$BODY$;
+
+   
+CREATE OR REPLACE FUNCTION public.reindex(
+	class_id integer)
+    RETURNS void
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+begin
+	perform reindex((select table_name from cs_class where id = class_id));
+end
+$BODY$;
+
+
+create table cs_id(id integer not null unique, key text primary key);
+
+CREATE or replace FUNCTION public.getId(keyValue text)
+    RETURNS integer
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE PARALLEL UNSAFE
+AS $BODY$
+declare
+	res Integer;
+begin
+    BEGIN
+		select id into res from cs_id where key = keyValue;
+		
+		if res is null then
+			select max(id) + 1 into res from cs_id;
+			
+			if res is null then
+				res = 1;
+			end if;
+			insert into cs_id (id, key) values(res, keyValue);
+		end if;
+		
+		return res;
+    END;
+end
+$BODY$;
 
 --- Funktion zur SALT Erzeugung
 CREATE OR REPLACE FUNCTION salt(INTEGER) RETURNS TEXT
@@ -1576,14 +1498,14 @@ DECLARE
    ref Record;
 BEGIN
 
-	for ref in select id  from cs_class LOOP
-		raise notice 'check class %', ref.id;
-		perform cs_refresh_changed(ref.id);
+	for ref in select table_name from cs_class LOOP
+		raise notice 'check class %', ref.table_name;
+		perform cs_refresh_changed(ref.table_name);
 	end LOOP;
 END;
 $BODY$;
 
-CREATE OR REPLACE FUNCTION public.cs_refresh_changed(classId INTEGER)
+CREATE OR REPLACE FUNCTION public.cs_refresh_changed(classKey TEXT)
     RETURNS void
     LANGUAGE 'plpgsql'
     COST 100
@@ -1598,52 +1520,52 @@ DECLARE
    queryToExecute TEXT;
 BEGIN
 	--delete all objects from the cs_changed table, if this class should not be monitored
-	if not exists (select 1 from cs_class c join cs_class_attr a on (a.class_id = c.id) where attr_key ilike 'class_changed_monitoring_level' and (attr_value ilike 'class' or attr_value ilike 'object') and c.id = classId) then
-		delete from cs_changed where class_id = classId;
+	if not exists (select 1 from cs_class c join cs_class_attr a on (a.class_id = c.id) where attr_key ilike 'class_changed_monitoring_level' and (attr_value ilike 'class' or attr_value ilike 'object') and c.table_name = classKey) then
+		delete from cs_changed where class_key = classKey;
 	end if;
 
-	for ref in select c.id as class_id, c.table_name, a.attr_value from cs_class c join cs_class_attr a on (a.class_id = c.id) where attr_key ilike 'class_changed_monitoring_level' and c.id = classId LOOP
+	for ref in select c.id as class_id, c.table_name, a.attr_value from cs_class c join cs_class_attr a on (a.class_id = c.id) where attr_key ilike 'class_changed_monitoring_level' and c.table_name = classKey LOOP
 		if ref.attr_value ilike 'object' then
-			select max(time), count(*) into t, c from cs_changed where class_id = ref.class_id;
+			select max(time), count(*) into t, c from cs_changed where class_key = ref.table_name;
 			
 			if c is not null and c = 1 then
-				select object_id into oid from cs_changed where class_id = ref.class_id;
+				select object_id into oid from cs_changed where class_key = ref.table_name;
 				
 				if oid = 0 then
-					delete from cs_changed where class_id = ref.class_id;
-					queryToExecute = 'insert into cs_changed (class_id, object_id, "time") (select ' || ref.class_id || ', id, ''' || t || ''' from ' || ref.table_name || ');';
+					delete from cs_changed where class_key = ref.table_name;
+					queryToExecute = 'insert into cs_changed (class_key, object_id, "time") (select ' || ref.table_name || ', id, ''' || t || ''' from ' || ref.table_name || ');';
 --					raise notice 'queryToExecute1 %', queryToExecute;
 					execute queryToExecute;
 				else 
-					queryToExecute = 'insert into cs_changed (class_id, object_id) (select ' || ref.class_id || ', id from ' || ref.table_name || ' where id <> ' || oid || ');';
+					queryToExecute = 'insert into cs_changed (class_key, object_id) (select ' || ref.table_name || ', id from ' || ref.table_name || ' where id <> ' || oid || ');';
 --					raise notice 'queryToExecute2 %', queryToExecute;
 					execute queryToExecute;
 				end if;
 			elsif c is null or c = 0 then
-				queryToExecute = 'insert into cs_changed (class_id, object_id) (select ' || ref.class_id || ', id from ' || ref.table_name || ');';
+				queryToExecute = 'insert into cs_changed (class_key, object_id) (select ' || ref.table_name || ', id from ' || ref.table_name || ');';
 --				raise notice 'queryToExecute3 %', queryToExecute;
 				execute queryToExecute;
 			else 
 				--there is more than one object from the given class
 				--remove the entry for the class, if one exists and add the missing entries
-				delete from cs_changed where class_id = ref.class_id and object_id = 0;
-				select array_agg(object_id) into oidArray from cs_changed where class_id = ref.class_id;
+				delete from cs_changed where class_key = ref.table_name and object_id = 0;
+				select array_agg(object_id) into oidArray from cs_changed where class_key = ref.table_name;
 				
-				queryToExecute = 'insert into cs_changed (class_id, object_id) (select ' || ref.class_id || ', id from ' || ref.table_name || ' where not (id = any (ARRAY[' || array_to_string(oidArray, ',') || '])));';
+				queryToExecute = 'insert into cs_changed (class_key, object_id) (select ' || ref.table_name || ', id from ' || ref.table_name || ' where not (id = any (ARRAY[' || array_to_string(oidArray, ',') || '])));';
 --				raise notice 'queryToExecute4 %', queryToExecute;
 				execute queryToExecute;
 			end if;
 		elsif ref.attr_value ilike 'class' then
-			select max(time), count(*) into t, c from cs_changed where class_id = ref.class_id;
+			select max(time), count(*) into t, c from cs_changed where class_key = ref.table_name;
 			
 			if c is not null and c = 1 then
-				update cs_changed set object_id = 0 where class_id = ref.class_id;
+				update cs_changed set object_id = 0 where class_key = ref.table_name;
 			elsif c is null or c = 0 then
-				insert into cs_changed (class_id, object_id) values (ref.class_id, 0);
+				insert into cs_changed (class_key, object_id) values (ref.table_name, 0);
 			else 
 				--there is more than one object from the given class
-				delete from cs_changed where class_id = ref.class_id;
-				insert into cs_changed (class_id, object_id, time) values (ref.class_id, 0, t);
+				delete from cs_changed where class_key = ref.table_name;
+				insert into cs_changed (class_key, object_id, time) values (ref.table_name, 0, t);
 			end if;
 		end if;
 	end LOOP;
