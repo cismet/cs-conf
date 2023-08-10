@@ -16,11 +16,11 @@ export function readConfigFiles(configDir, topics) {
         throw util.format("readConfigFiles: %s does not exist", configDir);
     }
 
-    let domains = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/domains.json", configDir), true) : null;
-    let usergroups = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configDir), true) : null;
-    let usermanagement = topics == null || topics.include("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configDir), true) : null;
+    let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configDir), true) : null;
+    let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configDir), true) : null;
+    let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configDir), true) : null;
     let xmlFiles = new Map();
-    if (topics == null || topics.include("accessControl")) {
+    if (topics == null || topics.includes("accessControl")) {
         let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
         if (fs.existsSync(confAttrXmlSnippetsFolder)) {
             for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
@@ -31,19 +31,19 @@ export function readConfigFiles(configDir, topics) {
         }
     }
 
-    let policyRules = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/policyRules.json", configDir), true) : null;
-    let classPerms = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/classPerms.json", configDir), true) : null;
-    let attrPerms = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/attrPerms.json", configDir), true) : null;
-    let classes = topics == null || topics.include("classes") || topics.include("classes") ? readConfigFile(util.format("%s/classes.json", configDir), true) : null;
-    let sync = topics == null || topics.include("classes") ? readConfigFile(util.format("%s/sync.json", configDir), true) : null;
+    let policyRules = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/policyRules.json", configDir), true) : null;
+    let classPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classPerms.json", configDir), true) : null;
+    let attrPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/attrPerms.json", configDir), true) : null;
+    let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configDir), true) : null;
+    let sync = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/sync.json", configDir), true) : null;
 
-    let structure = topics == null || topics.include("structure") ? readConfigFile(util.format("%s/structure.json", configDir), true) : null;
-    let dynchildhelpers = topics == null || topics.include("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configDir), true) : null;
+    let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configDir), true) : null;
+    let dynchildhelpers = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configDir), true) : null;
 
     let structureSqlFiles=new Map();
     let helperSqlFiles=new Map();
 
-    if (topics == null || topics.include("structure")) {
+    if (topics == null || topics.includes("structure")) {
         let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
         if (fs.existsSync(structureDynamicChildrenFolder)) {
             for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
