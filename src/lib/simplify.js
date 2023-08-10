@@ -1,4 +1,3 @@
-import { normalizeConfig } from "./normalize";
 import simplifyAttrPerms from "./simplify/attrPerms";
 import simplifyClasses from "./simplify/classes";
 import simplifyClassPerms from "./simplify/classPerms";
