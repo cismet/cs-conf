@@ -1,6 +1,7 @@
 [
     {
         "enforcedId": null,
+        "enforcedIdReason": null,
         "table": "table1",
         "name": "Table 1",
         "descr": "",

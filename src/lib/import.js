@@ -42,7 +42,6 @@ async function csImport(options) {
             csIconEntries, 
             csClassAttrEntries, 
             csClassEntries, 
-            csClassEntriesContainsEnforcedId,
             csTypeEntries,
             csAttrDbTypeEntries, 
             csAttrCidsTypeEntries, 
@@ -130,6 +129,7 @@ async function csImport(options) {
 
             // Import =======================================================================================================
 
+            await client.query('BEGIN;');
             if (csDomainEntries.length > 0) {
                 logVerbose(util.format(" ↳ importing domains (%d)", csDomainEntries.length));
                 await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
@@ -178,11 +178,7 @@ async function csImport(options) {
             }
             if (csClassEntries.length > 0) {                
                 logVerbose(util.format(" ↳ importing classes (%d)", csClassEntries.length));
-                if (csClassEntriesContainsEnforcedId) {
-                    await nestedFiller(client, stmnts.complex_cs_class_with_enforced_id, csClassEntries);
-                } else {
-                    await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
-                }
+                await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
             }
             if (csTypeEntries.length > 0) {                
                 logVerbose(util.format(" ↳ importing types (%d)", csTypeEntries.length));
@@ -226,6 +222,7 @@ async function csImport(options) {
             }                
             logVerbose(" ↳ (re)creating dynamic children helper functions");   
             await client.query(stmnts.execute_cs_refresh_dynchilds_functions);    
+            await client.query('COMMIT;');
         }
     } else {
         logDebug(prepared, { table: true });
@@ -297,7 +294,6 @@ export function prepareImport(config, permissionsUpdateOnly = false) {
         csIconEntries, 
         csClassAttrEntries,
         csClassEntries,
-        csClassEntriesContainsEnforcedId,
         csAttrDbTypeEntries,
         csAttrCidsTypeEntries
     } = prepareClasses(classes);
@@ -334,7 +330,6 @@ export function prepareImport(config, permissionsUpdateOnly = false) {
         csIconEntries, 
         csClassAttrEntries, 
         csClassEntries, 
-        csClassEntriesContainsEnforcedId,
         csTypeEntries,
         csAttrDbTypeEntries, 
         csAttrCidsTypeEntries, 
