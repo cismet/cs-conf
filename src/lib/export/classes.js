@@ -123,32 +123,32 @@ function analyzeAndPreprocess(classes, attributes, classattributes) {
         }
 
         //toString
-        if (c.tostringtype !== null && c.tostringclass != null) {
+        if (c.toStringType !== null && c.toStringClass != null) {
             c.toString = {
-                type: c.tostringtype,
-                class: c.tostringclass
+                type: c.toStringType,
+                class: c.toStringClass
             };
         }
-        delete c.tostringtype;
-        delete c.tostringclass;
+        delete c.toStringType;
+        delete c.toStringClass;
         //editor
-        if (c.editortype !== null && c.editorclass != null) {
+        if (c.editorType !== null && c.editorClass != null) {
             c.editor = {
-                type: c.editortype,
-                class: c.editorclass
+                type: c.editorType,
+                class: c.editorClass
             };
         }
-        delete c.editortype;
-        delete c.editorclass;
+        delete c.editorType;
+        delete c.editorClass;
         //renderer
-        if (c.renderertype !== null && c.rendererclass != null) {
+        if (c.rendererType !== null && c.rendererClass != null) {
             c.renderer = {
-                type: c.renderertype,
-                class: c.rendererclass
+                type: c.rendererType,
+                class: c.rendererClass
             };
         }
-        delete c.renderertype;
-        delete c.rendererclass;
+        delete c.rendererType;
+        delete c.rendererClass;
 
         //add attributes
         let attrs = attrsPerTable.get(c.table);
