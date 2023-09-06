@@ -40,7 +40,7 @@ const schemaOption = {
 };
 
 program
-	.version('0.9.9')
+	.version('1.0.0')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
 	.option('--debug', 'enables debug output')
