@@ -78,7 +78,7 @@ INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id, i
         cs_ug.id AS group_id,
         cs_domain.id AS domain_id, 
         cs_config_attr_key.id AS key_id, 
-        1,
+        cs_config_attr_value.id AS val_id,
         cs_config_attr_type.id AS type_id,
         t.id AS id
     FROM (SELECT 
@@ -93,6 +93,7 @@ INSERT INTO cs_config_attr_jt (usr_id, ug_id, dom_id, key_id, val_id, type_id, i
     LEFT OUTER JOIN cs_usr ON (cs_usr.login_name = username)
     JOIN cs_config_attr_key ON (cs_config_attr_key.key = attrkey)
     JOIN cs_config_attr_type ON (cs_config_attr_type.type = 'A')
+    JOIN cs_config_attr_value ON (cs_config_attr_value.value = 'true')
 ;
 `;
 

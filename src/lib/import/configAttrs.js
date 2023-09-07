@@ -3,7 +3,7 @@ import { extractGroupAndDomain } from '../tools/cids';
 
 function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
     let csConfigAttrKeyEntries = []
-    let csConfigAttrValueEntries = new Map();
+    let csConfigAttrValueEntries = new Map([['true', ['true', null]]]);
     let csConfigAttrValues4A = []; //only action attrs
     let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
     
