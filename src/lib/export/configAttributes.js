@@ -30,7 +30,7 @@ function analyzeAndPreprocess(configAttributes) {
             case 'X': {
                 let xmlToSave;
                 try {
-                    xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n' });
+                    xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
                 } catch (formatterProblem) {
                     xmlToSave = attr.value;
                 }                    
