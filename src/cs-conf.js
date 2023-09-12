@@ -25,6 +25,7 @@ import {
     Client
 } from 'pg'
 
+global.rootSrcDir = __dirname;
 global.silent = false;
 global.verbose = false;
 global.debug = false;
@@ -40,7 +41,7 @@ const schemaOption = {
 };
 
 program
-	.version('1.0.1')
+	.version('1.0.2')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
 	.option('--debug', 'enables debug output')

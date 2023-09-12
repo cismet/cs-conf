@@ -7,11 +7,11 @@ async function csTruncate(options) {
     let statements = [];
     
     if (permissionsUpdateOnly) {
-        statements.push(fs.readFileSync(util.format('%s/../ddl/cids-truncate-config-attr-only.sql', __dirname), 'utf8'));
+        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-truncate-config-attr-only.sql', __dirname), 'utf8'));
     } else {
-        statements.push(fs.readFileSync(util.format('%s/../ddl/cids-truncate.sql', __dirname), 'utf8'));
+        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-truncate.sql', __dirname), 'utf8'));
         if (init) {
-            statements.push(fs.readFileSync(util.format('%s/../ddl/cids-prepare.sql', __dirname), 'utf8'));
+            statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-prepare.sql', __dirname), 'utf8'));
         }
     }
 

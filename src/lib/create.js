@@ -11,9 +11,9 @@ async function csCreate(options) {
     if (purge) {
         statements.push(await csPurge({ client, execute: false, silent: false }));
     }
-    statements.push(fs.readFileSync(util.format('%s/../ddl/cids-create.sql', __dirname), 'utf8'));        
+    statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-create.sql', __dirname), 'utf8'));        
     if (init) {
-        statements.push(fs.readFileSync(util.format('%s/../ddl/cids-prepare.sql', __dirname), 'utf8'));
+        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-prepare.sql', __dirname), 'utf8'));
     }
 
     if (execute) {

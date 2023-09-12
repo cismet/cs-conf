@@ -9,7 +9,7 @@ async function csBackup(options) {
     
     logOut(util.format("Creating backup of '%s'...", extractDbInfo(client)));
     let start = new Date();
-    await client.query(fs.readFileSync(util.format('%s/../ddl/cids-backup.sql', __dirname), 'utf8'));            
+    await client.query(fs.readFileSync(util.format('%s/../../ddl/cids-backup.sql', __dirname), 'utf8'));            
     let { rows : results } = await client.query("SELECT array_to_string(array_agg(cs_dump_cs_tables), E'\n') AS queries FROM cs_dump_cs_tables(ARRAY['url', 'url_base', 'cs_attr', 'cs_cat_link', 'cs_cat_node', 'cs_class', 'cs_class_attr', 'cs_config_attr_jt', 'cs_config_attr_key', 'cs_config_attr_value', 'cs_domain', 'cs_dynamic_children_helper', 'cs_icon', 'cs_java_class', 'cs_policy_rule', 'cs_type', 'cs_ug', 'cs_ug_attr_perm', 'cs_ug_cat_node_perm', 'cs_ug_class_perm', 'cs_ug_membership', 'cs_usr']);");
     let end = new Date();
     let seconds = (end - start) / 1000;

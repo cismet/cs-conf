@@ -6,7 +6,7 @@ async function csPurge(options) {
     let { client, execute, silent, main } = options;
     let statements = [];
     
-    statements.push(fs.readFileSync(util.format('%s/../ddl/cids-drop.sql', __dirname), 'utf8'));
+    statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-drop.sql', __dirname), 'utf8'));
 
     if (execute) {
         logOut("Purging ...");
