@@ -33,6 +33,7 @@ global.debug = false;
 const runtimePropertiesOption = { 
 	flags: '-r, --runtime-properties <filepath>', 
 	description: 'the runtime.properties to load the database connection informations from',
+	default: 'runtime.properties',
 };
 const schemaOption = { 
 	flags: '-s, --schema <schema>', 
