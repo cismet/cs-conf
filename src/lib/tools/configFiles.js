@@ -7,7 +7,7 @@ import { logVerbose } from './tools';
 
 export function readConfigFile(file, sub) {    
     logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "sReading", file));
-    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : []
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : null
 }
 
 export function readConfigFiles(configDir, topics) {
