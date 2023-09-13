@@ -1,6 +1,6 @@
 import util from "util";
 import normalizeAttributes from "../normalize/attributes";
-import { copyFromTemplate, defaultAttribute, defaultClass } from "../tools/defaultObjects";
+import { copyFromTemplate, defaultAttribute, defaultAttributePrimary, defaultAttributedefaultClass } from "../tools/defaultObjects";
 
 function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
     if (attributes == null) return null;
@@ -10,32 +10,22 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
         if (attribute != null && attribute.field != null) {
             let simplifiedAttribute = copyFromTemplate(attribute, defaultAttribute);
             if (pk !== undefined && attribute.field == pk) {
-                let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttribute, {
-                    field: attribute.field,
-                    name: attribute.field,
-                    descr: "Primärschlüssel",
-                    dbType: "INTEGER",
-                    mandatory: true,
-                    hidden: true,
-                }));
-                if (
-                    simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table) ||
-                    simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')::text", table) ||
-                    simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq'::regclass)", table) 
-                ) {
+                let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttributePrimary(table, pk)));
+                if (simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table)) {
                     delete simplifiedPkAttribute.defaultValue;
                 }
-
-                if (Object.entries(simplifiedPkAttribute).length == 0) {
-                    continue;
+                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                    delete simplifiedAttribute.name;
                 }
+                if (Object.entries(simplifiedPkAttribute).length > 0) {
+                    simplified.push(Object.assign({field: pk}, simplifiedPkAttribute));
+                }
+            } else {
+                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                    delete simplifiedAttribute.name;
+                }
+                simplified.push(simplifiedAttribute);
             }
-
-            if (simplifiedAttribute.name == simplifiedAttribute.field) {
-                delete simplifiedAttribute.name;
-            }
-
-            simplified.push(simplifiedAttribute);
         }
     }
     return simplified.length > 0 ? simplified : undefined;

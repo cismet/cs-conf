@@ -8,7 +8,7 @@ function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
     if (attributes !== undefined) {
         let pkMissing = true;
         let pkDummy = Object.assign({}, defaultAttribute, {
-            descr: "Primärschlüssel",
+            descr: "Primary Key",
             dbType: "INTEGER",
             mandatory: true,
             defaultValue: util.format("nextval('%s_seq')", table),

@@ -22,7 +22,7 @@
             {
                 "field": "id",
                 "name": "id",
-                "descr": "Primärschlüssel",
+                "descr": "Primary Key",
                 "dbType": "INTEGER",
                 "extension_attr": false,
                 "precision": null,

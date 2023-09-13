@@ -35,6 +35,18 @@ export const defaultAttribute = {
     comment: null,
 };
 
+export const defaultAttributePrimary = (table_name, pk) => { 
+        return Object.assign({}, defaultAttribute, {
+        field: pk,
+        name: pk,
+        descr: 'Primary Key',
+        dbType: 'INTEGER',
+        mandatory: true,
+        defaultValue: 'nextval(\'' + table_name + '_seq\')',
+        hidden: true,
+    })
+};
+
 // classes
 export const defaultClass = {
     enforcedId: null,
