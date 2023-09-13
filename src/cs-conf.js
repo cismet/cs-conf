@@ -41,7 +41,7 @@ const schemaOption = {
 };
 
 program
-	.version('1.0.2')
+	.version('1.0.3')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
 	.option('--debug', 'enables debug output')
@@ -243,7 +243,8 @@ commands.get('sync')
 		setGlobals(cmd);
 		cs(csSync, { 
 			client: getClientForConfig(cmd.runtimeProperties),
-			config: readConfigFiles(cmd.config, ["sync"]),
+			config: cmd.config ? readConfigFiles(cmd.config) : null,
+			mainDomain: getDomainFromConfig(cmd.runtimeProperties),
 			execute: cmd.sync,
 			purge: cmd.purge,
 			skipDiffs: cmd.skipDiffs,

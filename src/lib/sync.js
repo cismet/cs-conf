@@ -2,8 +2,10 @@ import fs from 'fs';
 import util from 'util';
 import wcmatch from 'wildcard-match';
 import csDiff from './diff';
+import csExport from './export';
 import normalizeClasses from './normalize/classes';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import { readConfigFiles } from './tools/configFiles';
 import csBackup from './backup';
 
 async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
@@ -404,15 +406,27 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { client, config, execute, purge, schema, skipDiffs, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
+    let { client, config, mainDomain, execute, purge, schema, skipDiffs, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
     if (config != null && !skipDiffs) {
-        let differences = await csDiff( { client, config, schema, simplify: true, reorganize: true, normalize: false } );
+        let differences = await csDiff( { client, config, mainDomain, schema, simplify: true, reorganize: true, normalize: false } );
         if (differences.length > 0) {
             throw "differences found, aborting sync !";
         }
+    }
+
+    if (config == null) {
+        let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
+        let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
+        let targetDir = util.format("/tmp/sync_%s.%s", prefix, formattedDate);
+        
+        await csExport({ client, mainDomain, configDir: targetDir, schema });
+    
+        config = readConfigFiles(targetDir);        
+
+        fs.rmSync(targetDir, { recursive: true, force: true });    
     }
     
     if (execute && !skipBackup) {
@@ -431,13 +445,8 @@ async function csSync(options) {
     let normalized = normalizeClasses(classes);
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
-    if (sync != null) {
-        try {
-            let sync = JSON.parse(fs.readFileSync(sync, {encoding: 'utf8'}));        
-            ignoreRules.push(... sync.tablesToIgnore);
-        } catch (e) {
-            throw util.format("could not load sync.json %s: %s", sync, e);
-        }
+    if (sync.tablesToIgnore != null) {
+        ignoreRules.push(... sync.tablesToIgnore);
     } else {
         logInfo("no sync.json found");
     }
