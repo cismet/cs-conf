@@ -7,13 +7,14 @@ import simplifyPolicyRules from "./simplify/policyRules";
 import simplifyStructure from "./simplify/structure";
 import simplifyUsergroups from "./simplify/usergroups";
 import simplifyUsermanagement from "./simplify/usermanagement";
+import { reorganizeConfig } from './reorganize';
 import { writeConfigFiles } from "./tools/configFiles";
 
 async function csSimplify(options) {
-    let { config, targetDir } = options;
+    let { config, targetDir, reorganize } = options;
     if (config == null) throw "config not set";
-
-    let simplified = simplifyConfig(config);
+    
+    let simplified = simplifyConfig(reorganize ? reorganizeConfig(config) : config);
 
     if (targetDir != null) {
         writeConfigFiles(simplified, targetDir, true);

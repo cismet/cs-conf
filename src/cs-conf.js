@@ -42,7 +42,7 @@ const schemaOption = {
 };
 
 program
-	.version('1.0.3')
+	.version('1.0.4')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
 	.option('--debug', 'enables debug output')
@@ -202,11 +202,13 @@ commands.get('simplify')
 	.description('simplifies the configuration in a given directory')
 	.option('-c, --config <dirpath>', 'the directory containing the configuration files', '.')
 	.option('-t, --target <dirpath>', 'the directory to simplify the config into', null)
+	.option('-R, --reorganize', 'reorganize config')
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csSimplify, { 
 			config: readConfigFiles(cmd.config),
 			targetDir: cmd.target ? cmd.target : cmd.config,
+			reorganize: cmd.reorganize,
 		}, cmd);
 	});
 	 	 
