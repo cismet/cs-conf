@@ -48,7 +48,7 @@ const sourceOption = {
 };
 
 program
-	.version('1.1.0')
+	.version('1.1.1')
 	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
 	.option('-v, --verbose', 'enables verbose output')
 	.option('--debug', 'enables debug output')

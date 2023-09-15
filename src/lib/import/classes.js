@@ -20,6 +20,7 @@ function prepareClasses(classes) {
         let array_link = clazz.array_link;
         let indexed = clazz.indexed;
         let policy = clazz.policy;
+        let attributesOrder = clazz.attributesOrder;
         let attributePolicy = clazz.attribute_policy;
         let classIcon = clazz.classIcon;
         let objectIcon = clazz.objectIcon;
@@ -94,6 +95,7 @@ function prepareClasses(classes) {
             array_link,
             policy,
             attributePolicy,
+            attributesOrder,
             enforcedId,
             enforcedId ? enforcedIdReason ?? 'enforced by cs-conf' : null,
         ]);

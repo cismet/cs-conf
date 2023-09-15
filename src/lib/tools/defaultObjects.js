@@ -88,6 +88,7 @@ export const defaultClass = {
     editor: null,
     renderer: null,
     attributes: null,
+    attributesOrder: "auto",
     additionalAttributes: null,
     comment: null,
 };

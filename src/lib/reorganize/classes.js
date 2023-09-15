@@ -1,10 +1,13 @@
-import reorganizeAttributes from "./attributes";
 
 function reorganizeClasses(classes) {
     if (classes != null) {
         for (let clazz of classes) {
-            if (clazz.attributes != null) {
-                clazz.attributes = reorganizeAttributes(clazz.attributes);
+            if (clazz.attributesOrder == "auto") {
+                if (clazz.attributes != null) {
+                    clazz.attributes = clazz.attributes.sort((a, b) => { 
+                        return a.field.localeCompare(b.field);
+                    });                
+                }
             }
         }
         // TODO additionalattributes (which is a Map, not an array) ?

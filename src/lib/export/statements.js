@@ -80,6 +80,7 @@ SELECT
     c.array_link AS "array_link",
     cp.name AS "policy", 
     ap.name AS "attribute_policy",
+    c.pos_attr AS "attributesOrder",
     cs_id.used_id AS "enforcedId",
     cs_id.reason AS "enforcedIdReason"
 FROM 

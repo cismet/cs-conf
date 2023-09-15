@@ -165,6 +165,7 @@ export const complex_cs_class = `INSERT INTO cs_class (
     array_link, 
     policy, 
     attribute_policy, 
+    pos_attr,
     id
 ) SELECT 
     n, 
@@ -180,6 +181,7 @@ export const complex_cs_class = `INSERT INTO cs_class (
     a, 
     class_policy.id, 
     attribute_policy.id, 
+    pa,
     CASE WHEN eid IS NOT NULL THEN getId('cs_class'::text, t, eid, eidr) ELSE getId('cs_class'::text, t) END
 FROM (
     SELECT 
@@ -199,9 +201,10 @@ FROM (
         UNNEST($14::bool[]), 
         UNNEST($15::text[]), 
         UNNEST($16::text[]),
-        UNNEST($17::integer[]),
-        UNNEST($18::text[])
-    ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap, eid, eidr)
+        UNNEST($17::text[]),
+        UNNEST($18::integer[]),
+        UNNEST($19::text[])
+    ) AS t(n, d, ci, oi, t, pk, i, tsc, tst, ec, et, rc, rt, a, p, ap, pa, eid, eidr)
     LEFT OUTER JOIN cs_icon class_icons ON (ci=class_icons.file_name)
     LEFT OUTER JOIN cs_icon object_icons ON (oi=object_icons.file_name)
     LEFT OUTER JOIN cs_java_class toStringClasses ON (tsc=toStringClasses.qualifier AND tst=toStringClasses.type)
