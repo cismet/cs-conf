@@ -4,7 +4,7 @@ import { defaultAttrPerm } from "../tools/defaultObjects";
 function normalizeAttrPerms(attrPerms) {
     let normalized = [];
     
-    if (attrPerms !== undefined) {
+    if (attrPerms != null) {
         for (let attrPerm of attrPerms) {
             if (attrPerm.key == null) throw "normalizeAttrPerms: missing key";
 

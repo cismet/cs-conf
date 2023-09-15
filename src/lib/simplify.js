@@ -7,22 +7,27 @@ import simplifyPolicyRules from "./simplify/policyRules";
 import simplifyStructure from "./simplify/structure";
 import simplifyUsergroups from "./simplify/usergroups";
 import simplifyUsermanagement from "./simplify/usermanagement";
-import { reorganizeConfig } from './reorganize';
-import { writeConfigFiles } from "./tools/configFiles";
+import { reorganizeConfigs } from './reorganize';
+import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+import simplifyConfig from "./simplify/config";
 
 async function csSimplify(options) {
-    let { config, targetDir, reorganize } = options;
-    if (config == null) throw "config not set";
+    let { sourceDir, targetDir, reorganize } = options;
+    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configs = readConfigFiles(configsDir);
+    if (configs == null) throw "config not set";
     
-    let simplified = simplifyConfig(reorganize ? reorganizeConfig(config) : config);
+    let simplified = simplifyConfigs(reorganize ? reorganizeConfigs(configs) : configs);
 
+    targetDir = targetDir ? targetDir : global.config.configsDir;
     if (targetDir != null) {
-        writeConfigFiles(simplified, targetDir, true);
+        writeConfigFiles(simplified, targetDir);
     }
     return simplified;
 }
 
-export function simplifyConfig({
+export function simplifyConfigs({
+    config,
     attrPerms, 
     classes, 
     classPerms, 
@@ -34,7 +39,7 @@ export function simplifyConfig({
     structureSqlFiles,
     usergroups, 
     usermanagement, 
-    xmlFiles,
+    xmlFiles,    
 }) {
     let mainDomain = null;
     if (domains != null) {
@@ -46,6 +51,7 @@ export function simplifyConfig({
         }
     }
     return {
+        config: simplifyConfig(config), 
         attrPerms: simplifyAttrPerms(attrPerms, mainDomain), 
         classes: simplifyClasses(classes), 
         classPerms: simplifyClassPerms(classPerms, mainDomain), 

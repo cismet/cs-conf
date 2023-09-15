@@ -1,14 +1,14 @@
 import fs from 'fs';
 import util from 'util';
 import wcmatch from 'wildcard-match';
-import csDiff from './diff';
 import csExport from './export';
-import normalizeClasses from './normalize/classes';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import { initClient } from './tools/db';
 import { readConfigFiles } from './tools/configFiles';
-import csBackup from './backup';
+import { normalizeConfigs } from './normalize';
+import stringify from 'json-stringify-pretty-compact';
 
-async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz) {
+async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz, noDropColumns, dropColumns) {
     let statements = [];
     let cidsTableName = clazz.table.toLowerCase();
 
@@ -38,7 +38,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                             let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                             // directly adding recursive results to statements-array for assuring
                             // that the most bottom table is created first
-                            statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass));
+                            statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass, noDropColumns, dropColumns));
                             
                             columns.push({ name: fieldName, type: "integer", null: !cidsAttribute.mandatory });
                         } else {
@@ -93,7 +93,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                 let subCidsClass = allCidsClassesByTableName[subCidsTableName];
                                 // directly adding recursive results to statements-array for assuring
                                 // that the most bottom table is created first
-                                statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass));
+                                statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass, noDropColumns, dropColumns));
 
                                 if (!existingTable.columns.hasOwnProperty(fieldName)) {
                                     statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: "integer", null: !cidsAttribute.mandatory });
@@ -233,7 +233,11 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                     delete existingTable.columns[columnDone];
                 }
                 Object.keys(existingTable.columns).forEach(function(key) {
-                    statements.push({ action: "DROP COLUMN", table: cidsTableName, column: key });
+                    let tableColumnKey = util.format("%s.%s", cidsTableName, key);
+                    if (!noDropColumns.includes(tableColumnKey)) {
+                        statements.push({ action: "DROP COLUMN", table: cidsTableName, column: key });
+                        dropColumns.push(tableColumnKey);
+                    }
                 });        
             }
         }
@@ -275,7 +279,7 @@ function fullTypeFromAttribute(cidsAttribute) {
 }
 
 function queriesFromStatement(statement) {
-    let queries = [""];
+    let queries = [];
 
     switch(statement.action) {
         case "DROP TABLE": {
@@ -286,7 +290,7 @@ function queriesFromStatement(statement) {
         } break;
         case "CREATE TABLE": {
             let sequenceName = util.format("%s_seq", statement.table);
-            queries.push(util.format("-- START creating table %s", statement.table));
+            queries.push(util.format("-- creating table %s", statement.table));
 
             if (statement.sequence !== undefined) {
                 queries.push(util.format("CREATE SEQUENCE %s INCREMENT BY 1 NO MAXVALUE NO MINVALUE;", sequenceName));
@@ -319,7 +323,6 @@ function queriesFromStatement(statement) {
             } else {
                 queries.push(util.format("CREATE TABLE %s;", statement.table));
             }
-            queries.push("-- END");
         } break;
         case "DROP SEQUENCE": {
             let sequenceName = util.format("%s_seq", statement.table);
@@ -345,16 +348,15 @@ function queriesFromStatement(statement) {
                 queries.push(util.format("CREATE SEQUENCE %s INCREMENT BY 1 NO MAXVALUE NO MINVALUE;", sequenceName));
             }
 
-            queries.push(util.format("-- START adding column %s to table %s", statement.column, statement.table));
+            queries.push(util.format("-- adding column %s to table %s", statement.column, statement.table));
             queries.push(util.format("ALTER TABLE %s ADD COLUMN %s %s;", statement.table, statement.column, typeAndAttributes));
-            queries.push("-- END");
         } break;
         case "CHANGE COLUMN": {
             let tmpColumn = util.format("%s_%d", statement.column, Date.now());
 
-            queries.push(util.format("-- START changing column %s.%s", statement.table, statement.column));
+            queries.push(util.format("-- changing column %s.%s", statement.table, statement.column));
             if (statement.type !== undefined) {
-                queries.push(util.format("-- changing type from %s to %s", statement.oldType, statement.type));
+                queries.push(util.format("-- + changing type from %s to %s", statement.oldType, statement.type));
                 /*
                 queries.push(util.format("ALTER TABLE %s RENAME COLUMN %s TO %s;", statement.table, statement.column, tmpColumn));
                 // ["\nBEGIN TRANSACTION;", ...queries, dryRun ? "-- because of dry-run\nROLLBACK TRANSACTION;" : "COMMIT TRANSACTION;" ]    
@@ -395,7 +397,6 @@ function queriesFromStatement(statement) {
                     queries.push(util.format("ALTER TABLE %s ALTER COLUMN %s SET NOT NULL;", statement.table, statement.column));
                 }
             }
-            queries.push("-- END");
         } break;
         case "DROP COLUMN": {
             queries.push(util.format("ALTER TABLE %s DROP COLUMN %s;", statement.table, statement.column));
@@ -406,52 +407,46 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { client, config, mainDomain, execute, purge, schema, skipDiffs, syncJson, skipBackup, backupPrefix, backupDir, main } = options;
+    let { sourceDir, targetDir, noExport, purge, outputSql, outputDrop, outputIgnore, execute, schema } = options;
 
-    if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
-
-    if (config != null && !skipDiffs) {
-        let differences = await csDiff( { client, config, mainDomain, schema, simplify: true, reorganize: true, normalize: false } );
-        if (differences.length > 0) {
-            throw "differences found, aborting sync !";
+    let configs;
+    if (noExport) {
+        let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+            if(configsDir == null) {
+            throw "can't sync from local config since no configsDir is set";
         }
-    }
-
-    if (config == null) {
-        let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
-        let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
-        let targetDir = util.format("/tmp/sync_%s.%s", prefix, formattedDate);
-        
-        await csExport({ client, mainDomain, configDir: targetDir, schema });
-    
-        config = readConfigFiles(targetDir);        
-
-        fs.rmSync(targetDir, { recursive: true, force: true });    
-    }
-    
-    if (execute && !skipBackup) {
-        await csBackup({
-            client,
-            dir: backupDir, 
-            prefix: backupPrefix, 
-            client
-        });
+        configs = readConfigFiles(configsDir);
     } else {
-        logVerbose("Skipping backup.");
+        let mainDomain = global.config.domainName;
+
+        let tmpTargetDir = targetDir == null;
+        if (tmpTargetDir) {
+            let client = await initClient(global.config.connection, false);
+
+            let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
+            let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
+            targetDir = util.format("/tmp/sync_%s.%s", prefix, formattedDate);
+        }
+    
+        await csExport({ mainDomain, targetDir, schema });
+        configs = readConfigFiles(targetDir, [ "classes" ]);        
+        if (tmpTargetDir) {
+            fs.rmSync(targetDir, { recursive: true, force: true });    
+        }    
     }
 
-    let { classes, sync } = config;    
-
-    let normalized = normalizeClasses(classes);
+    let normalized = normalizeConfigs(configs);
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
-    if (sync.tablesToIgnore != null) {
-        ignoreRules.push(... sync.tablesToIgnore);
+    if (global.config.sync.noDropTables != null) {
+        ignoreRules.push(... global.config.sync.noDropTables);
     } else {
-        logInfo("no sync.json found");
+        logInfo("no sync.noDropTables rules found");
     }
 
-    let allCidsClasses = [...normalized];
+    let client = await initClient(global.config.connection);
+
+    let allCidsClasses = [...normalized.classes];
     let allCidsClassesByTableName = {};
 
     let attributesCount = 0;
@@ -463,7 +458,7 @@ async function csSync(options) {
             attributesCount += singleCidsClass.attributes.length;
         }
     }
-    logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.length));
+    logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.classes.length));
 
     let existingData = {
         tables : {},
@@ -549,9 +544,12 @@ async function csSync(options) {
     logVerbose("Preparing sync statements ...");
     let statements = [];
     let tablesDone = [];
+    let dropTables = [];
+    let dropColumns = [];
+
     while(allCidsClasses.length > 0) {
         let cidsClass = allCidsClasses.pop();
-        statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass));
+        statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass, normalized.config.sync.noDropColumns, dropColumns));
     }    
     if (statements.length > 0) {
         logVerbose(statements, { table: true });
@@ -565,9 +563,10 @@ async function csSync(options) {
     Object.keys(existingData.tables).forEach(function(key) {
         if (!ignoredTables.includes(key)) {
             var tableData = existingData.tables[key];
-            if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === "public") {
+            if (tableData.tableType.toUpperCase() === "BASE TABLE" && tableData.schema === schema) {
                 let sequenceKey = util.format("%s_seq", key);
                 statements.push({ action: "DROP TABLE", table: key, sequence: existingData.sequences.includes(sequenceKey) });
+                dropTables.push(key);
             }
         }
     });
@@ -576,25 +575,39 @@ async function csSync(options) {
 
     if (statements.length > 0) {
 
-        let skipped = [];
+        let skippedQueries = [];
         let subQueries = [];
         
         for (let statement of statements) {
             if (purge !== true && statement.action.startsWith("DROP ")) {
-                skipped.push(... queriesFromStatement(statement));
+                skippedQueries.push(... queriesFromStatement(statement));
             } else {
                 subQueries.push(... queriesFromStatement(statement));
             }
         }
 
-        if (skipped.length > 0)  {
-            logOut("======================");
-            logOut(util.format("%d Skipped statements:", skipped.filter((value) => {
-                return value.trim() != "";
-            }).length));
-            logOut("----------------------");
-            logOut(skipped.join("\n"));
-            logOut("======================");
+        let sync = {
+            dropTables: dropTables.sort(),
+            dropColumns: dropColumns.sort(),
+        };
+
+        if (outputIgnore && (sync.dropTables.length > 0 || sync.dropColumns > 0)) {
+            logOut(stringify(sync), { noSilent: true });
+        }
+
+        if (outputDrop && skippedQueries.length > 0)  {
+            let query = "\n";
+            query += "-- ########################################\n";
+            query += "-- ### BEGIN OF SKIPPED QUERIES ###\n";
+            query += "-- ########################################\n";
+            query += "\n";
+            query += skippedQueries.join("\n");
+            query += "\n\n";
+            query += "-- ######################################\n";
+            query += "-- ### END OF SKIPPED QUERIES ###\n";
+            query += "-- ######################################\n";
+
+            logOut(query, { noSilent: true });
         }
 
         if (subQueries.length > 0) {
@@ -602,25 +615,25 @@ async function csSync(options) {
             query += "-- ########################################\n";
             query += "-- ### BEGIN OF SYNCHRONISATION QUERIES ###\n";
             query += "-- ########################################\n";
+            query += "\n";
             query += subQueries.join("\n");
             query += "\n\n";
             query += "-- ######################################\n";
             query += "-- ### END OF SYNCHRONISATION QUERIES ###\n";
             query += "-- ######################################\n";
 
+            if (outputSql) {
+                logVerbose("\nresulting sync queries:");
+                logOut(query, { noSilent: true });
+            }
+
             if (execute) {
                 logOut(util.format("\nstart syncing (%d queries) ...", subQueries.filter((value) => {
                     return value.trim() != "" && !value.trim().startsWith("--");
                 }).length));
                 await client.query(query);
-            } else {
-                logVerbose("\nresulting sync queries:");
-                logOut(query, { noSilent: main });
-            }
-            if (execute) {
                 logInfo(" ↳ syncing successfull");
             } else {
-                logOut(" ↳ syncing successfull");
                 logOut();
                 logWarn("DRY RUN nothing has really happend yet. '-X|--sync' for execution");
             }

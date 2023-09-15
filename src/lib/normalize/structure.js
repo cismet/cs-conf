@@ -5,7 +5,7 @@ import util from "util";
 function normalizeStructure(structure) {
     let normalized = [];
 
-    if (structure !== undefined) {
+    if (structure != null) {
         let lastNode = null;
         for (let node of structure) {
             if (node.link == null) {

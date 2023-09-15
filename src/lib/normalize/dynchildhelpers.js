@@ -4,7 +4,7 @@ import { util } from "chai";
 function normalizeDynchildhelpers(dynchildhelpers) {
     let normalized = [];
 
-    if (dynchildhelpers !== undefined) {
+    if (dynchildhelpers != null) {
         for (let dynchildhelper of dynchildhelpers) {
             if (dynchildhelper.name == null) throw "normalizeDynchildhelpers: name missing";
             if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name);

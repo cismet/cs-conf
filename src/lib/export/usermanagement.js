@@ -1,6 +1,7 @@
 import * as stmnts from './statements';
 
-async function exportUserManagement(client, groupConfigAttrs, userConfigAttrs) {
+async function exportUserManagement(groupConfigAttrs, userConfigAttrs) {
+    let client = global.client;
     let {
         rows: groupArray
     } = await client.query(stmnts.usergroups);

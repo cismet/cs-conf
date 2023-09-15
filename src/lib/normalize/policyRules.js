@@ -3,7 +3,7 @@ import { defaultPolicyRule } from "../tools/defaultObjects";
 function normalizePolicyRules(policyRules) {
     let normalized = [];
     
-    if (policyRules !== undefined) {
+    if (policyRules != null) {
         for (let policyRule of policyRules) {
             if (policyRule.policy == null) throw "normalizePolicyRules: missing policy";
             if (policyRule.permission == null) throw "normalizePolicyRules: missing permission";

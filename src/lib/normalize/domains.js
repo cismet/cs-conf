@@ -5,7 +5,7 @@ import util from 'util';
 function normalizeDomains(domains) {
     let normalized = [];
 
-    if (domains !== undefined) {
+    if (domains != null) {
         let main = null;
         let domainnames = [];
         for (let domain of domains) {

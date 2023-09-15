@@ -6,7 +6,7 @@ import { util } from "chai";
 function normalizeUsermanagement(usermanagement) {
     let normalized = [];
 
-    if (usermanagement !== undefined) {
+    if (usermanagement != null) {
         for (let user of usermanagement) {
             if (user.login_name == null) throw "normalizeUsermanagement: missing login_name";
             if (user.pw_hash == null) throw util.format("normalizeUsermanagement: [%s] missing pw_hash", user.login_name);

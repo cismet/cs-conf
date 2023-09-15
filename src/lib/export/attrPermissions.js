@@ -1,8 +1,9 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-async function exportAttrPermissions(client, attributes, classReadPerms, classWritePerms) {
-    const {
+async function exportAttrPermissions(attributes, classReadPerms, classWritePerms) {
+    let client = global.client;
+    let {
         rows: attrPermResult
     } = await client.query(stmnts.attributePermissions);
 

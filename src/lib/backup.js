@@ -1,13 +1,15 @@
 import fs from 'fs';
 import util from 'util';
 import zlib from 'zlib';
-import { extractDbInfo } from './tools/db';
+import { initClient, getClientInfo } from './tools/db';
 import { logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csBackup(options) {
-    let { client, dir, prefix } = options;
+    let { dir, prefix } = options;
     
-    logOut(util.format("Creating backup of '%s'...", extractDbInfo(client)));
+    let client = await initClient(global.config.connection);
+    
+    logOut(util.format("Creating backup of '%s'...", getClientInfo()));
     let start = new Date();
     await client.query(fs.readFileSync(util.format('%s/../../ddl/cids-backup.sql', __dirname), 'utf8'));            
     let { rows : results } = await client.query("SELECT array_to_string(array_agg(cs_dump_cs_tables), E'\n') AS queries FROM cs_dump_cs_tables(ARRAY['url', 'url_base', 'cs_attr', 'cs_cat_link', 'cs_cat_node', 'cs_class', 'cs_class_attr', 'cs_config_attr_jt', 'cs_config_attr_key', 'cs_config_attr_value', 'cs_domain', 'cs_dynamic_children_helper', 'cs_icon', 'cs_java_class', 'cs_policy_rule', 'cs_type', 'cs_ug', 'cs_ug_attr_perm', 'cs_ug_cat_node_perm', 'cs_ug_class_perm', 'cs_ug_membership', 'cs_usr']);");

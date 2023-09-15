@@ -1,8 +1,9 @@
 import { defaultDomain } from '../tools/defaultObjects';
 import * as stmnts from './statements';
 
-async function exportDomains(client, mainDomain, domainConfigAttrs) {
-    const {
+async function exportDomains(mainDomain, domainConfigAttrs) {
+    let client = global.client;
+    let {
         rows: domains
     } = await client.query(stmnts.domains);
     return analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs);

@@ -5,7 +5,7 @@ import { defaultUserGroup } from "../tools/defaultObjects";
 function normalizeUsergroups(usergroups) {
     let normalized = [];
 
-    if (usergroups !== undefined) {
+    if (usergroups != null) {
         for (let usergroup of usergroups) {
             if (usergroup.key == null) throw "normalizeUsergroups: missing key";
 

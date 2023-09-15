@@ -1,11 +1,10 @@
 import util from "util";
 import { defaultAttribute, defaultClass } from "../tools/defaultObjects";
-import { logWarn } from "../tools/tools";
 
 function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
     let normalized = [];
 
-    if (attributes !== undefined) {
+    if (attributes != null) {
         let pkMissing = true;
         let pkDummy = Object.assign({}, defaultAttribute, {
             descr: "Primary Key",

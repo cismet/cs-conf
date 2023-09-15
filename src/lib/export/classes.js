@@ -1,7 +1,8 @@
 import * as stmnts from './statements';
 import { clean } from '../tools/tools.js';
 
-async function exportClasses(client) {
+async function exportClasses() {
+    let client = global.client;
     const {
         rows: classes
     } = await client.query(stmnts.classes);

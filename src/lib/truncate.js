@@ -1,18 +1,17 @@
 import fs from 'fs';
 import util from 'util';
 import { logInfo, logOut, logVerbose } from './tools/tools';
+import { initClient } from './tools/db';
 
 async function csTruncate(options) {
-    let { client, execute, init, permissionsUpdateOnly = false, silent, main } = options;
+    let { execute, init, silent, main } = options;
     let statements = [];
     
-    if (permissionsUpdateOnly) {
-        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-truncate-config-attr-only.sql', __dirname), 'utf8'));
-    } else {
-        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-truncate.sql', __dirname), 'utf8'));
-        if (init) {
-            statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-prepare.sql', __dirname), 'utf8'));
-        }
+    let client = await initClient(global.config.connection, execute);
+    
+    statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-truncate.sql', __dirname), 'utf8'));
+    if (init) {
+        statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-prepare.sql', __dirname), 'utf8'));
     }
 
     if (execute) {

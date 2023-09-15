@@ -1,26 +1,28 @@
 import fs from 'fs';
 import util from 'util';
 import zlib from 'zlib';
-import { extractDbInfo } from './tools/db';
+import { getClientInfo, initClient } from './tools/db';
 import { logInfo, logOut, logVerbose } from './tools/tools';
 import csTruncate from './truncate';
 
 async function csRestore(options) {
-    let { client, file, execute, main } = options;
+    let { file, execute, main } = options;
     if (file == null) throw "file has to be set !";
+
+    let client = await initClient(global.config.connection, execute);
 
     logOut(util.format("Reading statements from %s", file));
     
     let statements = [];
-    statements.push(await csTruncate({ client, execute: false, init: true, silent: true, }));
+    statements.push(await csTruncate({ execute: false, init: true, silent: true, }));
     if(file.endsWith(".gz")){
         statements.push(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
     } else {
         statements.push(fs.readFileSync(file, "utf8"));
     }
 
-    if (execute === true) {
-        logOut(util.format("Executing statements on '%s' ...", extractDbInfo(client)));
+    if (execute) {
+        logOut(util.format("Executing statements on '%s' ...", getClientInfo()));
         let start = new Date();
         await client.query(statements.join("\n"));
         let end = new Date();

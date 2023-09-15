@@ -1,11 +1,14 @@
-import { normalizeConfig } from "./normalize";
+import { normalizeConfigs } from "./normalize";
+import { readConfigFiles } from "./tools/configFiles";
 import { logOut } from "./tools/tools";
 
 async function csCheck(options) {
-    let { config } = options;
-    if (config == null) throw "config not set";
+    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configs = readConfigFiles(configsDir);
 
-    normalizeConfig(config);
+    if (configs == null) throw "config not set";
+
+    normalizeConfigs(configs);
 
     logOut("configuration ok");
 }

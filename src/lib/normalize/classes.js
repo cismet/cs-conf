@@ -5,7 +5,7 @@ import { defaultClass } from "../tools/defaultObjects";
 function normalizeClasses(classes) {
     let normalized = [];
     
-    if (classes !== undefined) {
+    if (classes != null) {
         for (let clazz of classes) {
             if (clazz.table == null) throw "normalizeClasses: missing table for class";
             //if (clazz.table !== clazz.table.toUpperCase()) throw util.format("normalizeClasses: table '%s' has to be uppercase", clazz.table);
@@ -34,7 +34,6 @@ function normalizeClasses(classes) {
             }));
         }
     }
-    
     return normalized;
 }
 

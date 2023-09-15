@@ -3,8 +3,9 @@ import xmlFormatter from 'xml-formatter';
 import util from 'util';
 import * as stmnts from './statements';
 
-async function exportConfigAttributes(client) {
-    const {
+async function exportConfigAttributes() {
+    let client = global.client;
+    let {
         rows: configAttributes
     } = await client.query(stmnts.configAttr);
     return analyzeAndPreprocess(configAttributes);

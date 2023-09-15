@@ -8,51 +8,51 @@ import exportClasses from './export/classes';
 import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
-import { checkConfigFolders, writeConfigFiles } from './tools/configFiles';
-import { simplifyConfig } from './simplify';
-import { reorganizeConfig } from './reorganize';
-import { normalizeConfig } from './normalize';
+import { writeConfigFiles } from './tools/configFiles';
+import { simplifyConfigs } from './simplify';
+import { reorganizeConfigs } from './reorganize';
 import { logOut, logVerbose } from './tools/tools';
-import { extractDbInfo } from './tools/db';
+import { initClient } from './tools/db';
+import { getClientInfo } from './tools/db';
 
-async function createConfig(client, mainDomain) {
+async function createConfig(mainDomain) {
     logVerbose(" ↳ exporting configuration attributes");
     let {
         userConfigAttrs,
         groupConfigAttrs,
         domainConfigAttrs,
         xmlFiles
-    } = await exportConfigAttributes(client);
+    } = await exportConfigAttributes();
 
     logVerbose(" ↳ exporting domains");
-    let { domains } = await exportDomains(client, mainDomain, domainConfigAttrs);
+    let { domains } = await exportDomains(mainDomain, domainConfigAttrs);
 
     logVerbose(" ↳ exporting policy defaults");
-    let { policyRules } = await exportPolicyRules(client);
+    let { policyRules } = await exportPolicyRules();
 
     logVerbose(" ↳ exporting users and groups");
     let {
         usermanagement,
         usergroups
-    } = await exportUserManagement(client, groupConfigAttrs, userConfigAttrs);
+    } = await exportUserManagement(groupConfigAttrs, userConfigAttrs);
 
     logVerbose(" ↳ exporting classes and attributes");
     let {
         classes,
         attributes
-    } = await exportClasses(client);
+    } = await exportClasses();
 
     logVerbose(" ↳ exporting class permissions");
     let {
         classPerms,
         classReadPerms,
         classWritePerms
-    } = await exportClassPermissions(client, classes);
+    } = await exportClassPermissions(classes);
     
     logVerbose(" ↳ exporting atrributes permissions");
     let {
         attrPerms,
-    } = await exportAttrPermissions(client, attributes, classReadPerms, classWritePerms);
+    } = await exportAttrPermissions(attributes, classReadPerms, classWritePerms);
 
     logVerbose(" ↳ exporting structure");
     let {
@@ -60,7 +60,7 @@ async function createConfig(client, mainDomain) {
         structureSqlFiles,
         dynchildhelpers,
         helperSqlFiles
-    } = await exportStructure(client);
+    } = await exportStructure();
 
     return {
         domains,
@@ -79,23 +79,23 @@ async function createConfig(client, mainDomain) {
 }
 
 async function csExport(options) {
-    let  { client, configDir, schema, overwrite = false, mainDomain, simplify = false, reorganize = false } = options;
+    let  { schema, targetDir, normalized = false } = options;
 
-    checkConfigFolders(configDir, overwrite);
+    let client = await initClient(global.config.connection);
 
-    logOut(util.format("Exporting configuration from '%s' ...", extractDbInfo(client)));
-    let config = await createConfig(client, mainDomain);
+    let mainDomain = global.config.domainName;
 
-    config = normalizeConfig(config);
-    if (simplify) {
-        config = simplifyConfig(config);
+    logOut(util.format("Exporting configuration from '%s' ...", getClientInfo()));
+    let configFiles = Object.assign({ config: global.config }, await createConfig(mainDomain));
+
+    configFiles = reorganizeConfigs(configFiles);
+    if (!normalized) {
+        configFiles = simplifyConfigs(configFiles);
     }
-    if (reorganize) {
-        config = reorganizeConfig(config);
-    }
 
-    logOut(util.format(" ↳ writing configuration to %s", configDir));
-    writeConfigFiles(config, configDir, overwrite);
+    let configsDir = targetDir != null ? targetDir : global.config.configsDir;
+
+    writeConfigFiles(configFiles, configsDir);
 }
 
 export default csExport;

@@ -1,11 +1,14 @@
 import fs from 'fs';
 import util from 'util';
 import { logInfo, logOut, logVerbose } from './tools/tools';
+import { initClient } from './tools/db';
 
 async function csPurge(options) {
-    let { client, execute, silent, main } = options;
+    let { execute, silent, main } = options;
     let statements = [];
     
+    let client = await initClient(global.config.connection, execute);
+
     statements.push(fs.readFileSync(util.format('%s/../../ddl/cids-drop.sql', __dirname), 'utf8'));
 
     if (execute) {

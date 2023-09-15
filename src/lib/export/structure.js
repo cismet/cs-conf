@@ -5,7 +5,8 @@ import slug from 'slug';
 import striptags from 'striptags';
 import util from 'util';
 
-async function exportStructure(client) {
+async function exportStructure() {
+    let client = global.client;
     let {
         rows: nodesResult
     } = await client.query(stmnts.nodes);

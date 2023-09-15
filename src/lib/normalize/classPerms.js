@@ -4,7 +4,7 @@ import { defaultClassPerm } from "../tools/defaultObjects";
 function normalizeClassPerms(classPerms) {
     let normalized = [];
     
-    if (classPerms !== undefined) {
+    if (classPerms != null) {
         for (let classPerm of classPerms) {
             if (classPerm.table == null) throw "normalizeClassPerms: missing table for classPerm";
 

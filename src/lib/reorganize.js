@@ -1,3 +1,4 @@
+import reorganizeConfig from "./reorganize/config";
 import reorganizeAttrPerms from "./reorganize/attrPerms";
 import reorganizeClasses from "./reorganize/classes";
 import reorganizeClassPerms from "./reorganize/classPerms";
@@ -7,21 +8,25 @@ import reorganizePolicyRules from "./reorganize/policyRules";
 import reorganizeStructure from "./reorganize/structure";
 import reorganizeUsergroups from "./reorganize/usergroups";
 import reorganizeUsermanagement from "./reorganize/usermanagement";
-import { writeConfigFiles } from "./tools/configFiles";
+import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csReorganize(options) {
-    let { config, targetDir } = options;
-    if (config == null) throw "config not set";
+    let { sourceDir, targetDir } = options;
+    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configs = readConfigFiles(configsDir);
+    if (configs == null) throw "config not set";
 
-    let reorganized = reorganizeConfig(config);
+    let reorganized = reorganizeConfigs(configs);
 
+    targetDir = targetDir ? targetDir : global.config.configsDir;
     if (targetDir != null) {
-        writeConfigFiles(reorganized, targetDir, true);
+        writeConfigFiles(reorganized, targetDir);
     }
     return reorganized;
 }
 
-export function reorganizeConfig({
+export function reorganizeConfigs({
+    config,
     attrPerms, 
     classes, 
     classPerms, 
@@ -36,6 +41,7 @@ export function reorganizeConfig({
     xmlFiles,
 }) {
     return {
+        config: reorganizeConfig(config), 
         attrPerms: reorganizeAttrPerms(attrPerms), 
         classes: reorganizeClasses(classes), 
         classPerms: reorganizeClassPerms(classPerms), 

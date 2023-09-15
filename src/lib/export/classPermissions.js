@@ -1,7 +1,8 @@
 import * as stmnts from './statements';
 import util from 'util';
 
-async function exportClassPermissions(client, classes) {
+async function exportClassPermissions(classes) {
+    let client = global.client;
     let {
         rows: classPermResult
     } = await client.query(stmnts.classPermissions);

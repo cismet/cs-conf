@@ -13,17 +13,23 @@ import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
 import { singleRowFiller, nestedFiller } from './tools/db';
-import { normalizeConfig } from './normalize';
-import { extractDbInfo } from './tools/db';
+import { normalizeConfigs } from './normalize';
+import { getClientInfo, initClient } from './tools/db';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import { readConfigFiles } from './tools/configFiles';
 
 async function csImport(options) {
-    let { client, config, backupDir, backupPrefix, execute, init, permissionsUpdateOnly, recreate, schema, skipBackup } = options;
+    let { sourceDir, backupDir, backupPrefix, execute, init, recreate, schema, skipBackup } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
+    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configs = readConfigFiles(configsDir);
+
     logOut("Preparing import ...");
-    let prepared = prepareImport(config, permissionsUpdateOnly);
+    let prepared = prepareImport(configs);
+
+    let client = await initClient(global.config.connection, execute);
 
     // Execution ---------------------------------
 
@@ -55,7 +61,6 @@ async function csImport(options) {
     
         if (!skipBackup) {
             await csBackup({
-                client,
                 dir: backupDir, 
                 prefix: backupPrefix, 
                 client
@@ -64,166 +69,123 @@ async function csImport(options) {
             logVerbose("Skipping backup.");
         }
 
-        logOut(util.format("Importing configuration to '%s' ...", extractDbInfo(client)));
+        logOut(util.format("Importing configuration to '%s' ...", getClientInfo()));
 
-        if (permissionsUpdateOnly) {
-            await client.query('BEGIN;');
-
-            logVerbose(" ↳ truncating config-attr tables");
+        if (recreate) {            
+            logVerbose(" ↳ purging and recreating cs_tables");
+            await client.query(await csCreate({
+                purge: true, 
+                init: true, 
+                execute: false, 
+                silent: true, 
+                schema, 
+            }));
+        } else {
+            logVerbose(" ↳ truncating cs_tables");
             await client.query(await csTruncate({
-                client,
                 execute: false, 
                 init: true, 
-                silent: true, 
-                permissionsUpdateOnly,
+                silent: true,
                 client
             }));
+        }                
 
-            if (csConfigAttrKeyEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attribute keys (%d)", csConfigAttrKeyEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
-            }
-            if (csConfigAttrValueEntriesArray.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attributes values (%d)", csConfigAttrValueEntriesArray.length));
-                await singleRowFiller(client, stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
-            }
-            if (csConfigAttrValues4A.length > 0) {
-                logVerbose(util.format(" ↳ importing action-attributes (%d)", csConfigAttrValues4A.length));
-                await nestedFiller(client, stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
-            }            
-            if (csConfigAttrValues4CandX.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attributes (%d)", csConfigAttrValues4CandX.length));
-                await nestedFiller(client, stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
-            }
+        // Import =======================================================================================================
 
-            if (csUserEntries.length > 0) {
-                logVerbose(util.format(" ↳ update passwords (%d)", csUserEntries.length));
-                await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
-                await singleRowFiller(client, stmnts.update_cs_usr_passwords, csUserEntries);
-                await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");        
-            }
-
-            await client.query('COMMIT;');
-        } else {
-            if (recreate) {            
-                logVerbose(" ↳ purging and recreating cs_tables");
-                await client.query(await csCreate({
-                    client,
-                    purge: true, 
-                    init: true, 
-                    execute: false, 
-                    silent: true, 
-                    schema, 
-                }));
-            } else {
-                logVerbose(" ↳ truncating cs_tables");
-                await client.query(await csTruncate({
-                    client,
-                    execute: false, 
-                    init: true, 
-                    silent: true, 
-                    permissionsUpdateOnly,
-                    client
-                }));
-            }                
-
-            // Import =======================================================================================================
-
-            await client.query('BEGIN;');
-            if (csDomainEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing domains (%d)", csDomainEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
-            }
-            if (csUgEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing usergroups (%d)", csUgEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_ug, csUgEntries);
-            }
-            if (csUserEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing users (%d)", csUserEntries.length));
-                await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
-                await singleRowFiller(client, stmnts.simple_cs_usr, csUserEntries);
-                await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");        
-            }
-            if (csUgMembershipEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing user memberships (%d)", csUgMembershipEntries.length));
-                await nestedFiller(client, stmnts.nested_cs_ug_membership, csUgMembershipEntries);
-            }            
-            if (csConfigAttrKeyEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attribute keys (%d)", csConfigAttrKeyEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
-            }
-            if (csConfigAttrValueEntriesArray.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attributes values (%d)", csConfigAttrValueEntriesArray.length));
-                await singleRowFiller(client, stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
-            }
-            if (csConfigAttrValues4A.length > 0) {
-                logVerbose(util.format(" ↳ importing action-attributes (%d)", csConfigAttrValues4A.length));
-                await nestedFiller(client, stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
-            }            
-            if (csConfigAttrValues4CandX.length > 0) {
-                logVerbose(util.format(" ↳ importing config-attributes (%d)", csConfigAttrValues4CandX.length));
-                await nestedFiller(client, stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
-            }
-            if (csPolicyRulesEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing policyRules (%d)", csPolicyRulesEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_policy_rules, csPolicyRulesEntries);
-            }
-            if (csIconEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing icons (%d)", csIconEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_icon, csIconEntries);
-            }
-            if (csJavaClassEntries.length > 0) {        
-                logVerbose(util.format(" ↳ importing java classes (%d)", csJavaClassEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_java_class, csJavaClassEntries);
-            }
-            if (csClassEntries.length > 0) {                
-                logVerbose(util.format(" ↳ importing classes (%d)", csClassEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
-            }
-            if (csTypeEntries.length > 0) {                
-                logVerbose(util.format(" ↳ importing types (%d)", csTypeEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_type, csTypeEntries);       
-            }
-            if (csAttrDbTypeEntries.length > 0) {        
-                logVerbose(util.format(" ↳ importing simple attributes (%d)", csAttrDbTypeEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_attr4dbTypes, csAttrDbTypeEntries);        
-            }
-            if (csAttrCidsTypeEntries.length > 0) {        
-                logVerbose(util.format(" ↳ importing complex attributes (%d)", csAttrCidsTypeEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_attr4cidsTypes, csAttrCidsTypeEntries);       
-            }
-            if (csClassAttrEntries.length > 0) {        
-                logVerbose(util.format(" ↳ importing class attributes (%d)", csClassAttrEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_class_attr, csClassAttrEntries);        
-            }
-            if (csClassPermEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing class permission (%d)", csClassPermEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_class_permission, csClassPermEntries);
-            }           
-            if (csAttrPermEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing attribute permission (%d)", csAttrPermEntries.length));
-                await dbtools.nestedFiller(client, stmnts.complex_cs_attr_permission, csAttrPermEntries);
-            }               
-            if (csCatNodeEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing cat-nodes (%d)", csCatNodeEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_cat_node, csCatNodeEntries);
-            }                
-            if (csCatLinkEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing cat-links (%d)", csCatLinkEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_cat_link, csCatLinkEntries);
-            }                
-            if (csCatNodePermEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing cat-node permissions (%d)", csCatNodePermEntries.length));
-                await nestedFiller(client, stmnts.complex_cs_ug_cat_node_permission, csCatNodePermEntries);
-            }                
-            if (csDynamicChildrenHelperEntries.length > 0) {
-                logVerbose(util.format(" ↳ importing dynamic children helpers (%d)", csDynamicChildrenHelperEntries.length));
-                await singleRowFiller(client, stmnts.simple_cs_dynamic_children_helper, csDynamicChildrenHelperEntries);
-            }                
-            logVerbose(" ↳ (re)creating dynamic children helper functions");   
-            await client.query(stmnts.execute_cs_refresh_dynchilds_functions);    
-            await client.query('COMMIT;');
+        await client.query('BEGIN;');
+        if (csDomainEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing domains (%d)", csDomainEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
         }
+        if (csUgEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing usergroups (%d)", csUgEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_ug, csUgEntries);
+        }
+        if (csUserEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing users (%d)", csUserEntries.length));
+            await client.query("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
+            await singleRowFiller(client, stmnts.simple_cs_usr, csUserEntries);
+            await client.query("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");        
+        }
+        if (csUgMembershipEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing user memberships (%d)", csUgMembershipEntries.length));
+            await nestedFiller(client, stmnts.nested_cs_ug_membership, csUgMembershipEntries);
+        }            
+        if (csConfigAttrKeyEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing config-attribute keys (%d)", csConfigAttrKeyEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_config_attr_key, csConfigAttrKeyEntries);
+        }
+        if (csConfigAttrValueEntriesArray.length > 0) {
+            logVerbose(util.format(" ↳ importing config-attributes values (%d)", csConfigAttrValueEntriesArray.length));
+            await singleRowFiller(client, stmnts.simple_cs_config_attr_value, csConfigAttrValueEntriesArray);
+        }
+        if (csConfigAttrValues4A.length > 0) {
+            logVerbose(util.format(" ↳ importing action-attributes (%d)", csConfigAttrValues4A.length));
+            await nestedFiller(client, stmnts.complex_cs_config_attrs4A, csConfigAttrValues4A);
+        }            
+        if (csConfigAttrValues4CandX.length > 0) {
+            logVerbose(util.format(" ↳ importing config-attributes (%d)", csConfigAttrValues4CandX.length));
+            await nestedFiller(client, stmnts.complex_cs_config_attrs_C_X, csConfigAttrValues4CandX);
+        }
+        if (csPolicyRulesEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing policyRules (%d)", csPolicyRulesEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_policy_rules, csPolicyRulesEntries);
+        }
+        if (csIconEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing icons (%d)", csIconEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_icon, csIconEntries);
+        }
+        if (csJavaClassEntries.length > 0) {        
+            logVerbose(util.format(" ↳ importing java classes (%d)", csJavaClassEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_java_class, csJavaClassEntries);
+        }
+        if (csClassEntries.length > 0) {                
+            logVerbose(util.format(" ↳ importing classes (%d)", csClassEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class, csClassEntries);
+        }
+        if (csTypeEntries.length > 0) {                
+            logVerbose(util.format(" ↳ importing types (%d)", csTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_type, csTypeEntries);       
+        }
+        if (csAttrDbTypeEntries.length > 0) {        
+            logVerbose(util.format(" ↳ importing simple attributes (%d)", csAttrDbTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_attr4dbTypes, csAttrDbTypeEntries);        
+        }
+        if (csAttrCidsTypeEntries.length > 0) {        
+            logVerbose(util.format(" ↳ importing complex attributes (%d)", csAttrCidsTypeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_attr4cidsTypes, csAttrCidsTypeEntries);       
+        }
+        if (csClassAttrEntries.length > 0) {        
+            logVerbose(util.format(" ↳ importing class attributes (%d)", csClassAttrEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class_attr, csClassAttrEntries);        
+        }
+        if (csClassPermEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing class permission (%d)", csClassPermEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_class_permission, csClassPermEntries);
+        }           
+        if (csAttrPermEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing attribute permission (%d)", csAttrPermEntries.length));
+            await dbtools.nestedFiller(client, stmnts.complex_cs_attr_permission, csAttrPermEntries);
+        }               
+        if (csCatNodeEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing cat-nodes (%d)", csCatNodeEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_cat_node, csCatNodeEntries);
+        }                
+        if (csCatLinkEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing cat-links (%d)", csCatLinkEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_cat_link, csCatLinkEntries);
+        }                
+        if (csCatNodePermEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing cat-node permissions (%d)", csCatNodePermEntries.length));
+            await nestedFiller(client, stmnts.complex_cs_ug_cat_node_permission, csCatNodePermEntries);
+        }                
+        if (csDynamicChildrenHelperEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing dynamic children helpers (%d)", csDynamicChildrenHelperEntries.length));
+            await singleRowFiller(client, stmnts.simple_cs_dynamic_children_helper, csDynamicChildrenHelperEntries);
+        }                
+        logVerbose(" ↳ (re)creating dynamic children helper functions");   
+        await client.query(stmnts.execute_cs_refresh_dynchilds_functions);    
+        await client.query('COMMIT;');
     } else {
         logDebug(prepared, { table: true });
 
@@ -231,7 +193,7 @@ async function csImport(options) {
     }
 }   
 
-export function prepareImport(config, permissionsUpdateOnly = false) {
+export function prepareImport(configs) {
     logVerbose(" ↳ normalizing configuration");
     let {
         domains, 
@@ -246,7 +208,7 @@ export function prepareImport(config, permissionsUpdateOnly = false) {
         xmlFiles,
         structureSqlFiles,
         helperSqlFiles
-    } = normalizeConfig(config, permissionsUpdateOnly);
+    } = normalizeConfigs(configs);
 
     logVerbose(util.format(" ↳ preparing domains (%d)", domains.length));
     let { 
@@ -271,16 +233,6 @@ export function prepareImport(config, permissionsUpdateOnly = false) {
         csConfigAttrValues4CandX , 
         csConfigAttrValueEntriesArray
     } = prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles);
-
-    if (permissionsUpdateOnly) {
-        return {
-            csUserEntries, 
-            csConfigAttrKeyEntries, 
-            csConfigAttrValues4A, 
-            csConfigAttrValues4CandX, 
-            csConfigAttrValueEntriesArray, 
-        };        
-    }
 
     logVerbose(util.format(" ↳ preparing policyRules (%d)", policyRules.length));
     let { 

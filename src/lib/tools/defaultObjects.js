@@ -1,3 +1,23 @@
+//config
+export const defaultConfigConnection = {
+    jdbc: null,
+    user: null,
+    password: null,
+};
+
+export const defaultConfigSync = {
+    noDropTables: [],
+    noDropColumns: [],
+};
+
+export const defaultConfig = {
+    configsDir: ".",
+    connection: defaultConfigConnection,
+    domainName: null,
+    maxFileLength: 80,
+    sync: defaultConfigSync,
+};
+
 // attrPerms
 export const defaultAttrPerm = {
     key: null,

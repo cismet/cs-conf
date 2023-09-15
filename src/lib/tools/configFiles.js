@@ -3,25 +3,48 @@ import util from 'util';
 import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
 import * as constants from './constants.js';
-import { logVerbose } from './tools';
+import { logOut, logVerbose } from './tools';
+import normalizeConfig from '../normalize/config.js';
 
-export function readConfigFile(file, sub) {    
-    logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "sReading", file));
+export function readConfigJsonFile(file) {    
+    logVerbose(util.format("Reading config file '%s' ...", file));
+    let config = fs.existsSync(file) ? readConfigFile(file, true) : {};
+    return normalizeConfig(config);
+}
+
+export function readConfigFile(file, sub = false) {    
+    logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "Reading", file));
     return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : null
 }
 
-export function readConfigFiles(configDir, topics) {
-    logVerbose(util.format("Reading config directory '%s' ...", configDir));
-    if (!fs.existsSync(configDir)) {
-        throw util.format("readConfigFiles: %s does not exist", configDir);
+export function writeConfigFile(config, file, sub = false) {    
+    writeFile(config != null ? stringify(config, { maxLength: global.config.maxFileLength }): null, file, sub);
+}
+
+function writeFile(content, file, sub = false) {    
+    if (content != null) {
+        logVerbose(util.format("%s file '%s'", sub ? " ↳ writing" : "Writing", file));
+        fs.writeFileSync(file, content, "utf8");
+    } else if (fs.existsSync(file)) {
+        logVerbose(util.format("%s file '%s'", sub ? " ↳ deleting" : "Deleting", file));
+        fs.rmSync(file);
+    }
+}
+
+export function readConfigFiles(configsDir, topics) {
+    logOut(util.format("Reading config directory '%s' ...", configsDir));
+    if (!fs.existsSync(configsDir)) {
+        throw util.format("readConfigFiles: %s does not exist", configsDir);
     }
 
-    let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configDir), true) : null;
-    let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configDir), true) : null;
-    let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configDir), true) : null;
+    let config = readConfigFile(util.format("%s/config.json", configsDir), true);
+
+    let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : null;
+    let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configsDir), true) : null;
+    let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configsDir), true) : null;
     let xmlFiles = new Map();
     if (topics == null || topics.includes("accessControl")) {
-        let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
+        let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, constants.confAttrXmlSnippetsFolder);
         if (fs.existsSync(confAttrXmlSnippetsFolder)) {
             for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
                 if (extname(file) == ".xml") {
@@ -31,20 +54,19 @@ export function readConfigFiles(configDir, topics) {
         }
     }
 
-    let policyRules = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/policyRules.json", configDir), true) : null;
-    let classPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classPerms.json", configDir), true) : null;
-    let attrPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/attrPerms.json", configDir), true) : null;
-    let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configDir), true) : null;
-    let sync = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/sync.json", configDir), true) : null;
+    let policyRules = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/policyRules.json", configsDir), true) : null;
+    let classPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classPerms.json", configsDir), true) : null;
+    let attrPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/attrPerms.json", configsDir), true) : null;
+    let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configsDir), true) : null;
 
-    let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configDir), true) : null;
-    let dynchildhelpers = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configDir), true) : null;
+    let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configsDir), true) : null;
+    let dynchildhelpers = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configsDir), true) : null;
 
     let structureSqlFiles=new Map();
     let helperSqlFiles=new Map();
 
     if (topics == null || topics.includes("structure")) {
-        let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
+        let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, constants.structureDynamicChildrenFolder);
         if (fs.existsSync(structureDynamicChildrenFolder)) {
             for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
                 if (extname(file) == ".sql") {
@@ -53,7 +75,7 @@ export function readConfigFiles(configDir, topics) {
             }    
         }
 
-        let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
+        let structureHelperStatementsFolder = util.format("%s/%s", configsDir, constants.structureHelperStatementsFolder);
         if (fs.existsSync(structureHelperStatementsFolder)) {
             for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
                 if (extname(file) == ".sql") {
@@ -64,6 +86,7 @@ export function readConfigFiles(configDir, topics) {
     }
 
     return {
+        config,
         domains, 
         policyRules, 
         usergroups, 
@@ -75,19 +98,13 @@ export function readConfigFiles(configDir, topics) {
         dynchildhelpers,
         xmlFiles,
         structureSqlFiles,
-        helperSqlFiles,
-        sync
+        helperSqlFiles
     }
 }
 
-export function checkConfigFolders(configDir, overwrite = false) {
-    if (fs.existsSync(configDir) && !overwrite) {
-        throw util.format("checkConfigFolders: %s exists already", configDir);
-    }
-}
-
-export function writeConfigFiles(config, configDir, overwrite = false) {
+export function writeConfigFiles(configs, configsDir) {
     let {
+        config,
         domains,
         policyRules,
         usermanagement,
@@ -100,19 +117,30 @@ export function writeConfigFiles(config, configDir, overwrite = false) {
         structureSqlFiles,
         helperSqlFiles,
         xmlFiles
-    } = config;
+    } = configs;
 
-    let confAttrXmlSnippetsFolder = util.format("%s/%s", configDir, constants.confAttrXmlSnippetsFolder);
-    let structureDynamicChildrenFolder = util.format("%s/%s", configDir, constants.structureDynamicChildrenFolder);
-    let structureHelperStatementsFolder = util.format("%s/%s", configDir, constants.structureHelperStatementsFolder);
-
-    // create configDir structure
-
-    if (fs.existsSync(configDir) && overwrite) {
-        //fs.rmSync(configDir, { recursive: true, force: true }) // DANGER!!!
+    if (
+        fs.existsSync(configsDir) 
+        && fs.statSync(configsDir).isDirectory() 
+        && !fs.existsSync(util.format("%s/config.json", configsDir)) 
+        && fs.readdirSync(configsDir).length !== 0
+    ) {
+        throw util.format("checkConfigFolders: target directory %s exists but is not empty and has no config.json", configsDir);
     }
-    if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir);
+
+    logOut(util.format("Writing config directory '%s' ...", configsDir));
+
+    let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, constants.confAttrXmlSnippetsFolder);
+    let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, constants.structureDynamicChildrenFolder);
+    let structureHelperStatementsFolder = util.format("%s/%s", configsDir, constants.structureHelperStatementsFolder);
+
+    // create configsDir structure
+
+    if (fs.existsSync(configsDir)) {
+        //fs.rmSync(configsDir, { recursive: true, force: true }) // DANGER!!!
+    }
+    if (!fs.existsSync(configsDir)) {
+        fs.mkdirSync(configsDir);
     }
 
     if (fs.existsSync(confAttrXmlSnippetsFolder)) {
@@ -138,65 +166,30 @@ export function writeConfigFiles(config, configDir, overwrite = false) {
 
     // writing files
 
-    if (domains != null) {
-        fs.writeFileSync(util.format("%s/domains.json", configDir), stringify(domains), "utf8");
-    } else if (fs.existsSync(util.format("%s/domains.json", configDir))) {
-        fs.rmSync(util.format("%s/domains.json", configDir));
-    }
-    if (policyRules != null) {
-        fs.writeFileSync(util.format("%s/policyRules.json", configDir), stringify(policyRules), "utf8");
-    } else if (fs.existsSync(util.format("%s/policyRules.json", configDir))) {
-        fs.rmSync(util.format("%s/policyRules.json", configDir));
-    }
-    if (usergroups != null) {
-        fs.writeFileSync(util.format("%s/usergroups.json", configDir), stringify(usergroups, { maxLength: 160 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/usergroups.json", configDir))) {
-        fs.rmSync(util.format("%s/usergroups.json", configDir));
-    }
-    if (usermanagement != null) {
-        fs.writeFileSync(util.format("%s/usermanagement.json", configDir), stringify(usermanagement, { maxLength: 120 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/usermanagement.json", configDir))) {
-        fs.rmSync(util.format("%s/usermanagement.json", configDir));
-    }
-    if (classes != null) {
-        fs.writeFileSync(util.format("%s/classes.json", configDir), stringify(classes, { maxLength: 100 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/classes.json", configDir))) {
-        fs.rmSync(util.format("%s/classes.json", configDir));
-    }
-    if (classPerms != null) {
-        fs.writeFileSync(util.format("%s/classPerms.json", configDir), stringify(classPerms, { maxLength: 100 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/classPerms.json", configDir))) {
-        fs.rmSync(util.format("%s/classPerms.json", configDir));
-    }
-    if (attrPerms != null) {
-        fs.writeFileSync(util.format("%s/attrPerms.json", configDir), stringify(attrPerms, { maxLength: 100 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/attrPerms.json", configDir))) {
-        fs.rmSync(util.format("%s/attrPerms.json", configDir));
-    }
-    if (structure != null) {
-        fs.writeFileSync(util.format("%s/structure.json", configDir), stringify(structure, { maxLength: 80 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/structure.json", configDir))) {
-        fs.rmSync(util.format("%s/structure.json", configDir));
-    }
-    if (dynchildhelpers != null) {
-        fs.writeFileSync(util.format("%s/dynchildhelpers.json", configDir), stringify(dynchildhelpers, { maxLength: 80 }), "utf8");
-    } else if (fs.existsSync(util.format("%s/dynchildhelpers.json", configDir))) {
-        fs.rmSync(util.format("%s/dynchildhelpers.json", configDir));
-    }
+    writeConfigFile(config, util.format("%s/config.json", configsDir), true);
+    writeConfigFile(domains, util.format("%s/domains.json", configsDir), true);
+    writeConfigFile(policyRules, util.format("%s/policyRules.json", configsDir), true);
+    writeConfigFile(usergroups, util.format("%s/usergroups.json", configsDir), true);
+    writeConfigFile(usermanagement, util.format("%s/usermanagement.json", configsDir), true);
+    writeConfigFile(classes, util.format("%s/classes.json", configsDir), true);
+    writeConfigFile(classPerms, util.format("%s/classPerms.json", configsDir), true);
+    writeConfigFile(attrPerms, util.format("%s/attrPerms.json", configsDir), true);
+    writeConfigFile(structure, util.format("%s/structure.json", configsDir), true);
+    writeConfigFile(dynchildhelpers, util.format("%s/dynchildhelpers.json", configsDir), true);
 
     if (helperSqlFiles != null && helperSqlFiles.size > 0) {
         helperSqlFiles.forEach(async (value, key) => {
-            fs.writeFileSync(util.format("%s/%s", structureHelperStatementsFolder, key), value, "utf8");
+            writeFile(value, util.format("%s/%s", structureHelperStatementsFolder, key), true)
         });
     }
     if (structureSqlFiles != null && structureSqlFiles.size > 0) {
         structureSqlFiles.forEach(async (value, key) => {
-            fs.writeFileSync(util.format("%s/%s", structureDynamicChildrenFolder, key), value, "utf8");
+            writeFile(value, util.format("%s/%s", structureDynamicChildrenFolder, key), true)
         });
     }
     if (xmlFiles != null && xmlFiles.size > 0) {
         xmlFiles.forEach(async (xmlToSave, fileName) => {
-            fs.writeFileSync(util.format("%s/%s", confAttrXmlSnippetsFolder, fileName), xmlToSave, "utf8");
+            writeFile(xmlToSave, util.format("%s/%s", confAttrXmlSnippetsFolder, fileName), true)
         });
     }
 }
