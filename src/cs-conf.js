@@ -29,18 +29,28 @@ const configOption = {
 	description: 'the config.json config file',
 	default: 'config.json',
 };
-
+const silentOption = { 
+	flags: '-q, --silent', 
+	description: 'disables default output (error and debug message are still printed)',
+};
+const verboseOption = { 
+	flags: '-v, --verbose',
+	description: 'enables verbose output',
+};
+const debugOption = { 
+	flags:'--debug',
+	description: 'enables debug output',
+};
 const runtimePropertiesOption = { 
 	flags: '-r, --runtime-properties <filepath>', 
 	description: 'the runtime.properties to load the database connection informations from',
 	default: 'runtime.properties',
 };
 const schemaOption = { 
-	flags: '-s, --schema <schema>', 
+	flags: '--schema <schema>', 
 	description: 'the schema where the cs-Tables are',
 	default: 'public'
 };
-
 const sourceOption = { 
 	flags: '-s, --source <dirpath>', 
 	description: 'the source directory of the config files',
@@ -48,22 +58,18 @@ const sourceOption = {
 };
 
 program
-	.version('1.1.1')
-	.option('-q, --silent', 'disables default output (error and debug message are still printed)')
-	.option('-v, --verbose', 'enables verbose output')
-	.option('--debug', 'enables debug output')
+	.version('1.1.2')
 ;
 
 let commands = new Map();
-	
-program.command(' ');
-
-commands.set('config', program.command('config'));
-commands.get('config')
-	.description('creates a new config file')
+program.command('\t');
+commands.set('config', program.command('config').description('creates a new config file')
 	.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 	.option("-f, --file <filepath>", "the config file", "config.json")
 	.option('-N, --normalized', 'normalize the config')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csConfig, {
@@ -71,21 +77,22 @@ commands.get('config')
 			runtimeProperties: cmd.runtimeProperties,
 			normalize: cmd.normalized !== undefined,
 		}, cmd);
-	});
-
-program.command(' ');	
-
-commands.set('import', program.command('import'));
-commands.get('import')
+	})
+);
+program.command('\t');	
+commands.set('import', program.command('import')
 	.description('imports the (cs_*)meta-information from a configuration directory into a database')
-	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
 	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
+	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csImport, {
@@ -97,85 +104,96 @@ commands.get('import')
 			backupDir: cmd.backupDir,
 			schema: cmd.schema, 
 		}, cmd);
-	});
-
-commands.set('backup', program.command('backup'));
-commands.get('backup')
+	})
+);
+commands.set('backup', program.command('backup')
 	.description('backups the (cs_*)meta-information to a file')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-d, --dir <dirpath>', 'the directory where the backups should be written')
 	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csBackup, {
 			dir: cmd.dir, 
 			prefix: cmd.prefix, 
 		}, cmd);
-	});
- 
-commands.set('restore', program.command('restore'));
-commands.get('restore')
+	})
+);
+commands.set('restore', program.command('restore')
 	.description('restores the (cs_*)meta-information from a backup file')
-	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-f, --file <file>', 'the backup file to restore from', null)
+	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csRestore, {
 			file: cmd.file,
 			execute: cmd.restore !== undefined,
 		}, cmd);
-	});
- 
-program.command(' ');
-
-commands.set('check', program.command('check'));
-commands.get('check')
+	})
+); 
+program.command('\t');
+commands.set('check', program.command('check')
 	.description('checks configuration for errors')
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csCheck, {
 			sourceDir: cmd.source
 		}, cmd);
-	});
-
-commands.set('normalize', program.command('normalize'));
-commands.get('normalize')
+	})
+);
+commands.set('normalize', program.command('normalize')
 	.description('normalizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to normalize the config into', null)
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csNormalize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
-	});
-	
-commands.set('reorganize', program.command('reorganize'));
-commands.get('reorganize')
+	})
+);	
+commands.set('reorganize', program.command('reorganize')
 	.description('reorganizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to reorganize the config into', null)
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csReorganize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
-	});
-	 
-commands.set('simplify', program.command('simplify'));
-commands.get('simplify')
+	})
+);	 
+commands.set('simplify', program.command('simplify')
 	.description('simplifies the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to simplify the config into', null)
 	.option('-R, --reorganize', 'reorganize config')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csSimplify, { 
@@ -183,16 +201,18 @@ commands.get('simplify')
 			targetDir: cmd.target,
 			reorganize: cmd.reorganize !== undefined,
 		}, cmd);
-	});
-	 	 
-program.command(' ');
-
-commands.set('password', program.command('password'));
-commands.get('password')
+	})
+);	 	 
+program.command('\t');
+commands.set('password', program.command('password')
 	.description('generates password hashes for the usermanagement')
+	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csPassword, {
@@ -200,14 +220,12 @@ commands.get('password')
 			password: cmd.password,
 			salt: cmd.salt,
 		}, cmd);
-	});
-
-commands.set('sync', program.command('sync'));
-commands.get('sync')
+	})
+);
+commands.set('sync', program.command('sync')
 	.description('synchronizes classes with the database')
-	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
 	.option('-C, --from-config', 'use local config directory instead of exporting the configuration from the database')
@@ -215,6 +233,10 @@ commands.get('sync')
 	.option('-S, --output-sql', 'outputs SQL statements')
 	.option('-D, --output-drop', 'outputs drop statements')
 	.option('-I, --output-ignore', 'outputs ignore snippets')
+	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csSync, { 
@@ -228,17 +250,18 @@ commands.get('sync')
 			outputIgnore: cmd.outputIgnore !== undefined,
 			execute: cmd.sync !== undefined,
 		}, cmd);
-	});
-
-program.command(' ');
-
-commands.set('export', program.command('export'));
-commands.get('export')
+	})
+);
+program.command('\t');
+commands.set('export', program.command('export')
 	.description('exports the (cs_*)meta-information of a database into a configuration directory')
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
 	.option('-N, --normalized', 'normalized config')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {		
 		setGlobals(cmd);
 		cs(csExport, {
@@ -246,16 +269,18 @@ commands.get('export')
 			targetDir: cmd.target,
 			normalize: cmd.normalized !== undefined,
 		}, cmd);
-	});
-
-commands.set('create', program.command('create'));
-commands.get('create')
+	})
+);
+commands.set('create', program.command('create')
 	.description('creates and initializes cs_tables on a given database')
-	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-P, --purge', 'purges before creating')
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
+	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csCreate, {
@@ -264,35 +289,39 @@ commands.get('create')
 			execute: cmd.create !== undefined,
 			schema: cmd.schema,
 		}, cmd);
-	});
-	
-commands.set('truncate', program.command('truncate'));
-commands.get('truncate')
+	})
+);	
+commands.set('truncate', program.command('truncate')
 	.description('truncates the cs_tables on a given database')
-	.option('-X, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
+	.option('-X, --truncate', 'activates the real truncate (expected for avoiding unintended truncating)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csTruncate, {
 			execute: cmd.truncate !== undefined,
 			init: cmd.init !== undefined,
 		}, cmd);
-	});
-
-commands.set('purge', program.command('purge'));
-commands.get('purge')
+	})
+);
+commands.set('purge', program.command('purge')
 	.description('purges the cs_tables on a given database')
-	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-X, --purge', 'activates the real purge (expected for avoiding unintended purging)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csPurge, {
 			execute: cmd.purge !== undefined,
 		}, cmd);	
-	});
-
-program.command(' ');
+	})
+);
+program.command('\t');
 
 let execution = program.parse(process.argv);
 
@@ -305,9 +334,9 @@ if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
 // ============================
 
 function setGlobals(cmd) {
-	global.silent = cmd.parent.silent !== undefined;
-	global.verbose = cmd.parent.verbose !== undefined;
-	global.debug = cmd.parent.debug !== undefined;	
+	global.silent = cmd.silent !== undefined;
+	global.verbose = cmd.verbose !== undefined;
+	global.debug = cmd.debug !== undefined;	
 	global.config = readConfigJsonFile(cmd.config)	
 }
 
