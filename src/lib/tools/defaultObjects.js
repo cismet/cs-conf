@@ -11,9 +11,10 @@ export const defaultConfigSync = {
 };
 
 export const defaultConfig = {
-    configsDir: ".",
+    configsDir: '.',
     connection: defaultConfigConnection,
     domainName: null,
+    schema: 'public',
     maxFileLength: 80,
     sync: defaultConfigSync,
 };
@@ -88,7 +89,7 @@ export const defaultClass = {
     editor: null,
     renderer: null,
     attributes: null,
-    attributesOrder: "auto",
+    attributesOrder: 'auto',
     additionalAttributes: null,
     comment: null,
 };
@@ -97,7 +98,7 @@ export const defaultClass = {
 export const defaultConfigurationAttributes = {
     key: null,
     groups: [],
-    keygroup: "__no_group__",
+    keygroup: '__no_group__',
     value: null,
     xmlfile: null,
     comment: null,

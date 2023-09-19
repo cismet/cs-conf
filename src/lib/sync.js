@@ -407,7 +407,7 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { sourceDir, targetDir, noExport, purge, outputSql, outputDrop, outputIgnore, execute, schema } = options;
+    let { sourceDir, targetDir, noExport, purge, outputSql, outputDrop, outputIgnore, execute } = options;
 
     let configs;
     if (noExport) {
@@ -428,7 +428,7 @@ async function csSync(options) {
             targetDir = util.format("/tmp/sync_%s.%s", prefix, formattedDate);
         }
     
-        await csExport({ mainDomain, targetDir, schema });
+        await csExport({ mainDomain, targetDir });
         configs = readConfigFiles(targetDir, [ "classes" ]);        
         if (tmpTargetDir) {
             fs.rmSync(targetDir, { recursive: true, force: true });    
@@ -436,6 +436,8 @@ async function csSync(options) {
     }
 
     let normalized = normalizeConfigs(configs);
+
+    let schema = global.config.schema;
 
     let ignoreRules = ["cs_*", "geometry_columns", "spatial_ref_sys"];
     if (global.config.sync.noDropTables != null) {
@@ -482,7 +484,7 @@ async function csSync(options) {
     let ignoredSequences = [];
 
     for (let tablesResult of tablesResults) {
-        let tableKey = (tablesResult.table_schema !== "public" ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
+        let tableKey = (tablesResult.table_schema !== schema ? util.format("%s.%s", tablesResult.table_schema, tablesResult.table_name) : tablesResult.table_name);
 
         let ignoreTable = false;
         for (let ignoreRule of ignoreRules) {

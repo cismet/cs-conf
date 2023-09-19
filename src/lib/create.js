@@ -4,8 +4,9 @@ import csPurge from './purge';
 import { logInfo, logOut, logVerbose } from './tools/tools';
 
 async function csCreate(options) {
-    let { purge, init, execute, silent, schema, main } = options
+    let { purge, init, execute, silent, main } = options
     let client = global.client;
+    let schema = global.config.schema;
     
     let statements = [];
 

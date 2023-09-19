@@ -19,7 +19,7 @@ import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 import { readConfigFiles } from './tools/configFiles';
 
 async function csImport(options) {
-    let { sourceDir, backupDir, backupPrefix, execute, init, recreate, schema, skipBackup } = options;
+    let { sourceDir, backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
@@ -29,6 +29,7 @@ async function csImport(options) {
     logOut("Preparing import ...");
     let prepared = prepareImport(configs);
 
+    let schema = global.config.schema;
     let client = await initClient(global.config.connection, execute);
 
     // Execution ---------------------------------

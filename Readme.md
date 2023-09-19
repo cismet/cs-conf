@@ -1,53 +1,33 @@
-# cs-conf
+# csconf
 
-Exports and imports the configuration of an existing cids system in version 6.1. it is usefull for migrating
-systems (or parts of systems) and it will be the tool to upgrade systems to version 7 and above.
-
+cids system manipilation and mantainance tool
 
 ## Usage
 ```
-Usage: cs-conf [options] [command]
+Usage: csconf [options] [command]
 
-  Options:
+Options:
+  -V, --version         output the version number
+  -h, --help            output usage information
 
-    -V, --version        output the version number
-    -c, --config <path>  set config path.  (default: ./runtime.properties)
-    -h, --help           output usage information
-
-  Commands:
-
-    import|i [options]   imports the meta information into the cids system
-    export|e [options]   exports the meta information of a cids system
-
-
-Usage: export|e [options]
-
-  exports the meta information of a cids system
-
-  Options:
-
-    -f, --configDir <configDir>  the configDir where the config will be written (default: config)
-    -s, --schema <schema>  the schema where the cs-Tables are (default: public)
-    -o, --only             Only export the following topics
-    -x, --skip             Skip the export of the following topics
-    -C, --classes          The classes with their attributes and permissions
-    -S, --structure        The structure information of the system
-    -U, --usermanagement   The users and their groups
-    -h, --help             output usage information
-
-Usage: import|i [options]
-
-  imports the meta information into the cids system
-
-  Options:
-
-    -f, --configDir <configDir>  the configDir where the config is (default: config)
-    -s, --schema <schema>  the schema where the cs-Tables will be (default: public)
-    -o, --only             Only import the following topics
-    -x, --skip             Skip the import of the following topics
-    -C, --classes          The classes with their attributes and permissions
-    -S, --structure        The structure information of the system
-    -U, --usermanagement   The users and their groups
-    -h, --help             output usage information
-
+Commands:
+  
+  config [options]      creates a new config file
+  
+  import [options]      imports the (cs_*)meta-information from a configuration directory into a database
+  backup [options]      backups the (cs_*)meta-information to a file
+  restore [options]     restores the (cs_*)meta-information from a backup file
+  
+  check [options]       checks configuration for errors
+  normalize [options]   normalizes the configuration in a given directory
+  reorganize [options]  reorganizes the configuration in a given directory
+  simplify [options]    simplifies the configuration in a given directory
+  
+  password [options]    generates password hashes for the usermanagement
+  sync [options]        synchronizes classes with the database
+  
+  export [options]      exports the (cs_*)meta-information of a database into a configuration directory
+  create [options]      creates and initializes cs_tables on a given database
+  truncate [options]    truncates the cs_tables on a given database
+  purge [options]       purges the cs_tables on a given database
 ```

@@ -79,7 +79,7 @@ async function createConfig(mainDomain) {
 }
 
 async function csExport(options) {
-    let  { schema, targetDir, normalized = false } = options;
+    let  { targetDir, normalized = false } = options;
 
     let client = await initClient(global.config.connection);
 

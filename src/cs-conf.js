@@ -46,11 +46,6 @@ const runtimePropertiesOption = {
 	description: 'the runtime.properties to load the database connection informations from',
 	default: 'runtime.properties',
 };
-const schemaOption = { 
-	flags: '--schema <schema>', 
-	description: 'the schema where the cs-Tables are',
-	default: 'public'
-};
 const sourceOption = { 
 	flags: '-s, --source <dirpath>', 
 	description: 'the source directory of the config files',
@@ -83,7 +78,6 @@ program.command('\t');
 commands.set('import', program.command('import')
 	.description('imports the (cs_*)meta-information from a configuration directory into a database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
 	.option('--skip-backup', 'does not create backup before import')	
@@ -102,7 +96,6 @@ commands.set('import', program.command('import')
 			sourceDir: cmd.source,
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,
-			schema: cmd.schema, 
 		}, cmd);
 	})
 );
@@ -225,7 +218,6 @@ commands.set('password', program.command('password')
 commands.set('sync', program.command('sync')
 	.description('synchronizes classes with the database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
 	.option('-C, --from-config', 'use local config directory instead of exporting the configuration from the database')
@@ -240,7 +232,6 @@ commands.set('sync', program.command('sync')
 	.action(async (cmd) => {
 		setGlobals(cmd);
 		cs(csSync, { 
-			schema: cmd.schema,
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			noExport: cmd.fromConfig !== undefined,
@@ -256,7 +247,6 @@ program.command('\t');
 commands.set('export', program.command('export')
 	.description('exports the (cs_*)meta-information of a database into a configuration directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
 	.option('-N, --normalized', 'normalized config')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
@@ -265,7 +255,6 @@ commands.set('export', program.command('export')
 	.action(async (cmd) => {		
 		setGlobals(cmd);
 		cs(csExport, {
-			schema: cmd.schema, 
 			targetDir: cmd.target,
 			normalize: cmd.normalized !== undefined,
 		}, cmd);
@@ -274,7 +263,6 @@ commands.set('export', program.command('export')
 commands.set('create', program.command('create')
 	.description('creates and initializes cs_tables on a given database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(schemaOption.flags, schemaOption.description, schemaOption.default)
 	.option('-P, --purge', 'purges before creating')
 	.option('-I, --init', 'initializes some entries (for setting up a virgin database)')
 	.option('-X, --create', 'activates the real create (expected for avoiding unintended creating)')
@@ -287,7 +275,6 @@ commands.set('create', program.command('create')
 			purge: cmd.purge !== undefined,
 			init: cmd.init !== undefined,
 			execute: cmd.create !== undefined,
-			schema: cmd.schema,
 		}, cmd);
 	})
 );	
