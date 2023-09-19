@@ -135,6 +135,7 @@ export const defaultNode = {
     children: [],
     key: null,
     link: null,
+    url: null,
 };
 
 // usergroups

@@ -12,7 +12,8 @@
         "dynamic_children_file": "node1.sql",
         "children": [],
         "key": null,
-        "link": null
+        "link": null,
+        "url": null
     },
     {
         "name": "Node 2",
@@ -39,10 +40,12 @@
                 "dynamic_children_file": "node3.sql",
                 "children": [],
                 "key": null,
-                "link": null
+                "link": null,
+                "url": null
             }
         ],
         "key": null,
-        "link": null
+        "link": null,
+        "url": null
     }
 ]

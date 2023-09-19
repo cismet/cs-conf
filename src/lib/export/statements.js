@@ -149,13 +149,13 @@ export const nodes = `
 SELECT 
     node.id, 
     node.name, 
-    node.url AS descr, 
     class.table_name AS table, 
     node.derive_permissions_from_class, 
     node.object_id, 
     node.node_type, 
     node.is_root, 
     node.org, 
+    CASE WHEN url.id IS NOT NULL THEN url_base.prot_prefix || url_base.server || url_base.path || url.object_name ELSE node.url END AS url,
     node.dynamic_children, 
     node.dynamic_children_filename,
     node.sql_sort, 
@@ -165,6 +165,8 @@ SELECT
     node.artificial_id
 FROM
     cs_cat_node AS node
+    LEFT OUTER JOIN url ON (node.descr = url.id) 
+    LEFT OUTER JOIN url_base ON (url.url_base_id = url_base.id) 
     LEFT OUTER JOIN cs_class AS class ON node.class_id = class.id
     LEFT OUTER JOIN cs_policy AS policy ON node.policy = policy.id
 ORDER BY node.id

@@ -53,7 +53,7 @@ const sourceOption = {
 };
 
 program
-	.version('1.1.2')
+	.version('1.1.3')
 ;
 
 let commands = new Map();
@@ -328,8 +328,7 @@ function setGlobals(cmd) {
 }
 
 async function cs(csFunction, options, cmd ) {
-	let command = cmd != null ? cmd._name : null;
-
+	let functionName = csFunction.name;
 	logDebug(util.format("starting %s with these options:", csFunction.name));
 	logDebug(clean(options));
 	logDebug("-".repeat(10));
@@ -339,10 +338,10 @@ async function cs(csFunction, options, cmd ) {
 		process.exit(0);
 	} catch (e) {
 		let logTemplate = "Error while execution of %s:";
-		let logLength = logTemplate.length + command.length - 2;
+		let logLength = logTemplate.length + functionName.length - 2;
 		
 		logErr("⚠".repeat(logLength));
-		logErr(util.format(logTemplate, command));
+		logErr(util.format(logTemplate, functionName));
 		logErr();
 		logErr(e);
 		if (e.stack) {
@@ -352,8 +351,8 @@ async function cs(csFunction, options, cmd ) {
 		logErr("⚠".repeat(logLength));
 
 		if (!global.silent) {
-			if (command != null) {
-				commands.get(command).outputHelp();
+			if (functionName != null) {
+				commands.get(functionName).outputHelp();
 			} else {
 				program.outputHelp();
 			}

@@ -406,7 +406,7 @@ INSERT INTO cs_cat_node (
         dpc, null, i, aid, tid
     FROM (SELECT
         UNNEST($1::text[]), -- name
-        UNNEST($2::text[]), -- descrurl
+        UNNEST($2::text[]), -- url
         UNNEST($3::text[]), -- table_name
         UNNEST($4::integer[]), -- object_id
         UNNEST($5::text[]), -- node_type

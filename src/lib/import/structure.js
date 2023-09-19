@@ -37,7 +37,7 @@ function prepareCatNodes(nodes, structureSqlFiles) {
             node.id = csCatNodeEntries.length;
             let catNode = [
                 node.name,
-                node.descr,
+                node.url,
                 node.table,
                 node.object_id,
                 node.node_type,
