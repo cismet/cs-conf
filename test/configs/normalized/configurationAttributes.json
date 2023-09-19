@@ -1,5 +1,5 @@
 [
-    { "key": "inTestGroup", "groups": [], "keygroup": "testGroup", "value": null, "xmlfile": null, "comment": null },
-    { "key": "withoutGroupNorValue", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null },
-    { "key": "InNoGroupWithValue", "groups": [], "keygroup": "__no_group__", "value": "test", "xmlfile": null, "comment": null }
+    { "key": "inTestGroup", "groups": [], "keygroup": "testGroup", "value": null, "xmlfile": null },
+    { "key": "withoutGroupNorValue", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null },
+    { "key": "InNoGroupWithValue", "groups": [], "keygroup": "__no_group__", "value": "test", "xmlfile": null }
 ]

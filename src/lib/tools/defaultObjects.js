@@ -24,7 +24,6 @@ export const defaultAttrPerm = {
     key: null,
     read: [],
     write: [],
-    comment: null,
 };
 
 // classPerms
@@ -32,7 +31,6 @@ export const defaultClassPerm = {
     table: null,
     read: [],
     write: [],
-    comment: null,
 };
 
 // classes
@@ -53,7 +51,6 @@ export const defaultAttribute = {
     hidden: false,
     indexed: false,
     arrayKey: null,
-    comment: null,
 };
 
 export const defaultAttributePrimary = (table_name, pk) => { 
@@ -91,7 +88,6 @@ export const defaultClass = {
     attributes: null,
     attributesOrder: 'auto',
     additionalAttributes: null,
-    comment: null,
 };
 
 // domains, usergroups, usermanagement
@@ -101,7 +97,6 @@ export const defaultConfigurationAttributes = {
     keygroup: '__no_group__',
     value: null,
     xmlfile: null,
-    comment: null,
 };
 
 // domains
@@ -109,7 +104,6 @@ export const defaultDomain = {
     main: false,
     domainname: null,
     configurationAttributes: [],
-    comment: null,
 };
 
 // dynchildhelpers
@@ -117,7 +111,6 @@ export const defaultDynchildhelper = {
     name: null,
     code: null,
     code_file: null,
-    comment: null,
 };
 
 // policyRules
@@ -125,7 +118,6 @@ export const defaultPolicyRule = {
     policy: null,
     permission: null,
     default_value: null,
-    comment: null,
 };
 
 // structure
@@ -143,7 +135,6 @@ export const defaultNode = {
     children: [],
     key: null,
     link: null,
-    comment: null,
 };
 
 // usergroups
@@ -151,7 +142,6 @@ export const defaultUserGroup = {
     key: null,
     descr: null,
     configurationAttributes: [],
-    comment: null,
 };
 
 // usermanagement
@@ -162,7 +152,6 @@ export const defaultUser = {
     salt: null,
     groups: [],
     configurationAttributes: [],
-    comment: null,
 };
 
 export function copyFromTemplate(object, template) {

@@ -35,8 +35,7 @@
                 "defaultValue": "nextval('table1_seq')",
                 "hidden": true,
                 "indexed": false,
-                "arrayKey": null,
-                "comment": null
+                "arrayKey": null
             },
             {
                 "field": "field1",
@@ -54,12 +53,10 @@
                 "defaultValue": null,
                 "hidden": false,
                 "indexed": false,
-                "arrayKey": null,
-                "comment": null
+                "arrayKey": null
             }
         ],
         "attributesOrder": "auto",
-        "additionalAttributes": null,
-        "comment": null
+        "additionalAttributes": null
     }          
 ]

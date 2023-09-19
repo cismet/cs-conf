@@ -2,12 +2,10 @@
     {
         "key": "Group1@LOCAL",
         "descr": "Descr1",
-        "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null, "comment": null }],
-        "comment": null
+        "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null }]
     }, { 
         "key": "Group2@LOCAL",
         "descr": null,
-        "configurationAttributes": [],
-        "comment": null
+        "configurationAttributes": []
     }
 ]
