@@ -28,7 +28,7 @@ import reorganizeDomains from '../src/lib/reorganize/domains';
 import reorganizeDynchildhelpers from '../src/lib/reorganize/dynchildhelpers';
 import reorganizePolicyRules from '../src/lib/reorganize/policyRules';
 import reorganizeStructure from '../src/lib/reorganize/usergroups';
-import reorganizeManagement from '../src/lib/reorganize/usermanagement';
+import reorganizeUsermanagement from '../src/lib/reorganize/usermanagement';
 import reorganizeConfigurationAttributes from '../src/lib/reorganize/configurationAttributes';
 
 let should = chai.should();
@@ -51,7 +51,7 @@ const allFunctions = {
     'policyRules': { normalize: normalizePolicyRules, simplify: simplifyPolicyRules, reorganize: reorganizePolicyRules, },
     'structure': { normalize: normalizeStructure, simplify: simplifyStructure, reorganize: null, },
     'usergroups': { normalize: normalizeUsergroups, simplify: simplifyUsergroups, reorganize: reorganizeStructure, },
-    'usermanagement': { normalize: normalizeUsermanagement, simplify: simplifyUsermanagement, reorganize: reorganizeManagement, },
+    'usermanagement': { normalize: normalizeUsermanagement, simplify: simplifyUsermanagement, reorganize: reorganizeUsermanagement, },
 };
 
 describe('Normalize:', () => {

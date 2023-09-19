@@ -47,13 +47,18 @@ const runtimePropertiesOption = {
 	default: 'runtime.properties',
 };
 const sourceOption = { 
-	flags: '-s, --source <dirpath>', 
-	description: 'the source directory of the config files',
+	flags: '--source <dirpath>', 
+	description: 'the source directory to read the config files from',
+	default: null,
+};
+const targetOption = { 
+	flags: '--target <dirpath>', 
+	description: 'the target directory to write the config files to',
 	default: null,
 };
 
 program
-	.version('1.1.3')
+	.version('1.1.4')
 ;
 
 let commands = new Map();
@@ -67,7 +72,7 @@ commands.set('config', program.command('config').description('creates a new conf
 	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csConfig, {
+		cs('config', csConfig, {
 			file: cmd.file, 
 			runtimeProperties: cmd.runtimeProperties,
 			normalize: cmd.normalized !== undefined,
@@ -89,7 +94,7 @@ commands.set('import', program.command('import')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csImport, {
+		cs('import', csImport, {
 			execute: cmd.import !== undefined,
 			recreate: cmd.recreate !== undefined, 
 			skipBackup: cmd.skipBackup !== undefined,
@@ -109,7 +114,7 @@ commands.set('backup', program.command('backup')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csBackup, {
+		cs('backup', csBackup, {
 			dir: cmd.dir, 
 			prefix: cmd.prefix, 
 		}, cmd);
@@ -125,7 +130,7 @@ commands.set('restore', program.command('restore')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csRestore, {
+		cs('restore', csRestore, {
 			file: cmd.file,
 			execute: cmd.restore !== undefined,
 		}, cmd);
@@ -141,7 +146,7 @@ commands.set('check', program.command('check')
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csCheck, {
+		cs('check', csCheck, {
 			sourceDir: cmd.source
 		}, cmd);
 	})
@@ -149,14 +154,15 @@ commands.set('check', program.command('check')
 commands.set('normalize', program.command('normalize')
 	.description('normalizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to normalize the config into', null)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csNormalize, { 
+		cs('normalize', csNormalize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
@@ -165,14 +171,15 @@ commands.set('normalize', program.command('normalize')
 commands.set('reorganize', program.command('reorganize')
 	.description('reorganizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to reorganize the config into', null)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csReorganize, { 
+		cs('reorganize', csReorganize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
@@ -181,7 +188,8 @@ commands.set('reorganize', program.command('reorganize')
 commands.set('simplify', program.command('simplify')
 	.description('simplifies the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to simplify the config into', null)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-R, --reorganize', 'reorganize config')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
@@ -189,7 +197,7 @@ commands.set('simplify', program.command('simplify')
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csSimplify, { 
+		cs('simplify', csSimplify, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			reorganize: cmd.reorganize !== undefined,
@@ -198,20 +206,30 @@ commands.set('simplify', program.command('simplify')
 );	 	 
 program.command('\t');
 commands.set('password', program.command('password')
-	.description('generates password hashes for the usermanagement')
+	.description('changes or sets the password for an user.')
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
+	.option('-R, --reorganize', 'reorganize config')
+	.option('-N, --normalized', 'normalize the user informations')
+	.option('-C, --change', 'change the password of an already existing user')	
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csPassword, {
+		cs('password', csPassword, {
+			sourceDir: cmd.source,
+			targetDir: cmd.target,
 			loginName: cmd.user,
 			password: cmd.password,
 			salt: cmd.salt,
+			reorganize: cmd.reorganize !== undefined,
+			normalized: cmd.normalized !== undefined,
+			change: cmd.change !== undefined,
 		}, cmd);
 	})
 );
@@ -231,7 +249,7 @@ commands.set('sync', program.command('sync')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csSync, { 
+		cs('sync', csSync, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			noExport: cmd.fromConfig !== undefined,
@@ -254,7 +272,7 @@ commands.set('export', program.command('export')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {		
 		setGlobals(cmd);
-		cs(csExport, {
+		cs('export', csExport, {
 			targetDir: cmd.target,
 			normalize: cmd.normalized !== undefined,
 		}, cmd);
@@ -271,7 +289,7 @@ commands.set('create', program.command('create')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csCreate, {
+		cs('create', csCreate, {
 			purge: cmd.purge !== undefined,
 			init: cmd.init !== undefined,
 			execute: cmd.create !== undefined,
@@ -288,7 +306,7 @@ commands.set('truncate', program.command('truncate')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csTruncate, {
+		cs('truncate', csTruncate, {
 			execute: cmd.truncate !== undefined,
 			init: cmd.init !== undefined,
 		}, cmd);
@@ -303,7 +321,7 @@ commands.set('purge', program.command('purge')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		setGlobals(cmd);
-		cs(csPurge, {
+		cs('purge', csPurge, {
 			execute: cmd.purge !== undefined,
 		}, cmd);	
 	})
@@ -327,8 +345,7 @@ function setGlobals(cmd) {
 	global.config = readConfigJsonFile(cmd.config)	
 }
 
-async function cs(csFunction, options, cmd ) {
-	let functionName = csFunction.name;
+async function cs(functionName, csFunction, options, cmd ) {
 	logDebug(util.format("starting %s with these options:", csFunction.name));
 	logDebug(clean(options));
 	logDebug("-".repeat(10));

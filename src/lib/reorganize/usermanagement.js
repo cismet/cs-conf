@@ -1,6 +1,6 @@
 import reorganizeConfigurationAttributes from "./configurationAttributes";
 
-function reorganizeManagement(usermanagement) {
+function reorganizeUsermanagement(usermanagement) {
     if (usermanagement != null) {
         for (let user of usermanagement) {
             if (user.configurationAttributes) {
@@ -20,4 +20,4 @@ function reorganizeManagement(usermanagement) {
     return usermanagement;
 }
 
-export default reorganizeManagement;
+export default reorganizeUsermanagement;
