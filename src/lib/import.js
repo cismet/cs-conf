@@ -72,6 +72,8 @@ async function csImport(options) {
 
         logOut(util.format("Importing configuration to '%s' ...", getClientInfo()));
 
+        await client.query('BEGIN;');
+
         if (recreate) {            
             logVerbose(" ↳ purging and recreating cs_tables");
             await client.query(await csCreate({
@@ -93,7 +95,6 @@ async function csImport(options) {
 
         // Import =======================================================================================================
 
-        await client.query('BEGIN;');
         if (csDomainEntries.length > 0) {
             logVerbose(util.format(" ↳ importing domains (%d)", csDomainEntries.length));
             await singleRowFiller(client, stmnts.simple_cs_domain, csDomainEntries);    
