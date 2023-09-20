@@ -7,8 +7,11 @@ import { logOut, logVerbose } from './tools';
 import normalizeConfig from '../normalize/config.js';
 
 export function readConfigJsonFile(file) {    
+    if (!fs.existsSync(file)) {
+        throw util.format("config file '%s' doesn't exist", file);
+    }
     logVerbose(util.format("Reading config file '%s' ...", file));
-    let config = fs.existsSync(file) ? readConfigFile(file, true) : {};
+    let config = readConfigFile(file, true) ;
     return normalizeConfig(config);
 }
 
@@ -37,6 +40,13 @@ export function readConfigFiles(configsDir, topics) {
         throw util.format("readConfigFiles: %s does not exist", configsDir);
     }
 
+    if (
+        fs.existsSync(configsDir) 
+        && fs.statSync(configsDir).isDirectory() 
+        && !fs.existsSync(util.format("%s/config.json", configsDir))
+    ) {
+        throw util.format("checkConfigFolders: target directory %s exists but has no config.json", configsDir);
+    }    
     let config = readConfigFile(util.format("%s/config.json", configsDir), true);
 
     let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : null;

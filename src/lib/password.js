@@ -1,11 +1,12 @@
 import cryptoRandomString from 'crypto-random-string';
 import md5 from 'md5';
 import util from 'util';
-import { logErr, logInfo, logOut } from './tools/tools';
+import { logInfo, logOut } from './tools/tools';
 import { readConfigFiles, writeConfigFiles } from './tools/configFiles';
-import { reorganizeConfigs } from './reorganize';
 import { normalizeUser } from './normalize/usermanagement';
 import reorganizeUsermanagement from './reorganize/usermanagement';
+import stringify from 'json-stringify-pretty-compact';
+import simplifyUsermanagement, { simplifyUser } from './simplify/usermanagement';
 
 function createSalt(length = 16) {
     return cryptoRandomString({ length });
@@ -16,7 +17,7 @@ function createHash(password, salt = createSalt()) {
 }
 
 async function csPassword(options) {
-    let { sourceDir, targetDir, loginName, password, salt, reorganize = false, normalized = false, change = false } = options;
+    let { sourceDir, targetDir, loginName, password, groups, salt, reorganize = false, normalized = false, add = false, print = false } = options;
 
     if (loginName == null && password == null) {
         throw "user and password are mandatory";
@@ -28,6 +29,35 @@ async function csPassword(options) {
         throw "password is mandatory";
     }
 
+    if (!(add || print) && normalized) {
+        throw "normalized can only be combined with -A|--add or -P|--print";
+    }
+
+    if (!(add || print) && groups != null) {
+        throw "groups can only be combined with -A|--add or -P|--print";
+    }
+
+    if (print && reorganize) {
+        throw "print and reorganize can't be combined";
+    }
+
+    let newSalt = salt != null ? salt : createSalt();
+    let newUser = {
+        login_name: loginName,
+        salt: newSalt,
+        pw_hash: createHash(password, newSalt),
+        groups: groups != null ? groups.split(',') : undefined,
+    };
+
+    newUser = normalized ? normalizeUser(newUser) : simplifyUser(newUser);
+
+    if (print) {
+        logOut(stringify(newUser), { noSilent: true });
+        if (!add) {
+            return;
+        }
+    }
+
     let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
     let configs = readConfigFiles(configsDir);
     
@@ -35,41 +65,38 @@ async function csPassword(options) {
 
     let { usermanagement } = configs;
 
-
-    let found = false;
-    for (let user of usermanagement) {
-        let origLoginName = user.login_name;
-        if (origLoginName == loginName) {
-            if (found) {
-                throw util.format("duplicate entry for user '%'");
+    if (add) {
+        for (let user of usermanagement) {
+            let origLoginName = user.login_name;
+            if (origLoginName == loginName) {
+                throw util.format('user %s already exists', loginName);
             }
-            found = true;
-            if (!change) {
-                throw util.format("user %s already exists. Use '-C|--change' to change the password");
-            } else {
+        }
+        usermanagement.push(newUser);
+        logInfo(util.format("user '%s' added", loginName));
+    } else {
+        let found = false;
+        for (let user of usermanagement) {
+            let origLoginName = user.login_name;
+            if (origLoginName == loginName) {
+                if (found) {
+                    throw util.format("duplicate entry for user '%'", loginName);
+                }
+                found = true;
                 user.salt = salt != null ? salt : user.salt != null ? user.salt : createSalt();
                 console.log(user.salt);
                 let oldHash = user.pw_hash;
                 let newHash = createHash(password, user.salt);
                 if (newHash == oldHash) {
-                    throw util.format("the new password for user %s is identical with the old password");
+                    throw util.format("the new password for user %s is identical with the old password", loginName);
                 }
-                user.pw_hash = newHash;
+                user.pw_hash = newHash;                
                 logInfo(util.format("password changed for '%s'", loginName));
             }
         }
-    }
-    if (!found) {
-        if (change) {
-            throw util.format("user '%s' not found. password can't be changed", loginName);
+        if (!found) {
+            throw util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName);
         }
-        let user = {
-            login_name: loginName,
-            salt: salt != null ? salt : createSalt(),
-            pw_hash: createHash(password, salt),
-        };
-        usermanagement.push(normalized ? normalizeUser(user) : user);
-        logInfo(util.format("user '%s' added", loginName));
     }
 
     targetDir = targetDir ? targetDir : global.config.configsDir;

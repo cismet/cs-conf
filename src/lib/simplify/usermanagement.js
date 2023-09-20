@@ -3,27 +3,47 @@ import { removeLocalDomain } from "../tools/cids";
 import { copyFromTemplate, defaultUser } from "../tools/defaultObjects";
 import simplifyConfigurationAttributes from "./configurationAttributes";
 
-function simplifyUsermanagement(usermanagement, mainDomain) {
+export function simplifyUsermanagement(usermanagement, mainDomain) {
     if (usermanagement == null) return null;
 
     let simplified = [];
     for (let user of normalizeUsermanagement(usermanagement)) {
-        if (user != null) {
-            simplified.push(copyFromTemplate(Object.assign({}, user, { 
-                groups: simplifyGroups(user.groups, mainDomain),
-                configurationAttributes: simplifyConfigurationAttributes(user.configurationAttributes, mainDomain),
-            }), defaultUser));
+        let simplifiedUser = simplifyUser(user, mainDomain);
+        if (simplifiedUser != null) {
+            simplified.push(simplifiedUser);
         }
     }
     return simplified.length > 0 ? simplified : undefined;
 }
 
-function simplifyGroups(groups, mainDomain = null) {
+export function simplifyUser(user, mainDomain) {
+    let simplified = null;
+    if (user != null) {
+        simplified = copyFromTemplate(Object.assign({}, user, { 
+            groups: simplifyGroups(user.groups, mainDomain),
+            configurationAttributes: simplifyConfigurationAttributes(user.configurationAttributes, mainDomain),
+        }), defaultUser)
+    }
+    return simplified
+}
+
+export function simplifyGroup(group, mainDomain = null) {
+    let simplified = null;
+    if (group != null) {
+        simplified = removeLocalDomain(group, mainDomain);
+    }
+    return simplified;
+}
+
+export function simplifyGroups(groups, mainDomain = null) {
     let simplified = [];
 
     if (groups != null) {
         for (let group of groups) {
-            simplified.push(removeLocalDomain(group, mainDomain));
+            let simplifiedGroup = simplifyGroup(group);
+            if (simplifiedGroup != null) {
+                simplified.push(simplifiedGroup);
+            }
         }
     }
 

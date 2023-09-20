@@ -58,7 +58,7 @@ const targetOption = {
 };
 
 program
-	.version('1.1.4')
+	.version('1.1.5')
 ;
 
 let commands = new Map();
@@ -71,7 +71,6 @@ commands.set('config', program.command('config').description('creates a new conf
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('config', csConfig, {
 			file: cmd.file, 
 			runtimeProperties: cmd.runtimeProperties,
@@ -93,7 +92,6 @@ commands.set('import', program.command('import')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
  	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('import', csImport, {
 			execute: cmd.import !== undefined,
 			recreate: cmd.recreate !== undefined, 
@@ -113,7 +111,6 @@ commands.set('backup', program.command('backup')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('backup', csBackup, {
 			dir: cmd.dir, 
 			prefix: cmd.prefix, 
@@ -129,7 +126,6 @@ commands.set('restore', program.command('restore')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('restore', csRestore, {
 			file: cmd.file,
 			execute: cmd.restore !== undefined,
@@ -145,7 +141,6 @@ commands.set('check', program.command('check')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('check', csCheck, {
 			sourceDir: cmd.source
 		}, cmd);
@@ -161,7 +156,6 @@ commands.set('normalize', program.command('normalize')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('normalize', csNormalize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
@@ -178,7 +172,6 @@ commands.set('reorganize', program.command('reorganize')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('reorganize', csReorganize, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
@@ -196,7 +189,6 @@ commands.set('simplify', program.command('simplify')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('simplify', csSimplify, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
@@ -212,24 +204,27 @@ commands.set('password', program.command('password')
 	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
+	.option('-g, --groups <groups>', 'comma separated list of groups')
 	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
 	.option('-R, --reorganize', 'reorganize config')
 	.option('-N, --normalized', 'normalize the user informations')
-	.option('-C, --change', 'change the password of an already existing user')	
+	.option('-A, --add', 'add a new user with the given password and groups')	
+	.option('-P, --print', 'print the user. can be combined with -A|--add to also add the user to the config files')	
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('password', csPassword, {
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			loginName: cmd.user,
+			groups: cmd.groups,
 			password: cmd.password,
 			salt: cmd.salt,
 			reorganize: cmd.reorganize !== undefined,
 			normalized: cmd.normalized !== undefined,
-			change: cmd.change !== undefined,
+			add: cmd.add !== undefined,
+			print: cmd.print !== undefined,
 		}, cmd);
 	})
 );
@@ -248,7 +243,6 @@ commands.set('sync', program.command('sync')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('sync', csSync, { 
 			sourceDir: cmd.source,
 			targetDir: cmd.target,
@@ -271,7 +265,6 @@ commands.set('export', program.command('export')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {		
-		setGlobals(cmd);
 		cs('export', csExport, {
 			targetDir: cmd.target,
 			normalize: cmd.normalized !== undefined,
@@ -288,7 +281,6 @@ commands.set('create', program.command('create')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('create', csCreate, {
 			purge: cmd.purge !== undefined,
 			init: cmd.init !== undefined,
@@ -305,7 +297,6 @@ commands.set('truncate', program.command('truncate')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('truncate', csTruncate, {
 			execute: cmd.truncate !== undefined,
 			init: cmd.init !== undefined,
@@ -320,7 +311,6 @@ commands.set('purge', program.command('purge')
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		setGlobals(cmd);
 		cs('purge', csPurge, {
 			execute: cmd.purge !== undefined,
 		}, cmd);	
@@ -338,19 +328,17 @@ if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
 
 // ============================
 
-function setGlobals(cmd) {
-	global.silent = cmd.silent !== undefined;
-	global.verbose = cmd.verbose !== undefined;
-	global.debug = cmd.debug !== undefined;	
-	global.config = readConfigJsonFile(cmd.config)	
-}
-
 async function cs(functionName, csFunction, options, cmd ) {
-	logDebug(util.format("starting %s with these options:", csFunction.name));
-	logDebug(clean(options));
-	logDebug("-".repeat(10));
-
 	try {		
+		logDebug(util.format("starting %s with these options:", functionName));
+		logDebug(clean(options));
+		logDebug("-".repeat(10));
+
+		global.silent = cmd.silent !== undefined;
+		global.verbose = cmd.verbose !== undefined;
+		global.debug = cmd.debug !== undefined;	
+		global.config = cmd.config !== undefined ? readConfigJsonFile(cmd.config) : null	
+
 		await csFunction(Object.assign({}, options, { main: true }));
 		process.exit(0);
 	} catch (e) {
@@ -367,7 +355,7 @@ async function cs(functionName, csFunction, options, cmd ) {
 		}
 		logErr("⚠".repeat(logLength));
 
-		if (!global.silent) {
+		if (global.verbose) {
 			if (functionName != null) {
 				commands.get(functionName).outputHelp();
 			} else {
