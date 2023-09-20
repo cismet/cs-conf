@@ -7,6 +7,7 @@ import { normalizeUser } from './normalize/usermanagement';
 import reorganizeUsermanagement from './reorganize/usermanagement';
 import stringify from 'json-stringify-pretty-compact';
 import simplifyUsermanagement, { simplifyUser } from './simplify/usermanagement';
+import normalizeConfig from './normalize/config';
 
 function createSalt(length = 16) {
     return cryptoRandomString({ length });
@@ -56,6 +57,10 @@ async function csPassword(options) {
         if (!add) {
             return;
         }
+    }
+
+    if (global.config == null) {
+        global.config = normalizeConfig({ configDir: sourceDir });
     }
 
     let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
