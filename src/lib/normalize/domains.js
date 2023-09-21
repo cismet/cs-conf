@@ -6,17 +6,17 @@ function normalizeDomains(domains) {
     let normalized = [];
 
     if (domains != null) {
-        let main = null;
+        let mainDomain = null;
         let domainnames = [];
         for (let domain of domains) {
             if (domain.domainname == null) throw "normalizeDomains: missing domainname";
             if (domainnames.includes(domain.domainname)) throw util.format("normalizeDomains: domain '%s' already exists", domain.domainname);
 
-            if (domain.main === true || domains.length == 1) {
-                if (main != null) {
-                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, main.domainname);
+            if (domain.domainname == global.config.domainName || domains.length == 1) {
+                if (mainDomain != null) {
+                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, mainDomain.domainname);
                 }
-                main = Object.assign(domain, { main: true });
+                mainDomain = domain;
             } else {
                 domainnames.push(domain.domainname);
                 normalized.push(Object.assign({}, defaultDomain, domain, {
@@ -26,15 +26,15 @@ function normalizeDomains(domains) {
             }
         }
 
-        if (main != null) {
+        if (mainDomain != null) {
             if (!domainnames.includes("LOCAL")) {
-                normalized.push(Object.assign({}, defaultDomain, main, { main: false, domainname: "LOCAL" }, {
-                    configurationAttributes: normalizeConfigurationAttributes(main.configurationAttributes)
+                normalized.push(Object.assign({}, defaultDomain, mainDomain, { domainname: "LOCAL" }, {
+                    configurationAttributes: normalizeConfigurationAttributes(mainDomain.configurationAttributes)
                 }));    
             }
 
-            if (!domainnames.includes(main.domainname)) {
-                normalized.push(Object.assign({}, defaultDomain, { main: true, domainname: main.domainname }));            
+            if (!domainnames.includes(mainDomain.domainname)) {
+                normalized.push(Object.assign({}, defaultDomain, { domainname: mainDomain.domainname }));            
             }
         }
     }

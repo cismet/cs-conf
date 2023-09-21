@@ -1,7 +1,6 @@
 [
     {
         "login_name": "User1",
-        "administrator": true,
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "groups": ["Group1", "Group2"],

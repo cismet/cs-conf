@@ -55,6 +55,7 @@ const allFunctions = {
 };
 
 describe('Normalize:', () => {
+    global.config = { mainDomain: "TEST "};
     describe('empty: normalize([]) == []', testEmpty);
     describe('smoke1: normalize(expected) == normalized', testSmoke1);
     describe('smoke2: normalize(data) == normalized', testSmoke2);

@@ -1,10 +1,8 @@
 [
   {
-    "main": false,
     "domainname": "LOCAL",
     "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null }]
   }, { 
-    "main": true,
     "domainname": "TEST",
     "configurationAttributes": []
   }

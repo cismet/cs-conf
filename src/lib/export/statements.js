@@ -35,7 +35,6 @@ export const users = `
 SELECT 
     login_name, 
     TO_CHAR(last_pwd_change, 'DD.MM.YYYY, HH24:MI:SS') AS last_pwd_change, 
-    administrator, 
     trim(pw_hash) AS pw_hash, 
     trim(salt) AS salt
 FROM cs_usr

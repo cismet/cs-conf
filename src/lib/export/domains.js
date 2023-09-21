@@ -17,13 +17,12 @@ function analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs) {
         if (attributes) {
             domain.configurationAttributes = attributes;        
         }
-        domain.main = domain.domainname == mainDomain;
-        if (domain.main) {
+        if (domain.domainname == mainDomain) {
             mainDomainFound = true;
         }
     }
     if (!mainDomainFound) {
-        domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain, main: true}));
+        domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain }));
     }
     return { domains };
 }

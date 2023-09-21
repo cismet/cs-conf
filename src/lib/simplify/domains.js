@@ -11,7 +11,7 @@ function simplifyDomains(domains, mainDomain = null) {
     for (let domain of normalizeDomains(domains)) {
         if (domain != null) {
             domainnames.push(domain.domainname);
-            if (domain.main === true && domain.configurationAttributes.length == 0 && domain.comment == null) {
+            if (domain.domainname == global.config.domainName && domain.configurationAttributes.length == 0 && domain.comment == null) {
                 simpleMain = domain;
             }
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
@@ -29,7 +29,6 @@ function simplifyDomains(domains, mainDomain = null) {
                 continue;
             } else if (domain.domainname === "LOCAL") {               
                 simplified.unshift(copyFromTemplate(Object.assign({}, domain, { 
-                    main: true,
                     domainname: simpleMain.domainname,
                 }), defaultDomain));                
             } else {
@@ -40,9 +39,6 @@ function simplifyDomains(domains, mainDomain = null) {
         }
     }
 
-    if (simplified.length == 1) {
-        simplified[0].main = undefined;
-    }
     return simplified.length > 0 ? simplified : undefined;
 }
 

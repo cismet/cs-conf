@@ -101,7 +101,6 @@ export const defaultConfigurationAttributes = {
 
 // domains
 export const defaultDomain = {
-    main: false,
     domainname: null,
     configurationAttributes: [],
 };
@@ -151,6 +150,7 @@ export const defaultUser = {
     pw_hash: null,
     salt: null,
     last_pwd_change: null,
+    shadow: [],
     groups: [],
     configurationAttributes: [],
 };

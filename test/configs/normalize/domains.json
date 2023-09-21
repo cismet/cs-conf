@@ -1,6 +1,5 @@
 [
     {
-      "main": true,
       "domainname": "TEST",
       "configurationAttributes": [{ "key": "test" }]
     }
