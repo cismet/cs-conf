@@ -4,7 +4,6 @@
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "last_pwd_change": null,
-        "shadow": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
         "configurationAttributes": [ { "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null } ]
     }, {
@@ -12,7 +11,6 @@
         "pw_hash": "HashyHash2",
         "salt": "saltySalt2",
         "last_pwd_change": null,
-        "shadow": [],        
         "groups": ["Group3@LOCAL"],
         "configurationAttributes": []
     }, {
@@ -20,7 +18,6 @@
         "pw_hash": "HashyHash3",
         "salt": "saltySalt3",
         "last_pwd_change": null,
-        "shadow": [],        
         "groups": [],
         "configurationAttributes": []
     }, {
@@ -28,7 +25,6 @@
         "pw_hash": "HashyHash4",
         "salt": "saltySalt4",
         "last_pwd_change": null,
-        "shadow": [],        
         "groups": [],
         "configurationAttributes": []
     }

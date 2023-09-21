@@ -19,10 +19,8 @@ export function simplifyUsermanagement(usermanagement, mainDomain) {
 export function simplifyUser(user, mainDomain) {
     let simplified = null;
     if (user != null) {
-        let unshadowedGroups = user.groups;
-        
         simplified = copyFromTemplate(Object.assign({}, user, { 
-            groups: simplifyGroups(unshadowedGroups, mainDomain),
+            groups: simplifyGroups(user.groups, mainDomain),
             configurationAttributes: simplifyConfigurationAttributes(user.configurationAttributes, mainDomain),
         }), defaultUser)
     }

@@ -150,7 +150,6 @@ export const defaultUser = {
     pw_hash: null,
     salt: null,
     last_pwd_change: null,
-    shadow: [],
     groups: [],
     configurationAttributes: [],
 };
