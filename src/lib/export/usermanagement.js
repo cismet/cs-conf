@@ -1,16 +1,16 @@
-import * as stmnts from './statements';
+import * as statements from './statements';
 
 async function exportUserManagement(groupConfigAttrs, userConfigAttrs) {
     let client = global.client;
     let {
         rows: groupArray
-    } = await client.query(stmnts.usergroups);
+    } = await client.query(statements.usergroups);
     let {
         rows: userArray
-    } = await client.query(stmnts.users);
+    } = await client.query(statements.users);
     let {
         rows: membership
-    } = await client.query(stmnts.usergroupmembership);
+    } = await client.query(statements.usergroupmembership);
 
     let processed = analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
     return processed;
@@ -64,9 +64,6 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         if (user.administrator === false) {
             delete user.administrator;
         }
-
-        // remove the last_pwd_change
-        delete user.last_pwd_change;
 
     }
     return {

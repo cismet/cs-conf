@@ -22,29 +22,13 @@ INSERT INTO cs_ug (name, descr, domain, prio, id) VALUES (
 `;
 
 export const simple_cs_usr = `
-INSERT INTO cs_usr (login_name, password, last_pwd_change, administrator, pw_hash, salt, last_pw_hash, last_salt, id) VALUES (
+INSERT INTO cs_usr (login_name, pw_hash, salt, last_pwd_change, id) VALUES (
     $1, 
-    '*',
-    CURRENT_TIMESTAMP, 
     $2, 
     $3, 
-    $4, 
-    NULL, 
-    NULL,
+    TO_TIMESTAMP($4, 'DD.MM.YYYY, HH24:MI:SS'), 
     $5
 );
-`;
-
-export const update_cs_usr_passwords = `
-UPDATE cs_usr SET 
-    password = '*', 
-    last_pwd_change = CURRENT_TIMESTAMP, 
-    administrator = $2, 
-    pw_hash = $3, 
-    salt = $4,
-    last_pw_hash = pw_hash, 
-    last_salt = salt
-WHERE login_name = $1 AND $5 = $5;
 `;
 
 export const nested_cs_ug_membership = `

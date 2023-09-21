@@ -5,9 +5,9 @@ function prepareUsermanagement(usermanagement) {
     for (let user of usermanagement) {
         csUserEntries.push([ 
             user.login_name, 
-            user.administrator === true, 
             user.pw_hash, 
             user.salt,
+            user.last_pwd_change,
             csUserEntries.length + 1,
         ]);
         if (user.groups) {

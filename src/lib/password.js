@@ -6,7 +6,7 @@ import { readConfigFiles, writeConfigFiles } from './tools/configFiles';
 import { normalizeUser } from './normalize/usermanagement';
 import reorganizeUsermanagement from './reorganize/usermanagement';
 import stringify from 'json-stringify-pretty-compact';
-import simplifyUsermanagement, { simplifyUser } from './simplify/usermanagement';
+import { simplifyUser } from './simplify/usermanagement';
 import normalizeConfig from './normalize/config';
 
 function createSalt(length = 16) {
@@ -18,7 +18,7 @@ function createHash(password, salt = createSalt()) {
 }
 
 async function csPassword(options) {
-    let { sourceDir, targetDir, loginName, password, groups, salt, reorganize = false, normalized = false, add = false, print = false } = options;
+    let { sourceDir, targetDir, loginName, password, groups, salt, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
 
     if (loginName == null && password == null) {
         throw "user and password are mandatory";
@@ -30,29 +30,27 @@ async function csPassword(options) {
         throw "password is mandatory";
     }
 
-    if (!(add || print) && normalized) {
+    if (!(add || printOnly) && normalized) {
         throw "normalized can only be combined with -A|--add or -P|--print";
     }
 
-    if (!(add || print) && groups != null) {
-        throw "groups can only be combined with -A|--add or -P|--print";
-    }
-
-    if (print && reorganize) {
+    if (printOnly && reorganize) {
         throw "print and reorganize can't be combined";
     }
 
+    let newLastPwdChange = new Date().toLocaleString();
     let newSalt = salt != null ? salt : createSalt();
     let newUser = {
         login_name: loginName,
         salt: newSalt,
         pw_hash: createHash(password, newSalt),
+        last_pwd_change: newLastPwdChange,
         groups: groups != null ? groups.split(',') : undefined,
     };
 
     newUser = normalized ? normalizeUser(newUser) : simplifyUser(newUser);
 
-    if (print) {
+    if (printOnly) {
         logOut(stringify(newUser), { noSilent: true });
         if (!add) {
             return;
@@ -79,6 +77,7 @@ async function csPassword(options) {
         }
         usermanagement.push(newUser);
         logInfo(util.format("user '%s' added", loginName));
+        logOut(stringify(normalized ? normalizeUser(newUser) : simplifyUser(newUser)), { noSilent: true });
     } else {
         let found = false;
         for (let user of usermanagement) {
@@ -88,15 +87,40 @@ async function csPassword(options) {
                     throw util.format("duplicate entry for user '%'", loginName);
                 }
                 found = true;
-                user.salt = salt != null ? salt : user.salt != null ? user.salt : createSalt();
-                console.log(user.salt);
+                let newSalt = salt != null ? salt : user.salt != null ? user.salt : createSalt();
                 let oldHash = user.pw_hash;
                 let newHash = createHash(password, user.salt);
-                if (newHash == oldHash) {
+                if (groups == null && newHash == oldHash) {
                     throw util.format("the new password for user %s is identical with the old password", loginName);
+                }                
+                let newGroups = groups != null ? groups.split(',') : user.groups;
+                // this is for assuring the right order of the properties.
+                // if we would directly assign the properties to the user object,
+                // new properties would appear at the end of the object, and not
+                // at the right position. Thats why we delete everything from user
+                // and readd it in the right order
+                let newInfo = {
+                    salt: newSalt,
+                    pw_hash: newHash,
+                    last_pwd_change: newLastPwdChange,
+                };
+                let modifiedUser = normalizeUser(Object.assign({}, user));
+                for (let key in modifiedUser) {
+                    if (user[key] === undefined && newInfo === undefined) {
+                        delete modifiedUser[key];
+                    }
+                    modifiedUser[key] = (newInfo[key] !== undefined) ? newInfo[key] : user[key]
                 }
-                user.pw_hash = newHash;                
+                for (let key in user) {
+                    delete user[key];
+                }
+                for (let key in modifiedUser) {
+                    user[key] = modifiedUser[key];
+                }
+                // ---
+
                 logInfo(util.format("password changed for '%s'", loginName));
+                logOut(stringify(normalized ? normalizeUser(user) : simplifyUser(user)), { noSilent: true });
             }
         }
         if (!found) {
