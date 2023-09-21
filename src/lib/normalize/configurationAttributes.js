@@ -23,7 +23,9 @@ function normalizeGroups(groups) {
 
     if (groups != null) {
         for (let group of groups) {
-            normalized.push(extendLocalDomain(group));
+            if (group != null) {
+                normalized.push(extendLocalDomain(group));
+            }
         }
     }
 

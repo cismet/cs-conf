@@ -38,13 +38,16 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
                         let groupAndDomain = extractGroupAndDomain(group);                        
                         allConfigurationAttributes.push(Object.assign({}, configurationAttribute, {
                             user: user.login_name,
-                            group: groupAndDomain.group,
-                            domain: groupAndDomain.domain,
+                            group: groupAndDomain != null ? groupAndDomain.group : null,
+                            domain: groupAndDomain != null ? groupAndDomain.domain : 'LOCAAAAAL',
                         }));
                     }
                 } else {
                     configurationAttribute.user = user.login_name;
-                    allConfigurationAttributes.push(configurationAttribute);
+                    allConfigurationAttributes.push(Object.assign({}, configurationAttribute, {
+                        user: user.login_name,
+                        domain: 'LOCAL',
+                    }));
                 }
             }
         }
@@ -61,7 +64,7 @@ function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {
         } else {
             type = 'A';
         }
-        
+
         let fullKey = util.format("%s.%s", allConfigurationAttribute.key, allConfigurationAttribute.keygroup);
         if (!duplicateKeyFinder.has(fullKey)) {
             csConfigAttrKeyEntries.push([
