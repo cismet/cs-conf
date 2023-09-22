@@ -1,17 +1,13 @@
 import { defaultDomain } from '../tools/defaultObjects';
-import * as stmnts from './statements';
 
-async function exportDomains(mainDomain, domainConfigAttrs) {
-    let client = global.client;
-    let {
-        rows: domains
-    } = await client.query(stmnts.domains);
-    return analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs);
-}
-
-function analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs) {
+function exportDomains({ csDomains }, { config, domainConfigAttrs }) {
+    let mainDomain = config.domainName;
+    
+    let domains = [];
     let mainDomainFound = false
-    for (let domain of domains) {
+    for (let csDomain of csDomains) {
+        let domain = Object.assign({}, csDomain);
+        
         //add the configuration attributes
         let attributes = domainConfigAttrs.get(domain.domainname);
         if (attributes) {
@@ -20,6 +16,7 @@ function analyzeAndPreprocess(domains, mainDomain, domainConfigAttrs) {
         if (domain.domainname == mainDomain) {
             mainDomainFound = true;
         }
+        domains.push(domain);
     }
     if (!mainDomainFound) {
         domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain }));

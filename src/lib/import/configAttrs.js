@@ -1,7 +1,7 @@
 import util from 'util';
 import { extractGroupAndDomain } from '../tools/cids';
 
-function prepareConfigAttrs(domains, usergroups, usermanagement, xmlFiles) {    
+function prepareConfigAttrs({ domains, usergroups, usermanagement, xmlFiles }) {
     let csConfigAttrKeyEntries = []
     let csConfigAttrValueEntries = new Map([['true', ['true', null]]]);
     let csConfigAttrValues4A = []; //only action attrs

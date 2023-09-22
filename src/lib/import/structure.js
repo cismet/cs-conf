@@ -109,7 +109,7 @@ function prepareCatNodePerms(nodes) {
     return csCatNodePermEntries;
 }
 
-function prepareStructure(structure, structureSqlFiles, dynchildhelpers, helperSqlFiles) {
+function prepareStructure({ structure, structureSqlFiles, dynchildhelpers, helperSqlFiles }) {
     let linkToNode = new Map();
     let nodes = flattenStructure(structure, linkToNode);
 

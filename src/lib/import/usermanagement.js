@@ -1,4 +1,4 @@
-function prepareUsermanagement(usermanagement) {
+function prepareUsermanagement({ usermanagement }) {
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 

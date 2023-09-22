@@ -1,6 +1,6 @@
 import util from 'util';
 
-function prepareClasses(classes) {
+function prepareClasses({ classes }) {
     let csTypeEntries = [];
     let csJavaClassEntries = [];
     let icons = [];

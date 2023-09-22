@@ -42,7 +42,7 @@ export function simplifyConfigs({
     usermanagement, 
     xmlFiles,    
 }) {
-    let mainDomain = global.config.domainname;
+    let mainDomain = config.domainName;
     return {
         config: simplifyConfig(config), 
         attrPerms: simplifyAttrPerms(attrPerms, mainDomain), 

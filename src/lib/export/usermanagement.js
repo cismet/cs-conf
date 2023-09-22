@@ -1,52 +1,20 @@
-import * as statements from './statements';
-
-async function exportUserManagement(groupConfigAttrs, userConfigAttrs) {
-    let client = global.client;
-    let {
-        rows: groupArray
-    } = await client.query(statements.usergroups);
-    let {
-        rows: userArray
-    } = await client.query(statements.users);
-    let {
-        rows: membership
-    } = await client.query(statements.usergroupmembership);
-
-    let processed = analyzeAndPreprocess(groupArray, userArray, membership, groupConfigAttrs, userConfigAttrs);
-    return processed;
-}
-
-function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfigAttrs, userConfigAttrs) {
-    let usergroups = [];
-    for (let group of groupArray) {
-        let g = {
-            key: group.name + (group.domain.toUpperCase() == 'LOCAL' ? '' : '@' + group.domain)
-        };
-        if (group.descr){
-            g.descr=group.descr;
-        }
-        let attributes = groupConfigAttrs.get(group.name + '@' + group.domain);
-        if (attributes) {
-            g.configurationAttributes = attributes;
-        }
-        usergroups.push(g);
-    }
-    // Users
-
+function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) {
     let userGroupMap = new Map();
-    for (let entry of membership) {
-        let user = userGroupMap.get(entry.login_name);
-        let gkey = entry.groupname + (entry.domainname.toUpperCase() == 'LOCAL' ? '' : '@' + entry.domainname)
+    for (let csUgMembership of csUgMemberships) {
+        let user = userGroupMap.get(csUgMembership.login_name);
+        let gkey = csUgMembership.groupname + (csUgMembership.domainname.toUpperCase() == 'LOCAL' ? '' : '@' + csUgMembership.domainname)
         if (user) {
             user.push(gkey);
         } else {
-            userGroupMap.set(entry.login_name, [gkey]);
+            userGroupMap.set(csUgMembership.login_name, [gkey]);
         }
     }
 
-    //now change the original user store
-    // Usermanagement -----------------------------------------------------------------------
-    for (let user of usermanagement) {
+    let usermanagement = [];
+
+    for (let csUsr of csUsrs) {
+        let user = Object.assign({}, csUsr);
+
         //add the usergroups
         let groups = userGroupMap.get(user.login_name);
         if (groups) {
@@ -64,11 +32,11 @@ function analyzeAndPreprocess(groupArray, usermanagement, membership, groupConfi
         if (user.administrator === false) {
             delete user.administrator;
         }
-
+        usermanagement.push(user);
     }
+
     return {
-        usermanagement,
-        usergroups
+        usermanagement
     }
 
 }

@@ -8,10 +8,10 @@ function simplifyDomains(domains, mainDomain = null) {
     let simplifiedBeforeLocal = [];
     let simpleMain = null;
     let domainnames = [];
-    for (let domain of normalizeDomains(domains)) {
+    for (let domain of normalizeDomains(domains, mainDomain)) {
         if (domain != null) {
             domainnames.push(domain.domainname);
-            if (domain.domainname == global.config.domainName && domain.configurationAttributes.length == 0 && domain.comment == null) {
+            if (domain.domainname == mainDomain && domain.configurationAttributes.length == 0 && domain.comment == null) {
                 simpleMain = domain;
             }
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);

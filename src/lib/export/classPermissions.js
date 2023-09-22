@@ -1,85 +1,50 @@
-import * as stmnts from './statements';
+import { exit } from 'process';
 import util from 'util';
 
-async function exportClassPermissions(classes) {
-    let client = global.client;
-    let {
-        rows: classPermResult
-    } = await client.query(stmnts.classPermissions);
-    return analyzeAndPreprocess(classPermResult, classes);
-}
-
-function analyzeAndPreprocess(classPermResult, classes) {
+function exportClassPermissions({ csUgClassPerms }, { classes }) {
     let classReadPerms = new Map();
     let classWritePerms = new Map();
-    for (let cp of classPermResult) {
-        let ug = util.format("%s@%s", cp.group, cp.domain);
-        let tableReadPermissions = classReadPerms.get(cp.table);
-        if (cp.permission === "read") {
+
+    for (let csUgClassPerm of csUgClassPerms) {
+        let ug = util.format("%s@%s", csUgClassPerm.group, csUgClassPerm.domain);
+        let tableReadPermissions = classReadPerms.get(csUgClassPerm.table);
+        if (csUgClassPerm.permission === "read") {
             if (!tableReadPermissions) {
                 tableReadPermissions = [];
-                classReadPerms.set(cp.table, tableReadPermissions);
+                classReadPerms.set(csUgClassPerm.table, tableReadPermissions);
             }
             tableReadPermissions.push(ug);
-        } else if (cp.permission === "write") {
-            let tableWritePermissions = classWritePerms.get(cp.table);
+        } else if (csUgClassPerm.permission === "write") {
+            let tableWritePermissions = classWritePerms.get(csUgClassPerm.table);
             if (!tableWritePermissions) {
                 tableWritePermissions = [];
-                classWritePerms.set(cp.table, tableWritePermissions);
+                classWritePerms.set(csUgClassPerm.table, tableWritePermissions);
             }
             tableWritePermissions.push(ug);
         }
     }
+
     let classPerms = [];
-    let normalizedCPerms = new Map();
-    for (let c of classes) {
-        let table = c.table;
-        let entry = {
+    for (let clazz of classes) {
+        let table = clazz.table;
+        let classPerm = {
             table: table
         }
-        //let normKey = "";
         let tableReadPermissions = classReadPerms.get(table);
         if (tableReadPermissions) {
-            entry.read = tableReadPermissions;
-            //normKey += "read:::" + JSON.stringify(entry.read);
+            classPerm.read = tableReadPermissions;
         }
         let tableWritePermissions = classWritePerms.get(table);
         if (tableWritePermissions) {
-            entry.write = tableWritePermissions;
-            //normKey += "write:::" + JSON.stringify(entry.write);
+            classPerm.write = tableWritePermissions;
         }
         if (tableReadPermissions || tableWritePermissions) {
-            //let tablesForPermissions = normalizedCPerms.get(normKey);
-            //if (!tablesForPermissions) {
-                //tablesForPermissions = [];
-                //normalizedCPerms.set(normKey, tablesForPermissions);
-            //}
-            //tablesForPermissions.push(table);
-            classPerms.push(entry);
+            classPerms.push(classPerm);
         }
     }
-    /*let normalizedClassPerms = [];
-    //normalized Permissions 
-    normalizedCPerms.forEach((tables) => {
-        let entry = {
-            tables
-        }
-        let rp = classReadPerms.get(tables[0]);
-        let wp = classWritePerms.get(tables[0]);
-        if (rp) {
-            entry.read = rp;
-        }
-        if (wp) {
-            entry.write = wp;
-        }
-        normalizedClassPerms.push(entry);
-    });*/
 
     return {
-        classPerms,
-        //normalizedClassPerms,
-        classReadPerms,
-        classWritePerms
+        classPerms
     }
 
 }

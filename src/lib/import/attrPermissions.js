@@ -1,6 +1,6 @@
 import createPermsEntry from './perms';
 
-function prepareAttributePermissions(attrPerms) {
+function prepareAttributePermissions({ attrPerms }) {
     let csAttrPermEntries = [];
     for (let attrPerm of attrPerms) {
         if (attrPerm.read) {

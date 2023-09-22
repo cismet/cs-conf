@@ -45,7 +45,7 @@ export function normalizeConfigs({
         attrPerms: normalizeAttrPerms(attrPerms), 
         classes: normalizeClasses(classes), 
         classPerms: normalizeClassPerms(classPerms), 
-        domains: normalizeDomains(domains), 
+        domains: normalizeDomains(domains, config.domainName), 
         dynchildhelpers: normalizeDynchildhelpers(dynchildhelpers),
         helperSqlFiles,
         policyRules: normalizePolicyRules(policyRules), 

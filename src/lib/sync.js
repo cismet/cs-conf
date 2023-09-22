@@ -417,8 +417,6 @@ async function csSync(options) {
         }
         configs = readConfigFiles(configsDir);
     } else {
-        let mainDomain = global.config.domainName;
-
         let tmpTargetDir = targetDir == null;
         if (tmpTargetDir) {
             let client = await initClient(global.config.connection, false);
@@ -428,7 +426,7 @@ async function csSync(options) {
             targetDir = util.format("/tmp/sync_%s.%s", prefix, formattedDate);
         }
     
-        await csExport({ mainDomain, targetDir });
+        await csExport({ targetDir });
         configs = readConfigFiles(targetDir, [ "classes" ]);        
         if (tmpTargetDir) {
             fs.rmSync(targetDir, { recursive: true, force: true });    

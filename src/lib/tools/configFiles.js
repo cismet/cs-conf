@@ -2,9 +2,12 @@ import fs from 'fs';
 import util from 'util';
 import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
-import * as constants from './constants.js';
 import { logOut, logVerbose } from './tools';
 import normalizeConfig from '../normalize/config.js';
+
+const structureDynamicChildrenFolderConst = "structure-dyn-children-stmnts";
+const structureHelperStatementsFolderConst = "structure-helper-stmnts";
+const confAttrXmlSnippetsFolderConst = "xml-config-attrs";
 
 export function readConfigJsonFile(file) {    
     if (!fs.existsSync(file)) {
@@ -54,7 +57,7 @@ export function readConfigFiles(configsDir, topics) {
     let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configsDir), true) : null;
     let xmlFiles = new Map();
     if (topics == null || topics.includes("accessControl")) {
-        let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, constants.confAttrXmlSnippetsFolder);
+        let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, confAttrXmlSnippetsFolderConst);
         if (fs.existsSync(confAttrXmlSnippetsFolder)) {
             for (let file of fs.readdirSync(confAttrXmlSnippetsFolder)) {
                 if (extname(file) == ".xml") {
@@ -76,7 +79,7 @@ export function readConfigFiles(configsDir, topics) {
     let helperSqlFiles=new Map();
 
     if (topics == null || topics.includes("structure")) {
-        let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, constants.structureDynamicChildrenFolder);
+        let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, structureDynamicChildrenFolderConst);
         if (fs.existsSync(structureDynamicChildrenFolder)) {
             for (let file of fs.readdirSync(structureDynamicChildrenFolder)) {
                 if (extname(file) == ".sql") {
@@ -85,7 +88,7 @@ export function readConfigFiles(configsDir, topics) {
             }    
         }
 
-        let structureHelperStatementsFolder = util.format("%s/%s", configsDir, constants.structureHelperStatementsFolder);
+        let structureHelperStatementsFolder = util.format("%s/%s", configsDir, structureHelperStatementsFolderConst);
         if (fs.existsSync(structureHelperStatementsFolder)) {
             for (let file of fs.readdirSync(structureHelperStatementsFolder)) {
                 if (extname(file) == ".sql") {
@@ -140,9 +143,9 @@ export function writeConfigFiles(configs, configsDir) {
 
     logOut(util.format("Writing config directory '%s' ...", configsDir));
 
-    let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, constants.confAttrXmlSnippetsFolder);
-    let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, constants.structureDynamicChildrenFolder);
-    let structureHelperStatementsFolder = util.format("%s/%s", configsDir, constants.structureHelperStatementsFolder);
+    let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, confAttrXmlSnippetsFolderConst);
+    let structureDynamicChildrenFolder = util.format("%s/%s", configsDir, structureDynamicChildrenFolderConst);
+    let structureHelperStatementsFolder = util.format("%s/%s", configsDir, structureHelperStatementsFolderConst);
 
     // create configsDir structure
 

@@ -1,10 +1,8 @@
-import * as stmnts from './statements';
-
-async function exportPolicyRules() {
-    let client = global.client;
-    let {
-        rows: policyRules
-    } = await client.query(stmnts.policyRules);
+function exportPolicyRules({ csPolicyRules }, {}) {
+    let policyRules = [];
+    for (let csPolicyRule of csPolicyRules) {
+        policyRules.push(Object.assign({}, csPolicyRule));
+    }
     return { policyRules };
 }
 

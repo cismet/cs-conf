@@ -1,4 +1,4 @@
-function prepareUsergroups(usergroups) {
+function prepareUsergroups({ usergroups }) {
     let csUgEntries = [];
     let prioCounter = 0;
     for (let group of usergroups) {

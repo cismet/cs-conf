@@ -2,21 +2,21 @@ import normalizeConfigurationAttributes from "./configurationAttributes";
 import { defaultDomain } from "../tools/defaultObjects";
 import util from 'util';
 
-function normalizeDomains(domains) {
+function normalizeDomains(domains, mainDomain) {
     let normalized = [];
 
     if (domains != null) {
-        let mainDomain = null;
+        let localDomain = null;
         let domainnames = [];
         for (let domain of domains) {
             if (domain.domainname == null) throw "normalizeDomains: missing domainname";
             if (domainnames.includes(domain.domainname)) throw util.format("normalizeDomains: domain '%s' already exists", domain.domainname);
 
-            if (domain.domainname == global.config.domainName || domains.length == 1) {
-                if (mainDomain != null) {
-                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, mainDomain.domainname);
+            if (domain.domainname == mainDomain || domains.length == 1) {
+                if (localDomain != null) {
+                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, localDomain.domainname);
                 }
-                mainDomain = domain;
+                localDomain = domain;
             } else {
                 domainnames.push(domain.domainname);
                 normalized.push(Object.assign({}, defaultDomain, domain, {
@@ -26,15 +26,15 @@ function normalizeDomains(domains) {
             }
         }
 
-        if (mainDomain != null) {
+        if (localDomain != null) {
             if (!domainnames.includes("LOCAL")) {
-                normalized.push(Object.assign({}, defaultDomain, mainDomain, { domainname: "LOCAL" }, {
-                    configurationAttributes: normalizeConfigurationAttributes(mainDomain.configurationAttributes)
+                normalized.push(Object.assign({}, defaultDomain, localDomain, { domainname: "LOCAL" }, {
+                    configurationAttributes: normalizeConfigurationAttributes(localDomain.configurationAttributes)
                 }));    
             }
 
-            if (!domainnames.includes(mainDomain.domainname)) {
-                normalized.push(Object.assign({}, defaultDomain, { domainname: mainDomain.domainname }));            
+            if (!domainnames.includes(localDomain.domainname)) {
+                normalized.push(Object.assign({}, defaultDomain, { domainname: localDomain.domainname }));            
             }
         }
     }

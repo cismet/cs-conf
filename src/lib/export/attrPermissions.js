@@ -1,30 +1,20 @@
-import * as stmnts from './statements';
 import util from 'util';
 
-async function exportAttrPermissions(attributes, classReadPerms, classWritePerms) {
-    let client = global.client;
-    let {
-        rows: attrPermResult
-    } = await client.query(stmnts.attributePermissions);
-
-    return analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms);
-}
-
-function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classWritePerms) {
+function exportAttrPermissions({ csUgAttrPerms }, { attributes }) {
     let attrReadPerms = new Map();
     let attrWritePerms = new Map();
 
-    for (let ap of attrPermResult) {
-        let ug = util.format("%s@%s", ap.group, ap.domain);
-        let key = util.format("%s.%s", ap.table, ap.field);
+    for (let csUgAttrPerm of csUgAttrPerms) {
+        let ug = util.format("%s@%s", csUgAttrPerm.group, csUgAttrPerm.domain);
+        let key = util.format("%s.%s", csUgAttrPerm.table, csUgAttrPerm.field);
         let attrReadPermissions = attrReadPerms.get(key);
-        if (ap.permission === "read") {
+        if (csUgAttrPerm.permission === "read") {
             if (!attrReadPermissions) {
                 attrReadPermissions = [];
                 attrReadPerms.set(key, attrReadPermissions);
             }
             attrReadPermissions.push(ug);
-        } else if (ap.permission === "write") {
+        } else if (csUgAttrPerm.permission === "write") {
             let attrWritePermissions = attrWritePerms.get(key);
             if (!attrWritePermissions) {
                 attrWritePermissions = [];
@@ -33,59 +23,30 @@ function analyzeAndPreprocess(attrPermResult, attributes, classReadPerms, classW
             attrWritePermissions.push(ug);
         }
     }
+    
     let attrPerms = [];
-    //let normalizedAPerms = new Map();
-    for (let a of attributes) {
-        let key = util.format("%s.%s", a.table, a.field);
+    for (let attribute of attributes) {
+        let key = util.format("%s.%s", attribute.table, attribute.field);
         let entry = {
             attribute: key
         }
 
-        //let normKey = "";
-
-        let attrReadPermissions = classReadPerms.get(key);
+        let attrReadPermissions = attrReadPerms.get(key);
         if (attrReadPermissions) {
             entry.read = attrReadPermissions;
-            //normKey += util.format("read:::%s", JSON.stringify(entry.read));
         }
 
-        let attrWritePermissions = classWritePerms.get(key);
+        let attrWritePermissions = attrWritePerms.get(key);
         if (attrWritePermissions) {
             entry.write = attrWritePermissions;
-            //normKey += util.format("write:::%s", JSON.stringify(entry.write));
         }
         if (attrReadPermissions || attrWritePermissions) {
-            //let attrsForPermissions = normalizedAPerms.get(normKey);
-            //if (!attrsForPermissions) {
-                //attrsForPermissions = [];
-                //normalizedAPerms.set(normKey, attrsForPermissions);
-            //}
-            //attrsForPermissions.push(t);
             attrPerms.push(entry);
         }
     }
 
-    /*let normalizedAttrPerms = [];
-    //normalized Permissions 
-    normalizedAPerms.forEach((attributes) => {
-        let entry = {
-            attributes
-        }
-        let rp = attrReadPerms.get(attributes[0]);
-        let wp = attrWritePerms.get(attributes[0]);
-        if (rp) {
-            entry.read = rp;
-        }
-        if (wp) {
-            entry.write = wp;
-        }
-        normalizedAttrPerms.push(entry);
-    });*/
-    
-
     return {
         attrPerms,
-        //normalizedAttrPerms
     };
 }
 

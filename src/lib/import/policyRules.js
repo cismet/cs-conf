@@ -1,4 +1,4 @@
-function preparePolicyRules(policyRules) {
+function preparePolicyRules({ policyRules }) {
     let csPolicyRulesEntries = [];    
     for (let policyRule of policyRules) {
         csPolicyRulesEntries.push([ 

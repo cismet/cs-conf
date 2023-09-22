@@ -1,17 +1,8 @@
 import zeroFill from 'zero-fill';
 import xmlFormatter from 'xml-formatter';
 import util from 'util';
-import * as stmnts from './statements';
 
-async function exportConfigAttributes() {
-    let client = global.client;
-    let {
-        rows: configAttributes
-    } = await client.query(stmnts.configAttr);
-    return analyzeAndPreprocess(configAttributes);
-};
-
-function analyzeAndPreprocess(configAttributes) {
+function exportConfigAttributes({ csConfigAttrs }, {}) {
     const userConfigAttrs = new Map();
     const groupConfigAttrs = new Map();
     const domainConfigAttrs = new Map();
@@ -19,68 +10,68 @@ function analyzeAndPreprocess(configAttributes) {
 
     let valuesToFilename = new Map();
     let xmlDocCounter = new Map();
-    for (let attr of configAttributes) {
+    for (let csConfigAttr of csConfigAttrs) {
         let attrInfo = {
-            key: attr.key,
-            keygroup: attr.keygroup
+            key: csConfigAttr.key,
+            keygroup: csConfigAttr.keygroup
         }
-        switch (attr.type) {
+        switch (csConfigAttr.type) {
             case 'C': {
-                attrInfo.value = attr.value                
+                attrInfo.value = csConfigAttr.value                
             } break;
             case 'X': {
                 let xmlToSave;
                 try {
-                    xmlToSave = xmlFormatter(attr.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
+                    xmlToSave = xmlFormatter(csConfigAttr.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
                 } catch (formatterProblem) {
-                    xmlToSave = attr.value;
+                    xmlToSave = csConfigAttr.value;
                 }                    
 
                 let fileName;
-                if (attr.filename != null) {
-                    fileName = attr.filename;
-                } else if (valuesToFilename.has(attr.value)) {
-                    fileName = valuesToFilename.get(attr.value);
+                if (csConfigAttr.filename != null) {
+                    fileName = csConfigAttr.filename;
+                } else if (valuesToFilename.has(csConfigAttr.value)) {
+                    fileName = valuesToFilename.get(csConfigAttr.value);
                 } else {
-                    let counter = xmlDocCounter.has(attr.key) ? xmlDocCounter.get(attr.key) + 1 : 1;
-                    xmlDocCounter.set(attr.key, counter);
-                    fileName = util.format("%s.%s.xml", attr.key, zeroFill(4, counter));
+                    let counter = xmlDocCounter.has(csConfigAttr.key) ? xmlDocCounter.get(csConfigAttr.key) + 1 : 1;
+                    xmlDocCounter.set(csConfigAttr.key, counter);
+                    fileName = util.format("%s.%s.xml", csConfigAttr.key, zeroFill(4, counter));
                 }
-                valuesToFilename.set(attr.value, fileName);
+                valuesToFilename.set(csConfigAttr.value, fileName);
                 xmlFiles.set(fileName, xmlToSave);
                 attrInfo.xmlfile = fileName;
             } break;
         }
-        if (attr.login_name) {
-            attrInfo = Object.assign(attrInfo, { groups: [ attr.groupkey ] });
-            if (userConfigAttrs.has(attr.login_name)) {
+        if (csConfigAttr.login_name) {
+            attrInfo = Object.assign(attrInfo, { groups: [ csConfigAttr.groupkey ] });
+            if (userConfigAttrs.has(csConfigAttr.login_name)) {
                 let found = false;
-                for (let userConfigAttr of userConfigAttrs.get(attr.login_name)) {
+                for (let userConfigAttr of userConfigAttrs.get(csConfigAttr.login_name)) {
                     if (userConfigAttr != null && userConfigAttr.key == attrInfo.key) {
                         found = true;
-                        if (attr.groupkey != null && userConfigAttr.groups != null && !userConfigAttr.groups.contains(attr.groupkey)) {
-                            userConfigAttr.groups.push(attr.groupkey);
+                        if (csConfigAttr.groupkey != null && userConfigAttr.groups != null && !userConfigAttr.groups.contains(csConfigAttr.groupkey)) {
+                            userConfigAttr.groups.push(csConfigAttr.groupkey);
                         }
                         break;
                     }
                 }
                 if (!found) {
-                    userConfigAttrs.get(attr.login_name).push(attrInfo);
+                    userConfigAttrs.get(csConfigAttr.login_name).push(attrInfo);
                 }
             } else {
-                userConfigAttrs.set(attr.login_name, [attrInfo]);
+                userConfigAttrs.set(csConfigAttr.login_name, [attrInfo]);
             }
-        } else if (attr.groupkey) {
-            if (groupConfigAttrs.has(attr.groupkey)) {
-                groupConfigAttrs.get(attr.groupkey).push(attrInfo);
+        } else if (csConfigAttr.groupkey) {
+            if (groupConfigAttrs.has(csConfigAttr.groupkey)) {
+                groupConfigAttrs.get(csConfigAttr.groupkey).push(attrInfo);
             } else {
-                groupConfigAttrs.set(attr.groupkey, [attrInfo]);
+                groupConfigAttrs.set(csConfigAttr.groupkey, [attrInfo]);
             }
-        } else if (attr.domainname) {
-            if (domainConfigAttrs.has(attr.domainname)) {
-                domainConfigAttrs.get(attr.domainname).push(attrInfo);
+        } else if (csConfigAttr.domainname) {
+            if (domainConfigAttrs.has(csConfigAttr.domainname)) {
+                domainConfigAttrs.get(csConfigAttr.domainname).push(attrInfo);
             } else {
-                domainConfigAttrs.set(attr.domainname, [attrInfo]);
+                domainConfigAttrs.set(csConfigAttr.domainname, [attrInfo]);
             }
         }
     }

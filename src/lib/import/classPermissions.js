@@ -1,6 +1,6 @@
 import createPermsEntry from './perms';
 
-function prepareClassPermissions(classPerms) {
+function prepareClassPermissions({ classPerms }) {
     let csClassPermEntries = [];
     for (let classPerm of classPerms) {
         if (classPerm.read) {

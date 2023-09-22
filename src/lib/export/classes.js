@@ -1,168 +1,158 @@
-import * as stmnts from './statements';
 import { clean } from '../tools/tools.js';
 
-async function exportClasses() {
-    let client = global.client;
-    const {
-        rows: classes
-    } = await client.query(stmnts.classes);
-    const {
-        rows: attributes
-    } = await client.query(stmnts.attributes);
-    const {
-        rows: classattributes
-    } = await client.query(stmnts.classAttributes);
-    return analyzeAndPreprocess(classes, attributes, classattributes);
-}
-
-function analyzeAndPreprocess(classes, attributes, classattributes) {
-    let classAttrsPerTable = new Map(); {
-        for (let ca of classattributes) {
-            let currentCAs = classAttrsPerTable.get(ca.table);
-            if (!currentCAs) {
-                currentCAs = {};
-                classAttrsPerTable.set(ca.table, currentCAs);
-            }
-            currentCAs[ca.key] = ca.value;
+function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
+    let classAttrsPerTable = new Map(); 
+    
+    for (let csClassAttr of csClassAttrs) {
+        let classAttribute = classAttrsPerTable.get(csClassAttr.table);
+        if (!classAttribute) {
+            classAttribute = {};
+            classAttrsPerTable.set(csClassAttr.table, classAttribute);
         }
+        classAttribute[csClassAttr.key] = csClassAttr.value;
     }
 
     let attrsPerTable = new Map();
-    for (let a of attributes) {
-        let tableAttributes = attrsPerTable.get(a.table);
+    let attributes = [];
+    for (let csAttr of csAttrs) {
+        let attribute = Object.assign({}, csAttr);
+        let tableAttributes = attrsPerTable.get(attribute.table);
         if (!tableAttributes) {
             tableAttributes = [];
-            attrsPerTable.set(a.table, tableAttributes);
+            attrsPerTable.set(attribute.table, tableAttributes);
         }
-
 
         // clean up
 
-        delete a.table;
-        if (a.field === a.name) {
-            delete a.name;
+        delete attribute.table;
+        if (attribute.field === attribute.name) {
+            delete attribute.name;
         }
 
-        if (a.cidsType !== null) {
-            delete a.dbType;
-            delete a.precision;
-            delete a.scale;
-            if (a.foreignKeyTableId < 0) {
-                delete a.cidsType;
-                delete a.optional;
-                delete a.manyToMany;
-            } else if (a.isArrray === true) {
-                delete a.cidsType;
-                delete a.optional;
-                delete a.oneToMany;
+        if (attribute.cidsType !== null) {
+            delete attribute.dbType;
+            delete attribute.precision;
+            delete attribute.scale;
+            if (attribute.foreignKeyTableId < 0) {
+                delete attribute.cidsType;
+                delete attribute.optional;
+                delete attribute.manyToMany;
+            } else if (attribute.isArrray === true) {
+                delete attribute.cidsType;
+                delete attribute.optional;
+                delete attribute.oneToMany;
             } else {
-                delete a.oneToMany;
-                delete a.manyToMany
+                delete attribute.oneToMany;
+                delete attribute.manyToMany
             }
         } else {
-            delete a.cidsType;
-            delete a.oneToMany;
-            delete a.manyToMany
+            delete attribute.cidsType;
+            delete attribute.oneToMany;
+            delete attribute.manyToMany
         }
 
-        if (a.mandatory === false) {
-            delete a.mandatory;
+        if (attribute.mandatory === false) {
+            delete attribute.mandatory;
         }
 
-        if (a.hidden === false) {
-            delete a.hidden;
+        if (attribute.hidden === false) {
+            delete attribute.hidden;
         }
-        if (a.indexed === false) {
-            delete a.indexed;
+        if (attribute.indexed === false) {
+            delete attribute.indexed;
         }
-        if (a.substitute === false) {
-            delete a.substitute;
+        if (attribute.substitute === false) {
+            delete attribute.substitute;
         }
-        if (a.extension_attr === false) {
-            delete a.extension_attr;
+        if (attribute.extension_attr === false) {
+            delete attribute.extension_attr;
         }
 
         //remove all fields that are not needed anymore
-        delete a.foreign_key;
-        delete a.foreignKeyTableId;
-        delete a.foreignkeytable; // check whether this should better be used instead of tc.table_name
-        delete a.isArrray;
+        delete attribute.foreign_key;
+        delete attribute.foreignKeyTableId;
+        delete attribute.foreignkeytable; // check whether this should better be used instead of tc.table_name
+        delete attribute.isArrray;
 
         //finally remove all field that are null
-        clean(a);
+        clean(attribute);
 
-        tableAttributes.push(a);
+        tableAttributes.push(attribute);
+        attributes.push(attribute);
     }
 
-    for (let c of classes) {
+    let classes = [];
+    for (let csClass of csClasses) {        
+        let clazz = Object.assign({}, csClass);
+
         //clean up
-        if (c.table === c.name) {
-            delete c.name;
+        if (clazz.table === clazz.name) {
+            delete clazz.name;
         }
-        if (c.descr === null) {
-            delete c.descr;
+        if (clazz.descr === null) {
+            delete clazz.descr;
         }
-        if (c.indexed === false) {
-            delete c.indexed;
+        if (clazz.indexed === false) {
+            delete clazz.indexed;
         }
 
-        if (c.classIcon === c.objectIcon) {
-            c.icon = c.classIcon;
-            delete c.classIcon;
-            delete c.objectIcon;
+        if (clazz.classIcon === clazz.objectIcon) {
+            clazz.icon = clazz.classIcon;
+            delete clazz.classIcon;
+            delete clazz.objectIcon;
         } else {
-            delete c.icon;
+            delete clazz.icon;
         }
-        if (c.array_link === false) {
-            delete c.array_link;
+        if (clazz.array_link === false) {
+            delete clazz.array_link;
         }
-        if (c.policy === null) {
-            delete c.policy;
+        if (clazz.policy === null) {
+            delete clazz.policy;
         }
-        if (c.attribute_policy === null) {
-            delete c.attribute_policy;
+        if (clazz.attribute_policy === null) {
+            delete clazz.attribute_policy;
         }
 
         //toString
-        if (c.toStringType !== null && c.toStringClass != null) {
-            c.toString = {
-                type: c.toStringType,
-                class: c.toStringClass
+        if (clazz.toStringType !== null && clazz.toStringClass != null) {
+            clazz.toString = {
+                type: clazz.toStringType,
+                class: clazz.toStringClass
             };
         }
-        delete c.toStringType;
-        delete c.toStringClass;
+        delete clazz.toStringType;
+        delete clazz.toStringClass;
         //editor
-        if (c.editorType !== null && c.editorClass != null) {
-            c.editor = {
-                type: c.editorType,
-                class: c.editorClass
+        if (clazz.editorType !== null && clazz.editorClass != null) {
+            clazz.editor = {
+                type: clazz.editorType,
+                class: clazz.editorClass
             };
         }
-        delete c.editorType;
-        delete c.editorClass;
+        delete clazz.editorType;
+        delete clazz.editorClass;
         //renderer
-        if (c.rendererType !== null && c.rendererClass != null) {
-            c.renderer = {
-                type: c.rendererType,
-                class: c.rendererClass
+        if (clazz.rendererType !== null && clazz.rendererClass != null) {
+            clazz.renderer = {
+                type: clazz.rendererType,
+                class: clazz.rendererClass
             };
         }
-        delete c.rendererType;
-        delete c.rendererClass;
+        delete clazz.rendererType;
+        delete clazz.rendererClass;
 
         //add attributes
-        let attrs = attrsPerTable.get(c.table);
+        let attrs = attrsPerTable.get(clazz.table);
         if (attrs) {
-            c.attributes = attrs;
+            clazz.attributes = attrs;
         }
 
         //add class attributes
-        let cattrs = classAttrsPerTable.get(c.table);
+        let cattrs = classAttrsPerTable.get(clazz.table);
         if (cattrs) {
-            c.additionalAttributes = cattrs;
+            clazz.additionalAttributes = cattrs;
         }
-
+        classes.push(clazz);
     }
     return { classes, attributes };
 }
