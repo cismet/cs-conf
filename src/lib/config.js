@@ -39,10 +39,12 @@ async function csConfig(options) {
         config = Object.assign(config, getConfigFromRuntimeProperties(runtimeProperties));
     }
 
-    config = simplifyConfig(config);
 
+    global.config = normalizeConfig({});
     if (normalize) {
         config = normalizeConfig(config);
+    } else {
+        config = simplifyConfig(config);
     }
 
     writeConfigFile(config, file);
