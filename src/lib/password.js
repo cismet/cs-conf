@@ -39,7 +39,7 @@ async function csPassword(options) {
         throw "print and reorganize can't be combined";
     }
 
-    let newLastPwdChange = dayjs().format("DD.MM.YYYY hh:mm:ss");
+    let newLastPwdChange = dayjs().format("DD.MM.YYYY, hh:mm:ss");
     let newSalt = salt != null ? salt : createSalt();
     let newUser = {
         login_name: loginName,
