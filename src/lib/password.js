@@ -1,4 +1,5 @@
 import cryptoRandomString from 'crypto-random-string';
+import dayjs from 'dayjs';
 import md5 from 'md5';
 import util from 'util';
 import { logInfo, logOut } from './tools/tools';
@@ -38,7 +39,7 @@ async function csPassword(options) {
         throw "print and reorganize can't be combined";
     }
 
-    let newLastPwdChange = new Date().toLocaleString();
+    let newLastPwdChange = dayjs().format("DD.MM.YYYY hh:mm:ss");
     let newSalt = salt != null ? salt : createSalt();
     let newUser = {
         login_name: loginName,

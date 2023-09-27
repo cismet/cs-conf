@@ -10,6 +10,7 @@
     "chalk": "^4.1.2",
     "commander": "^11.0.0",
     "crypto-random-string": "^3.2.0",
+    "dayjs": "^1.11.10",
     "json-diff": "^0.7.4",
     "json-stringify-pretty-compact": "^1.2.0",
     "lodash-transpose": "^0.2.1",
@@ -38,8 +39,14 @@
     "test": "node_modules/.bin/mocha --require @babel/register --recursive || true"
   },
   "pkg": {
-    "assets": ["ddl/**/*"],
+    "assets": [
+      "ddl/**/*"
+    ],
     "outputPath": "build/bin",
-    "targets": [ "node18-linux-x64", "node18-macos-x64", "node18-win-x64" ]
+    "targets": [
+      "node18-linux-x64",
+      "node18-macos-x64",
+      "node18-win-x64"
+    ]
   }
 }
