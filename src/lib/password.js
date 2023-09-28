@@ -1,7 +1,8 @@
 import cryptoRandomString from 'crypto-random-string';
-import dayjs from 'dayjs';
 import md5 from 'md5';
 import util from 'util';
+import dayjs from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { logInfo, logOut } from './tools/tools';
 import { readConfigFiles, writeConfigFiles } from './tools/configFiles';
 import { normalizeUser } from './normalize/usermanagement';
@@ -9,6 +10,8 @@ import reorganizeUsermanagement from './reorganize/usermanagement';
 import stringify from 'json-stringify-pretty-compact';
 import { simplifyUser } from './simplify/usermanagement';
 import normalizeConfig from './normalize/config';
+
+dayjs.extend(customParseFormat);
 
 function createSalt(length = 16) {
     return cryptoRandomString({ length });
@@ -19,7 +22,7 @@ function createHash(password, salt = createSalt()) {
 }
 
 async function csPassword(options) {
-    let { sourceDir, targetDir, loginName, password, groups, salt, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
+    let { sourceDir, targetDir, loginName, password, groups, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
 
     if (loginName == null && password == null) {
         throw "user and password are mandatory";
@@ -39,7 +42,13 @@ async function csPassword(options) {
         throw "print and reorganize can't be combined";
     }
 
-    let newLastPwdChange = dayjs().format("DD.MM.YYYY, hh:mm:ss");
+    let timeFormat = "DD.MM.YYYY, HH:mm:ss";
+    
+    let newLastPwdChange = time ?? dayjs().format(timeFormat);
+    if (!dayjs(newLastPwdChange, timeFormat, true).isValid()) {
+        throw util.format("the time '%s' doesn't match the required format '%s'", newLastPwdChange, timeFormat);
+    }
+
     let newSalt = salt ?? createSalt();
     let newUser = {
         login_name: loginName,

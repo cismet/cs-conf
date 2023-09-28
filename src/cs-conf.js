@@ -58,7 +58,7 @@ const targetOption = {
 };
 
 program
-	.version('1.2.2')
+	.version('1.2.3')
 ;
 
 let commands = new Map();
@@ -221,6 +221,7 @@ commands.set('password', program.command('password')
 			groups: cmd.groups,
 			password: cmd.password,
 			salt: cmd.salt,
+			time: cmd.time,
 			reorganize: cmd.reorganize !== undefined,
 			normalized: cmd.normalized !== undefined,
 			add: cmd.add !== undefined,
