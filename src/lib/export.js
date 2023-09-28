@@ -30,7 +30,7 @@ async function csExport(options) {
         configs = simplifyConfigs(configs);
     }
 
-    let configsDir = targetDir != null ? targetDir : normalizeConfig(configs.config).configsDir;
+    let configsDir = targetDir ?? normalizeConfig(configs.config).configsDir;
     writeConfigFiles(configs, configsDir);
 }
 

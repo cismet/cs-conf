@@ -22,7 +22,7 @@ async function csImport(options) {
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
-    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configsDir = sourceDir ?? global.config.configsDir;
     let configs = readConfigFiles(configsDir);
 
     logOut("Preparing import ...");

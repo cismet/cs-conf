@@ -411,7 +411,7 @@ async function csSync(options) {
 
     let configs;
     if (noExport) {
-        let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+        let configsDir = sourceDir ?? global.config.configsDir;
             if(configsDir == null) {
             throw "can't sync from local config since no configsDir is set";
         }

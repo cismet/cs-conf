@@ -102,7 +102,7 @@ function exportStructure({ csCatNodes, csCatLinks, csUgCatNodePerms }, {}) {
     let sortedNodes = Array.from(allNodes.values());
     for (let node of sortedNodes) {        
         if (node.dynamic_children) {
-            let fileName = node.dynamic_children_filename != null ? node.dynamic_children_filename : util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
+            let fileName = node.dynamic_children_filename ?? util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
             delete node.dynamic_children_filename;
             structureSqlFiles.set(fileName, node.dynamic_children);
             node.dynamic_children_file = fileName;        

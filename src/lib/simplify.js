@@ -14,7 +14,7 @@ import simplifyConfig from "./simplify/config";
 async function csSimplify(options) {
     let { sourceDir, targetDir, reorganize } = options;
 
-    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configsDir = sourceDir ?? global.config.configsDir;
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw "config not set";
     

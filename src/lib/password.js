@@ -40,7 +40,7 @@ async function csPassword(options) {
     }
 
     let newLastPwdChange = dayjs().format("DD.MM.YYYY, hh:mm:ss");
-    let newSalt = salt != null ? salt : createSalt();
+    let newSalt = salt ?? createSalt();
     let newUser = {
         login_name: loginName,
         salt: newSalt,
@@ -62,7 +62,7 @@ async function csPassword(options) {
         global.config = normalizeConfig({ configDir: sourceDir });
     }
 
-    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configsDir = sourceDir ?? global.config.configsDir;
     let configs = readConfigFiles(configsDir);
     
     if (configs == null) throw "config not set";
@@ -88,7 +88,7 @@ async function csPassword(options) {
                     throw util.format("duplicate entry for user '%'", loginName);
                 }
                 found = true;
-                let newSalt = salt != null ? salt : user.salt != null ? user.salt : createSalt();
+                let newSalt = salt ?? user.salt ?? createSalt();
                 let oldHash = user.pw_hash;
                 let newHash = createHash(password, user.salt);
                 if (groups == null && newHash == oldHash) {

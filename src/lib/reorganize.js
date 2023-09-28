@@ -12,7 +12,7 @@ import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csReorganize(options) {
     let { sourceDir, targetDir } = options;
-    let configsDir = sourceDir != null ? sourceDir : global.config.configsDir;
+    let configsDir = sourceDir ?? global.config.configsDir;
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw "config not set";
 
