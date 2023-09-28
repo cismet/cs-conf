@@ -11,14 +11,13 @@ import normalizeUsermanagement from "./normalize/usermanagement";
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csNormalize(options) {
-    let { sourceDir, targetDir } = options;
-    let configsDir = sourceDir ?? global.config.configsDir;
-    let configs = readConfigFiles(configsDir);
+    let { targetDir } = options;
+    let configs = readConfigFiles(global.configsDir);
     if (configs == null) throw "config not set";
 
     let normalized = normalizeConfigs(configs);
     
-    targetDir = targetDir ? targetDir : global.config.configsDir;
+    targetDir = targetDir ? targetDir : global.configsDir;
     if (targetDir != null) {
         writeConfigFiles(normalized, targetDir);
     }

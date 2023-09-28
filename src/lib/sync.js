@@ -407,11 +407,11 @@ function queriesFromStatement(statement) {
 }
 
 async function csSync(options) {
-    let { sourceDir, targetDir, noExport, purge, outputSql, outputDrop, outputIgnore, execute } = options;
+    let { targetDir, noExport, purge, outputSql, outputDrop, outputIgnore, execute } = options;
 
     let configs;
     if (noExport) {
-        let configsDir = sourceDir ?? global.config.configsDir;
+        let configsDir = global.configsDir;
             if(configsDir == null) {
             throw "can't sync from local config since no configsDir is set";
         }

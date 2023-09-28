@@ -22,7 +22,7 @@ function createHash(password, salt = createSalt()) {
 }
 
 async function csPassword(options) {
-    let { sourceDir, targetDir, loginName, password, groups, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
+    let { targetDir, loginName, password, groups, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
 
     if (loginName == null && password == null) {
         throw "user and password are mandatory";
@@ -68,11 +68,10 @@ async function csPassword(options) {
     }
 
     if (global.config == null) {
-        global.config = normalizeConfig({ configDir: sourceDir });
+        global.config = normalizeConfig({});
     }
 
-    let configsDir = sourceDir ?? global.config.configsDir;
-    let configs = readConfigFiles(configsDir);
+    let configs = readConfigFiles(global.configsDir);
     
     if (configs == null) throw "config not set";
 
@@ -138,7 +137,7 @@ async function csPassword(options) {
         }
     }
 
-    targetDir = targetDir ? targetDir : global.config.configsDir;
+    targetDir = targetDir ? targetDir : global.configsDir;
     if (targetDir != null) {
         writeConfigFiles(reorganize ? Object.assign(configs, { usermanagement: reorganizeUsermanagement(configs.usermanagement)}) : configs, targetDir);
     }

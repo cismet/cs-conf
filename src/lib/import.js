@@ -18,12 +18,11 @@ import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 import { readConfigFiles } from './tools/configFiles';
 
 async function csImport(options) {
-    let { sourceDir, backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
+    let { backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
 
-    let configsDir = sourceDir ?? global.config.configsDir;
-    let configs = readConfigFiles(configsDir);
+    let configs = readConfigFiles(global.configsDir);
 
     logOut("Preparing import ...");
     let prepared = prepareImport(configs);

@@ -18,6 +18,7 @@ import { readConfigJsonFile } from './lib/tools/configFiles';
 import { clean, logDebug, logErr } from './lib/tools/tools';
 import csCheck from './lib/check';
 import csConfig from './lib/config';
+import path from 'path';
 
 global.rootSrcDir = __dirname;
 global.silent = false;
@@ -45,11 +46,6 @@ const runtimePropertiesOption = {
 	flags: '-r, --runtime-properties <filepath>', 
 	description: 'the runtime.properties to load the database connection informations from',
 	default: 'runtime.properties',
-};
-const sourceOption = { 
-	flags: '--source <dirpath>', 
-	description: 'the source directory to read the config files from',
-	default: null,
 };
 const targetOption = { 
 	flags: '--target <dirpath>', 
@@ -82,7 +78,6 @@ program.command('\t');
 commands.set('import', program.command('import')
 	.description('imports the (cs_*)meta-information from a configuration directory into a database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
 	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
@@ -96,7 +91,6 @@ commands.set('import', program.command('import')
 			execute: cmd.import !== undefined,
 			recreate: cmd.recreate !== undefined, 
 			skipBackup: cmd.skipBackup !== undefined,
-			sourceDir: cmd.source,
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,
 		}, cmd);
@@ -139,25 +133,20 @@ commands.set('check', program.command('check')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		cs('check', csCheck, {
-			sourceDir: cmd.source
 		}, cmd);
 	})
 );
 commands.set('normalize', program.command('normalize')
 	.description('normalizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		cs('normalize', csNormalize, { 
-			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
 	})
@@ -165,15 +154,12 @@ commands.set('normalize', program.command('normalize')
 commands.set('reorganize', program.command('reorganize')
 	.description('reorganizes the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		cs('reorganize', csReorganize, { 
-			sourceDir: cmd.source,
 			targetDir: cmd.target,
 		}, cmd);
 	})
@@ -181,16 +167,13 @@ commands.set('reorganize', program.command('reorganize')
 commands.set('simplify', program.command('simplify')
 	.description('simplifies the configuration in a given directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-R, --reorganize', 'reorganize config')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.action(async (cmd) => {
 		cs('simplify', csSimplify, { 
-			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			reorganize: cmd.reorganize !== undefined,
 		}, cmd);
@@ -199,7 +182,6 @@ commands.set('simplify', program.command('simplify')
 program.command('\t');
 commands.set('password', program.command('password')
 	.description('changes or sets the password for an user.')
-	.option(sourceOption.flags, sourceOption.description, ".")
 	.option(targetOption.flags, targetOption.description, ".")
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
@@ -215,7 +197,6 @@ commands.set('password', program.command('password')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		cs('password', csPassword, {
-			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			loginName: cmd.user,
 			groups: cmd.groups,
@@ -232,7 +213,6 @@ commands.set('password', program.command('password')
 commands.set('sync', program.command('sync')
 	.description('synchronizes classes with the database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(sourceOption.flags, sourceOption.description, sourceOption.default)
 	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
 	.option('-C, --from-config', 'use local config directory instead of exporting the configuration from the database')
 	.option('-P, --purge', 'activate all drop statements')
@@ -245,7 +225,6 @@ commands.set('sync', program.command('sync')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		cs('sync', csSync, { 
-			sourceDir: cmd.source,
 			targetDir: cmd.target,
 			noExport: cmd.fromConfig !== undefined,
 			purge: cmd.purge !== undefined,
@@ -338,7 +317,8 @@ async function cs(functionName, csFunction, options, cmd ) {
 		global.silent = cmd.silent !== undefined;
 		global.verbose = cmd.verbose !== undefined;
 		global.debug = cmd.debug !== undefined;	
-		global.config = cmd.config !== undefined ? readConfigJsonFile(cmd.config) : null	
+		global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;
+		global.configsDir = cmd.config != null ? path.dirname(path.resolve(cmd.config)) : null;
 
 		await csFunction(Object.assign({}, options, { main: true }));
 		process.exit(0);

@@ -12,15 +12,15 @@ import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 import simplifyConfig from "./simplify/config";
 
 async function csSimplify(options) {
-    let { sourceDir, targetDir, reorganize } = options;
+    let { targetDir, reorganize } = options;
 
-    let configsDir = sourceDir ?? global.config.configsDir;
+    let configsDir = global.configsDir;
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw "config not set";
     
     let simplified = simplifyConfigs(reorganize ? reorganizeConfigs(configs) : configs);
 
-    targetDir = targetDir ? targetDir : global.config.configsDir;
+    targetDir = targetDir ? targetDir : global.configsDir;
     if (targetDir != null) {
         writeConfigFiles(simplified, targetDir);
     }

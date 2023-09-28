@@ -11,14 +11,14 @@ import reorganizeUsermanagement from "./reorganize/usermanagement";
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 
 async function csReorganize(options) {
-    let { sourceDir, targetDir } = options;
-    let configsDir = sourceDir ?? global.config.configsDir;
+    let { targetDir } = options;
+    let configsDir = global.configsDir;
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw "config not set";
 
     let reorganized = reorganizeConfigs(configs);
 
-    targetDir = targetDir ? targetDir : global.config.configsDir;
+    targetDir = targetDir ? targetDir : global.configsDir;
     if (targetDir != null) {
         writeConfigFiles(reorganized, targetDir);
     }
