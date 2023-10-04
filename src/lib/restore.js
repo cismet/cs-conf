@@ -14,17 +14,23 @@ async function csRestore(options) {
     logOut(util.format("Reading statements from %s", file));
     
     let statements = [];
+    statements.push("BEGIN;");
     statements.push(await csTruncate({ execute: false, init: true, silent: true, }));
+    statements.push("ALTER TABLE cs_usr DISABLE TRIGGER password_trigger;");
     if(file.endsWith(".gz")){
         statements.push(zlib.gunzipSync(fs.readFileSync(file)).toString("utf8"));
     } else {
         statements.push(fs.readFileSync(file, "utf8"));
     }
+    statements.push("ALTER TABLE cs_usr ENABLE TRIGGER password_trigger;");
+    statements.push("COMMIT;");
 
     if (execute) {
         logOut(util.format("Executing statements on '%s' ...", getClientInfo()));
         let start = new Date();
-        await client.query(statements.join("\n"));
+        for (let statement of statements) {
+            await client.query(statement);
+        }
         let end = new Date();
         let seconds = (end - start) / 1000;
         logVerbose(util.format(" ↳ done in %f seconds.", seconds));
