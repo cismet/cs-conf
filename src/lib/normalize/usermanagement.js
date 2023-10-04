@@ -1,7 +1,7 @@
 import { extendLocalDomain } from "../tools/cids";
 import normalizeConfigurationAttributes from "./configurationAttributes";
 import { defaultUser as defaultUser } from "../tools/defaultObjects";
-import { util } from "chai";
+import util from 'util';
 
 export function normalizeUsermanagement(usermanagement) {
     let normalized = [];

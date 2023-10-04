@@ -1,5 +1,5 @@
 import { defaultDynchildhelper } from "../tools/defaultObjects";
-import { util } from "chai";
+import util from 'util';
 
 function normalizeDynchildhelpers(dynchildhelpers) {
     let normalized = [];
