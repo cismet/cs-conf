@@ -182,6 +182,7 @@ commands.set('simplify', program.command('simplify')
 program.command('\t');
 commands.set('password', program.command('password')
 	.description('changes or sets the password for an user.')
+	.option(configOption.flags, configOption.description, configOption.default)
 	.option(targetOption.flags, targetOption.description, ".")
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
