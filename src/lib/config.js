@@ -40,7 +40,7 @@ async function csConfig(options) {
     }
 
 
-    global.config = normalizeConfig({});
+    global.config = normalizeConfig();
     if (normalize) {
         config = normalizeConfig(config);
     } else {

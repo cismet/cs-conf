@@ -19,6 +19,7 @@ import { clean, logDebug, logErr } from './lib/tools/tools';
 import csCheck from './lib/check';
 import csConfig from './lib/config';
 import path from 'path';
+import normalizeConfig from './lib/normalize/config';
 
 global.rootSrcDir = __dirname;
 global.silent = false;
@@ -54,7 +55,7 @@ const targetOption = {
 };
 
 program
-	.version('1.2.4')
+	.version('1.2.5')
 ;
 
 let commands = new Map();
@@ -208,7 +209,8 @@ commands.set('password', program.command('password')
 			normalized: cmd.normalized !== undefined,
 			add: cmd.add !== undefined,
 			print: cmd.print !== undefined,
-		}, cmd);
+		}, cmd, 
+		cmd.print !== undefined);
 	})
 );
 commands.set('sync', program.command('sync')
@@ -309,7 +311,7 @@ if (execution.args == 0 || typeof execution.args[0] === 'undefined') {
 
 // ============================
 
-async function cs(functionName, csFunction, options, cmd ) {
+async function cs(functionName, csFunction, options, cmd, configIsOptional = false ) {
 	try {		
 		logDebug(util.format("starting %s with these options:", functionName));
 		logDebug(clean(options));
@@ -318,7 +320,15 @@ async function cs(functionName, csFunction, options, cmd ) {
 		global.silent = cmd.silent !== undefined;
 		global.verbose = cmd.verbose !== undefined;
 		global.debug = cmd.debug !== undefined;	
-		global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;
+		try {
+			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;
+		} catch (e1) {
+			if (configIsOptional) {
+				global.config = normalizeConfig();
+			} else {
+				throw e1;
+			}
+		}
 		global.configsDir = cmd.config != null ? path.dirname(path.resolve(cmd.config)) : null;
 
 		await csFunction(Object.assign({}, options, { main: true }));
