@@ -13,6 +13,10 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
                 configurationAttributes.push(configurationAttribute);
             } 
         }
+
+        if (Object.keys(domain.additional_info).length > 0) {
+            additionalInfos.domain[domainKey] = Object.assign({type: 'domain'}, domain.additional_info);
+        }        
     }
     return { csDomainEntries };
 }

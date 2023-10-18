@@ -19,6 +19,14 @@ export const defaultConfig = {
     sync: defaultConfigSync,
 };
 
+export const defaultAdditionalInfos = {
+    user: {},
+    group: {},
+    domain: {},
+    class: {},
+    attribute: {},
+};
+
 // attrPerms
 export const defaultAttrPerm = {
     key: null,
@@ -51,6 +59,7 @@ export const defaultAttribute = {
     hidden: false,
     indexed: false,
     arrayKey: null,
+    additional_info: {},
 };
 
 export const defaultAttributePrimary = (table_name, pk) => { 
@@ -88,6 +97,7 @@ export const defaultClass = {
     attributes: null,
     attributesOrder: 'auto',
     additionalAttributes: null,
+    additional_info: {},
 };
 
 // domains, usergroups, usermanagement
@@ -96,13 +106,14 @@ export const defaultConfigurationAttributes = {
     groups: [],
     keygroup: '__no_group__',
     value: null,
-    xmlfile: null,
+    xmlfile: null
 };
 
 // domains
 export const defaultDomain = {
     domainname: null,
     configurationAttributes: [],
+    additional_info: {},
 };
 
 // dynchildhelpers
@@ -142,6 +153,7 @@ export const defaultUserGroup = {
     key: null,
     descr: null,
     configurationAttributes: [],
+    additional_info: {},
 };
 
 // usermanagement
@@ -152,6 +164,7 @@ export const defaultUser = {
     last_pwd_change: null,
     groups: [],
     configurationAttributes: [],
+    additional_info: {},
 };
 
 export function copyFromTemplate(object, template) {

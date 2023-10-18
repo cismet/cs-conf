@@ -1,8 +1,8 @@
 [
-    {"policy": "SECURE", "permission": "read", "default_value": false },
-    {"policy": "SECURE", "permission": "write", "default_value": false },
-    {"policy": "STANDARD", "permission": "read", "default_value": true },
-    {"policy": "STANDARD", "permission": "write", "default_value": false },
-    {"policy": "WIKI", "permission": "read", "default_value": true },
-    {"policy": "WIKI", "permission": "write", "default_value": true }
+    {"policy": "SECURE", "permission": "read", "default_value": false, "additional_info": {} },
+    {"policy": "SECURE", "permission": "write", "default_value": false, "additional_info": {} },
+    {"policy": "STANDARD", "permission": "read", "default_value": true, "additional_info": {} },
+    {"policy": "STANDARD", "permission": "write", "default_value": false, "additional_info": {} },
+    {"policy": "WIKI", "permission": "read", "default_value": true, "additional_info": {} },
+    {"policy": "WIKI", "permission": "write", "default_value": true, "additional_info": {} }
 ]

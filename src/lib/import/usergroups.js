@@ -26,6 +26,10 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
             }
         }
 
+        if (Object.keys(group.additional_info).length > 0) {
+                additionalInfos.group[groupKey] = Object.assign({type: 'group'}, group.additional_info);
+        }        
+}
     return { csUgEntries };
 }
 

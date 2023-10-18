@@ -1,3 +1,6 @@
+--TRUNCATE TABLE cs_info CASCADE;
+DELETE FROM cs_info;
+
 --TRUNCATE TABLE cs_attr CASCADE;
 DELETE FROM cs_attr;
 ALTER SEQUENCE cs_attr_sequence RESTART WITH 1;

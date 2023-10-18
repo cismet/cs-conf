@@ -13,7 +13,8 @@
         "children": [],
         "key": null,
         "link": null,
-        "url": null
+        "url": null,
+        "additional_info": {}
     },
     {
         "name": "Node 2",
@@ -41,11 +42,13 @@
                 "children": [],
                 "key": null,
                 "link": null,
-                "url": null
+                "url": null,
+                "additional_info": {}
             }
         ],
         "key": null,
         "link": null,
-        "url": null
+        "url": null,
+        "additional_info": {}
     }
 ]

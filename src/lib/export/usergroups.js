@@ -1,18 +1,25 @@
-function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
+function exportUsergroups({ csUgs }, { additionalInfos, groupConfigAttrs }) {
     let usergroups = [];
+    let additionalInfosGroup = additionalInfos.group ?? {};
 
     for (let csUg of csUgs) {
-        let g = {
-            key: csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain)
+        let groupKey = csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain);
+        let group = {
+            key: groupKey
         };
-        if (csUg.descr){
-            g.descr = csUg.descr;
+        if (csUg.descr) {
+            group.descr = csUg.descr;
         }
         let attributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
         if (attributes) {
-            g.configurationAttributes = attributes;
+            group.configurationAttributes = attributes;
         }
-        usergroups.push(g);
+        
+        //add the additionalInfo
+        group.additional_info = additionalInfosGroup[groupKey];
+        delete additionalInfosGroup[groupKey];        
+
+        usergroups.push(group);
     }
 
     return {

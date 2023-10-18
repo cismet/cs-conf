@@ -1,6 +1,6 @@
 import util from 'util';
 
-function prepareClasses({ classes }) {
+function prepareClasses({ classes, additionalInfos }) {
     let csTypeEntries = [];
     let csJavaClassEntries = [];
     let icons = [];
@@ -14,7 +14,7 @@ function prepareClasses({ classes }) {
         let enforcedId = clazz.enforcedId;
         let enforcedIdReason = clazz.enforcedIdReason;
         let name = clazz.name;
-        let table = clazz.table;
+        let classKey = clazz.table;
         let descr = clazz.descr;
         let pk = clazz.pk;
         let array_link = clazz.array_link;
@@ -83,7 +83,7 @@ function prepareClasses({ classes }) {
             descr, 
             classIcon, 
             objectIcon, 
-            table,
+            classKey,
             pk,
             indexed,
             toStringClass,
@@ -103,15 +103,20 @@ function prepareClasses({ classes }) {
         //For Types
         csTypeEntries.push([
             name, 
-            table
+            classKey
         ]);
+
+        if (Object.keys(clazz.additional_info).length > 0) {
+            additionalInfos.class[classKey] = Object.assign({type: 'class'}, clazz.additional_info);
+        }        
 
         let posCounter = 0;
         for (let attribute of clazz.attributes) {
             let isArray = false;
             let xx = 1;
             let name = attribute.name;
-            let fieldname = attribute.field;
+            let attributeKey = classKey + "." + attribute.field;
+            let field = attribute.field;
             let substitute = attribute.substitute;
             let descr = attribute.descr;
             let visible = !attribute.hidden;
@@ -160,10 +165,10 @@ function prepareClasses({ classes }) {
             
             if (attribute.dbType) {
                 csAttrDbTypeEntries.push([
-                    table,
+                    classKey,
                     type_name,
                     name,
-                    fieldname,
+                    field,
                     foreign_key,
                     substitute,
                     foreign_key_references_to_table_name,
@@ -189,10 +194,10 @@ function prepareClasses({ classes }) {
                 ]);
             } else {                
                 csAttrCidsTypeEntries.push([
-                    table,
+                    classKey,
                     type_name,
                     name,
-                    fieldname,
+                    field,
                     foreign_key,
                     substitute,
                     foreign_key_references_to_table_name,
@@ -218,11 +223,16 @@ function prepareClasses({ classes }) {
                     xx
                 ]);            
             }
+
+            if (Object.keys(attribute.additional_info).length > 0) {
+                additionalInfos.attribute[attributeKey] = Object.assign({type: 'attribute'}, attribute.additional_info);
+            }        
+    
         }
         if (clazz.additionalAttributes){
             for (let additionalAttributes in clazz.additionalAttributes) {
                 csClassAttrEntries.push([
-                    table,
+                    classKey,
                     additionalAttributes,
                     clazz.additionalAttributes[additionalAttributes],
                     csClassAttrEntries.length + 1,

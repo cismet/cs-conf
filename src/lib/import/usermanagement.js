@@ -49,6 +49,10 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
                 }
             }
         }
+
+        if (Object.keys(user.additional_info).length > 0) {
+            additionalInfos.user[userKey] = Object.assign({type: 'user'}, user.additional_info);
+        }
     }
     return { csUserEntries, csUgMembershipEntries };
 }

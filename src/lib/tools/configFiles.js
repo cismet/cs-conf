@@ -51,6 +51,7 @@ export function readConfigFiles(configsDir, topics) {
         throw util.format("checkConfigFolders: target directory %s exists but has no config.json", configsDir);
     }    
     let config = readConfigFile(util.format("%s/config.json", configsDir), true);
+    let additionalInfos = readConfigFile(util.format("%s/additionalInfos.json", configsDir), true);
 
     let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : null;
     let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configsDir), true) : null;
@@ -100,6 +101,7 @@ export function readConfigFiles(configsDir, topics) {
 
     return {
         config,
+        additionalInfos,
         domains, 
         policyRules, 
         usergroups, 
@@ -118,6 +120,7 @@ export function readConfigFiles(configsDir, topics) {
 export function writeConfigFiles(configs, configsDir) {
     let {
         config,
+        additionalInfos,
         domains,
         policyRules,
         usermanagement,
@@ -180,6 +183,7 @@ export function writeConfigFiles(configs, configsDir) {
     // writing files
 
     writeConfigFile(config, util.format("%s/config.json", configsDir), true);
+    writeConfigFile(additionalInfos, util.format("%s/additionalInfos.json", configsDir), true);
     writeConfigFile(domains, util.format("%s/domains.json", configsDir), true);
     writeConfigFile(policyRules, util.format("%s/policyRules.json", configsDir), true);
     writeConfigFile(usergroups, util.format("%s/usergroups.json", configsDir), true);

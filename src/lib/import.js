@@ -8,6 +8,7 @@ import prepareClasses from './import/classes';
 import prepareClassPermissions from './import/classPermissions';
 import prepareAttributePermissions from './import/attrPermissions';
 import prepareStructure from './import/structure';
+import prepareAdditionalInfos from './import/additionalInfos';
 import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
@@ -55,7 +56,8 @@ async function csImport(options) {
             csCatNodeEntries,
             csCatLinkEntries,
             csCatNodePermEntries,
-            csDynamicChildrenHelperEntries
+            csDynamicChildrenHelperEntries,
+            csInfoEntries,
         } = prepared;
     
         if (!skipBackup) {
@@ -183,6 +185,10 @@ async function csImport(options) {
             logVerbose(util.format(" ↳ importing dynamic children helpers (%d)", csDynamicChildrenHelperEntries.length));
             await singleRowFiller(client, dynamicChildrenHelpersImportStatement, csDynamicChildrenHelperEntries);
         }                
+        if (csInfoEntries.length > 0) {
+            logVerbose(util.format(" ↳ importing additional infos (%d)", csInfoEntries.length));
+            await singleRowFiller(client, additionalInfosImportStatement, csInfoEntries);
+        }                
         logVerbose(" ↳ (re)creating dynamic children helper functions");   
         await client.query("SELECT cs_refresh_dynchilds_functions();");    
         await client.query('COMMIT;');
@@ -231,8 +237,21 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing structure (%d)", normalizedConfigs.structure.length));
     Object.assign(csEntries, prepareStructure(normalizedConfigs));
 
+    let additionalInfoCount = 0;
+    for (let additionalInfoType of Object.keys(normalizedConfigs.additionalInfos)) {
+        let additionalInfo = normalizedConfigs.additionalInfos[additionalInfoType];
+        additionalInfoCount += Object.keys(additionalInfo).length;
+    }
+
+    logVerbose(util.format(" ↳ preparing additionalInfos (%d)", additionalInfoCount));
+    Object.assign(csEntries, prepareAdditionalInfos(normalizedConfigs));
+
     return csEntries;        
 }
+
+const additionalInfosImportStatement = `
+INSERT INTO cs_info (type, key, json) VALUES ($1, $2, $3::jsonb);
+`;
 
 
 const domainImportStatement = `

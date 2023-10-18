@@ -1,9 +1,11 @@
 [
   {
     "domainname": "LOCAL",
-    "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null }]
+    "configurationAttributes": [{ "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null }], 
+    "additional_info": {}
   }, { 
     "domainname": "TEST",
-    "configurationAttributes": []
+    "configurationAttributes": [], 
+    "additional_info": {}
   }
 ]

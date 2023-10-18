@@ -17,6 +17,7 @@ import { getClientInfo } from './tools/db';
 import normalizeConfig from './normalize/config';
 import exportDynchildhelpers from './export/dynchildhelpers';
 import exportUsergroups from './export/usergroups';
+import exportAdditionalInfos from './export/additionalInfos';
 
 async function csExport(options) {
     let  { targetDir, normalized = false } = options;
@@ -39,6 +40,9 @@ async function fetch() {
 
     logOut(util.format("Fetching cs Data from '%s' ...", getClientInfo()));
     let fetchedData = {};
+
+    logVerbose(" ↳ fetching cs_infos");
+    fetchedData['csAdditionalInfos'] = (await client.query(additionalInfosStatement)).rows;
 
     logVerbose(" ↳ fetching cs_policy_rules");
     fetchedData['csPolicyRules'] = (await client.query(policyRulesExportStatement)).rows;
@@ -92,6 +96,9 @@ function exportConfigs(fetchedData, config) {
     logOut(util.format("Exporting configuration from '%s' ...", getClientInfo()));
     let configs = { config };
 
+    logVerbose(" ↳ creating additionalInfos.json");
+    Object.assign(configs, exportAdditionalInfos(fetchedData, configs));
+
     logVerbose(" ↳ creating configurationAttributes.json and xml-config-attrs files");
     Object.assign(configs, exportConfigAttributes(fetchedData, configs));
 
@@ -124,6 +131,14 @@ function exportConfigs(fetchedData, config) {
 
     return configs;
 }
+
+const additionalInfosStatement = `
+SELECT 
+	type,
+	key,
+	json
+FROM cs_info;
+`;
 
 const configAttrExportStatement = `
 SELECT 

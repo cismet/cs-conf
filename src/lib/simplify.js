@@ -32,6 +32,7 @@ export function simplifyConfigs(configs) {
     let mainDomain = configs.config.domainName;
     return Object.assign({}, configs, {
         config: simplifyConfig(configs.config), 
+        additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
         attrPerms: simplifyAttrPerms(configs.attrPerms, configs.mainDomain), 
         classes: simplifyClasses(configs.classes), 
         classPerms: simplifyClassPerms(configs.classPerms, mainDomain), 

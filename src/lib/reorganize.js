@@ -29,6 +29,7 @@ async function csReorganize(options) {
 export function reorganizeConfigs(configs) {
     return Object.assign({}, configs, {
         config: reorganizeConfig(configs.config), 
+        additionalInfos: reorganizeAdditionalInfos(configs.additionalInfos), 
         attrPerms: reorganizeAttrPerms(configs.attrPerms), 
         classes: reorganizeClasses(configs.classes), 
         classPerms: reorganizeClassPerms(configs.classPerms), 

@@ -28,6 +28,7 @@ async function csNormalize(options) {
 export function normalizeConfigs(configs) {    
     return Object.assign({}, configs, {
         config: normalizeConfig(configs.config),
+        additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
         attrPerms: normalizeAttrPerms(configs.attrPerms), 
         classes: normalizeClasses(configs.classes), 
         classPerms: normalizeClassPerms(configs.classPerms), 
