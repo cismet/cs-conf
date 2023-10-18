@@ -55,7 +55,7 @@ const targetOption = {
 };
 
 program
-	.version('1.2.5')
+	.version('1.3')
 ;
 
 let commands = new Map();
