@@ -195,7 +195,12 @@ async function csImport(options) {
 
 export function prepareImport(configs) {
     logVerbose(" ↳ normalizing configuration");
-    let normalizedConfigs = normalizeConfigs(configs);
+    let normalizedConfigs = Object.assign(
+        {
+            configurationAttributes: [],
+        },
+        normalizeConfigs(configs)
+    );
 
     let csEntries = {};
 
@@ -208,7 +213,7 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing usermanagement (%d)", normalizedConfigs.usermanagement.length));
     Object.assign(csEntries, prepareUsermanagement(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing configuration attributes"));
+    logVerbose(util.format(" ↳ preparing configuration attributes (%d)", normalizedConfigs.configurationAttributes.length));
     Object.assign(csEntries, prepareConfigAttrs(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing policyRules (%d)", normalizedConfigs.policyRules.length));
