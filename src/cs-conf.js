@@ -1,5 +1,7 @@
 #!/usr/bin/babel-node --
 
+import { version } from '../package.json';
+
 import util from 'util';
 import program from 'commander';
 import csExport from './lib/export';
@@ -54,8 +56,7 @@ const targetOption = {
 	default: null,
 };
 
-program
-	.version('1.3')
+program.version(version)
 ;
 
 let commands = new Map();
