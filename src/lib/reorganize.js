@@ -9,6 +9,7 @@ import reorganizeStructure from "./reorganize/structure";
 import reorganizeUsergroups from "./reorganize/usergroups";
 import reorganizeUsermanagement from "./reorganize/usermanagement";
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+import reorganizeAdditionalInfos from "./reorganize/additionalInfos";
 
 async function csReorganize(options) {
     let { targetDir } = options;
@@ -25,36 +26,19 @@ async function csReorganize(options) {
     return reorganized;
 }
 
-export function reorganizeConfigs({
-    config,
-    attrPerms, 
-    classes, 
-    classPerms, 
-    domains, 
-    dynchildhelpers,
-    policyRules, 
-    structure, 
-    usergroups, 
-    usermanagement, 
-    helperSqlFiles,
-    structureSqlFiles,
-    xmlFiles,
-}) {
-    return {
-        config: reorganizeConfig(config), 
-        attrPerms: reorganizeAttrPerms(attrPerms), 
-        classes: reorganizeClasses(classes), 
-        classPerms: reorganizeClassPerms(classPerms), 
-        domains: reorganizeDomains(domains), 
-        dynchildhelpers: reorganizeDynchildhelpers(dynchildhelpers),
-        helperSqlFiles, 
-        policyRules: reorganizePolicyRules(policyRules), 
-        structure: reorganizeStructure(structure), 
-        structureSqlFiles,
-        usergroups: reorganizeUsergroups(usergroups), 
-        usermanagement: reorganizeUsermanagement(usermanagement), 
-        xmlFiles,
-    };
+export function reorganizeConfigs(configs) {
+    return Object.assign({}, configs, {
+        config: reorganizeConfig(configs.config), 
+        attrPerms: reorganizeAttrPerms(configs.attrPerms), 
+        classes: reorganizeClasses(configs.classes), 
+        classPerms: reorganizeClassPerms(configs.classPerms), 
+        domains: reorganizeDomains(configs.domains), 
+        dynchildhelpers: reorganizeDynchildhelpers(configs.dynchildhelpers),
+        policyRules: reorganizePolicyRules(configs.policyRules), 
+        structure: reorganizeStructure(configs.structure), 
+        usergroups: reorganizeUsergroups(configs.usergroups), 
+        usermanagement: reorganizeUsermanagement(configs.usermanagement), 
+    });
 }
 
 export default csReorganize;

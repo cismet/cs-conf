@@ -10,6 +10,7 @@ import simplifyUsermanagement from "./simplify/usermanagement";
 import { reorganizeConfigs } from './reorganize';
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 import simplifyConfig from "./simplify/config";
+import simplifyAdditionalInfos from "./simplify/additionalInfo";
 
 async function csSimplify(options) {
     let { targetDir, reorganize } = options;
@@ -27,37 +28,20 @@ async function csSimplify(options) {
     return simplified;
 }
 
-export function simplifyConfigs({
-    config,
-    attrPerms, 
-    classes, 
-    classPerms, 
-    domains, 
-    dynchildhelpers,
-    helperSqlFiles,
-    policyRules, 
-    structure, 
-    structureSqlFiles,
-    usergroups, 
-    usermanagement, 
-    xmlFiles,    
-}) {
-    let mainDomain = config.domainName;
-    return {
-        config: simplifyConfig(config), 
-        attrPerms: simplifyAttrPerms(attrPerms, mainDomain), 
-        classes: simplifyClasses(classes), 
-        classPerms: simplifyClassPerms(classPerms, mainDomain), 
-        domains: simplifyDomains(domains, mainDomain), 
-        dynchildhelpers: simplifyDynchildhelpers(dynchildhelpers),
-        policyRules: simplifyPolicyRules(policyRules), 
-        structure: simplifyStructure(structure, mainDomain), 
-        usergroups: simplifyUsergroups(usergroups, mainDomain), 
-        usermanagement: simplifyUsermanagement(usermanagement, mainDomain), 
-        helperSqlFiles, 
-        structureSqlFiles,
-        xmlFiles,
-    };
+export function simplifyConfigs(configs) {
+    let mainDomain = configs.config.domainName;
+    return Object.assign({}, configs, {
+        config: simplifyConfig(configs.config), 
+        attrPerms: simplifyAttrPerms(configs.attrPerms, configs.mainDomain), 
+        classes: simplifyClasses(configs.classes), 
+        classPerms: simplifyClassPerms(configs.classPerms, mainDomain), 
+        domains: simplifyDomains(configs.domains, mainDomain), 
+        dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
+        policyRules: simplifyPolicyRules(configs.policyRules), 
+        structure: simplifyStructure(configs.structure, mainDomain), 
+        usergroups: simplifyUsergroups(configs.usergroups, mainDomain), 
+        usermanagement: simplifyUsermanagement(configs.usermanagement, mainDomain), 
+    });
 }
 
 export default csSimplify;

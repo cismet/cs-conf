@@ -1,3 +1,4 @@
+import normalizeAdditionalInfos from "./normalize/additionalInfos";
 import normalizeAttrPerms from "./normalize/attrPerms";
 import normalizeClasses from "./normalize/classes";
 import normalizeClassPerms from "./normalize/classPerms";
@@ -24,36 +25,19 @@ async function csNormalize(options) {
     return normalized;
 }
 
-export function normalizeConfigs({
-    config,
-    attrPerms, 
-    classes, 
-    classPerms, 
-    domains, 
-    dynchildhelpers,
-    policyRules, 
-    structure, 
-    usergroups, 
-    usermanagement, 
-    helperSqlFiles,
-    structureSqlFiles,
-    xmlFiles,
-}) {    
-    return {
-        config: normalizeConfig(config),
-        attrPerms: normalizeAttrPerms(attrPerms), 
-        classes: normalizeClasses(classes), 
-        classPerms: normalizeClassPerms(classPerms), 
-        domains: normalizeDomains(domains, config.domainName), 
-        dynchildhelpers: normalizeDynchildhelpers(dynchildhelpers),
-        helperSqlFiles,
-        policyRules: normalizePolicyRules(policyRules), 
-        structure: normalizeStructure(structure), 
-        structureSqlFiles,
-        usergroups: normalizeUsergroups(usergroups), 
-        usermanagement: normalizeUsermanagement(usermanagement), 
-        xmlFiles,
-    };
+export function normalizeConfigs(configs) {    
+    return Object.assign({}, configs, {
+        config: normalizeConfig(configs.config),
+        attrPerms: normalizeAttrPerms(configs.attrPerms), 
+        classes: normalizeClasses(configs.classes), 
+        classPerms: normalizeClassPerms(configs.classPerms), 
+        domains: normalizeDomains(configs.domains, configs.config.domainName), 
+        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
+        policyRules: normalizePolicyRules(configs.policyRules), 
+        structure: normalizeStructure(configs.structure), 
+        usergroups: normalizeUsergroups(configs.usergroups), 
+        usermanagement: normalizeUsermanagement(configs.usermanagement), 
+    });
 }
 
 export default csNormalize;
