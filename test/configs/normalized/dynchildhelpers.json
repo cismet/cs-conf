@@ -2,12 +2,10 @@
   {
       "name": "helper1",
       "code" : "SELECT stuff FROM somewhere",
-      "code_file" : null, 
-      "additional_info": {}
+      "code_file" : null 
     }, { 
         "name": "helper2",
         "code": null,
-        "code_file" : "helper2.sql", 
-        "additional_info": {}
+        "code_file" : "helper2.sql"
     }
 ]
