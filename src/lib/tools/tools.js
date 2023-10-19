@@ -53,3 +53,32 @@ export function logInfo(text, options = {}) {
 export function logDebug(text, options = {}) {
     logOut(text, Object.assign(options, { debugging: true }));
 }
+
+export function topologicalSort(graph) {
+    let result = [];
+    let visited = new Set();
+    let visiting = new Set();
+  
+    function visit(node) {
+      if (visiting.has(node)) {
+        throw new Error("Cycle detected in the dependency graph.");
+      }
+  
+      if (!visited.has(node)) {
+        visiting.add(node);
+        for (let dependent of graph[node]) {
+          visit(dependent);
+        }
+        visiting.delete(node);
+        visited.add(node);
+        result.push(node);
+      }
+    }
+  
+    for (let node in graph) {
+      visit(node);
+    }
+  
+    return result;
+}
+  

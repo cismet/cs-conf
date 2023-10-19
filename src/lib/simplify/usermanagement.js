@@ -19,10 +19,19 @@ export function simplifyUsermanagement(usermanagement, mainDomain) {
 export function simplifyUser(user, mainDomain) {
     let simplified = null;
     if (user != null) {
+        let groups = user.additional_info._unshadowed_groups ?? user.groups;
+        let configurationAttributes = user.additional_info._unshadowed_configurationAttributes ?? user.configurationAttributes;        
         simplified = copyFromTemplate(Object.assign({}, user, { 
-            groups: simplifyGroups(user.groups, mainDomain),
-            configurationAttributes: simplifyConfigurationAttributes(user.configurationAttributes, mainDomain),
+            groups: simplifyGroups(groups, mainDomain),
+            configurationAttributes: simplifyConfigurationAttributes(configurationAttributes, mainDomain),
         }), defaultUser)
+        if (simplified.additional_info) {
+            delete simplified.additional_info._unshadowed_groups
+            delete simplified.additional_info._unshadowed_configurationAttributes
+            if (Object.keys(simplified.additional_info).length == 0) {
+                delete simplified.additional_info;
+            }
+        }
     }
     return simplified
 }
