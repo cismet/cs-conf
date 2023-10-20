@@ -34,57 +34,29 @@ async function fetch() {
     let client = await initClient(global.config.connection);
 
     logOut(util.format("Fetching cs Data from '%s' ...", getClientInfo()));
-    let fetchedData = {};
+    return {
+        csAdditionalInfos: await fetchStatement(client, 'cs_info', additionalInfosStatement),
+        csPolicyRules: await fetchStatement(client, 'cs_policy_rules', policyRulesExportStatement),
+        csConfigAttrs: await fetchStatement(client, 'cs_config_attr_*', configAttrExportStatement),
+        csDomains: await fetchStatement(client, 'cs_domains', domainsExportStatement),
+        csUgs: await fetchStatement(client, 'cs_ug', usergroupsExportStatement),
+        csUsrs: await fetchStatement(client, 'cs_usr', usersExportStatement),
+        csUgMemberships: await fetchStatement(client, 'cs_ug_membership', usergroupmembershipExportStatement),
+        csClasses: await fetchStatement(client, 'cs_classes', classesExportStatement),
+        csClassAttrs: await fetchStatement(client, 'cs_class_attr', classAttributesExportStatement),
+        csUgClassPerms: await fetchStatement(client, 'cs_ug_class_perm', classPermissionsExportStatement),
+        csAttrs: await fetchStatement(client, 'cs_attr', attributesExportStatement),
+        csUgAttrPerms: await fetchStatement(client, 'cs_ug_attr_perm', attributePermissionsExportStatement),
+        csCatNodes: await fetchStatement(client, 'cs_cat_node', nodesExportStatement),
+        csCatLinks: await fetchStatement(client, 'cs_cat_link', linksExportStatement),
+        csUgCatNodePerms: await fetchStatement(client, 'cs_ug_cat_node_perm', nodePermissionsExportStatement),
+        csDynamicChildreHelpers: await fetchStatement(client, 'cs_dynamic_children_helper', dynchildhelpersExportStatement),
+    };
+}
 
-    logVerbose(" ↳ fetching cs_infos");
-    fetchedData['csAdditionalInfos'] = (await client.query(additionalInfosStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_policy_rules");
-    fetchedData['csPolicyRules'] = (await client.query(policyRulesExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_config_attr_*");
-    fetchedData['csConfigAttrs'] = (await client.query(configAttrExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_domains");
-    fetchedData['csDomains'] = (await client.query(domainsExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_ug");
-    fetchedData['csUgs'] = (await client.query(usergroupsExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_usr");
-    fetchedData['csUsrs'] = (await client.query(usersExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_ug_membership");
-    fetchedData['csUgMemberships'] = (await client.query(usergroupmembershipExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_class");
-    fetchedData['csClasses'] = (await client.query(classesExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_class_attr");
-    fetchedData['csClassAttrs'] = (await client.query(classAttributesExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_ug_class_perm");
-    fetchedData['csUgClassPerms'] = (await client.query(classPermissionsExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_attr");
-    fetchedData['csAttrs'] = (await client.query(attributesExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_ug_attr_perm");
-    fetchedData['csUgAttrPerms'] = (await client.query(attributePermissionsExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_cat_node");
-    fetchedData['csCatNodes'] = (await client.query(nodesExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_cat_link");
-    fetchedData['csCatLinks'] = (await client.query(linksExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_ug_cat_node_perm");
-    fetchedData['csUgCatNodePerms'] = (await client.query(nodePermissionsExportStatement)).rows;
-
-    logVerbose(" ↳ fetching cs_dynamic_children_helper");
-    fetchedData['csDynamicChildreHelpers'] = (await client.query(dynchildhelpersExportStatement)).rows;
-
-    return fetchedData;
+async function fetchStatement(client, topic, statement) {
+    logVerbose(util.format(" ↳ fetching %s", topic));
+    return (await client.query(statement)).rows;
 }
 
 function exportConfigs(fetchedData, config) {
@@ -129,7 +101,7 @@ function exportConfigs(fetchedData, config) {
 
 // ---
 
-function exportAdditionalInfos({ csAdditionalInfos }, { config, domainConfigAttrs }) {
+function exportAdditionalInfos({ csAdditionalInfos }) {
     let additionalInfos = {};
 
     for (let csAdditionalInfo of csAdditionalInfos) {
