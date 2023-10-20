@@ -449,12 +449,12 @@ function normalizeSpecial(special, table) {
     return null;
 }
 
-function unshadow(userKey, usersMap, additionalInfos = {}) {      
+function unshadow(userKey, usersMap) {      
     let user = usersMap.get(userKey);
     if (user != null && user.shadows != null) {
         let shadows = user.shadows;
         if (shadows.length > 0) {
-            let additionalInfo = additionalInfos.user[userKey];
+            let additionalInfo = user.additional_info;
             if (!additionalInfo._unshadowed_groups) {
                 additionalInfo._unshadowed_groups = user.groups;
                 for (let shadowKey of [...shadows].reverse()) {

@@ -277,7 +277,7 @@ export function simplifyUser(user, additionalInfos = {}, mainDomain = null) {
     if (user != null) {
         let userKey = user.login_name;
         let additionalInfosUser = additionalInfos.user ?? {};
-        let additionalInfo = additionalInfosUser[userKey] ?? {};
+        let additionalInfo = user.additional_info ?? {};
         let groups = additionalInfo._unshadowed_groups ?? user.groups;
         let configurationAttributes = additionalInfo._unshadowed_configurationAttributes ?? user.configurationAttributes;        
         simplified = copyFromTemplate(Object.assign({}, user, { 
