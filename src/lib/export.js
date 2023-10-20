@@ -1,5 +1,10 @@
 import util from 'util';
 
+import { writeConfigFiles } from './tools/configFiles';
+import { logOut, logVerbose } from './tools/tools';
+import { initClient } from './tools/db';
+import { getClientInfo } from './tools/db';
+
 import exportConfigAttributes from './export/configAttributes';
 import exportDomains from './export/domains';
 import exportPolicyRules from './export/policyRules';
@@ -8,18 +13,15 @@ import exportClasses from './export/classes';
 import exportClassPermissions from './export/classPermissions.js';
 import exportAttrPermissions from './export/attrPermissions.js';
 import exportStructure from './export/structure.js';
-import { writeConfigFiles } from './tools/configFiles';
-import { simplifyConfigs } from './simplify';
-import { reorganizeConfigs } from './reorganize';
-import { logOut, logVerbose } from './tools/tools';
-import { initClient } from './tools/db';
-import { getClientInfo } from './tools/db';
-import normalizeConfig from './normalize/config';
 import exportDynchildhelpers from './export/dynchildhelpers';
 import exportUsergroups from './export/usergroups';
 import exportAdditionalInfos from './export/additionalInfos';
 
-async function csExport(options) {
+import { simplifyConfigs } from './simplify';
+import { reorganizeConfigs } from './reorganize';
+import { normalizeConfig } from './normalize';
+
+export default async function csExport(options) {
     let  { targetDir, normalized = false } = options;
 
     let fetchedData = await fetch();
@@ -341,5 +343,3 @@ FROM
     JOIN cs_domain d ON (g.domain=d.id)
 ORDER BY g.name, d.name, p.key
 ;`;
-
-export default csExport;

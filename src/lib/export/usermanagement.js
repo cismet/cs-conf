@@ -1,4 +1,4 @@
-function exportUserManagement({ csUsrs, csUgMemberships }, { additionalInfos, userConfigAttrs }) {
+function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) {
     let userGroupMap = new Map();
     for (let csUgMembership of csUgMemberships) {
         let user = userGroupMap.get(csUgMembership.login_name);
@@ -11,8 +11,6 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { additionalInfos, us
     }
 
     let usermanagement = [];
-
-    let additionalInfosUser = additionalInfos.user ?? {};
 
     for (let csUsr of csUsrs) {
         let user = Object.assign({}, csUsr);
@@ -29,10 +27,6 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { additionalInfos, us
         if (attributes) {
             user.configurationAttributes = attributes;
         }
-
-        //add the additionalInfo
-        user.additional_info = additionalInfosUser[userKey];
-        delete additionalInfosUser[userKey];        
 
         usermanagement.push(user);
     }

@@ -13,7 +13,7 @@ import csPurge from './lib/purge';
 import csCreate from './lib/create';
 import csTruncate from './lib/truncate';
 import csPassword from './lib/password';
-import csNormalize from './lib/normalize';
+import csNormalize, { normalizeConfig } from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
 import { readConfigJsonFile } from './lib/tools/configFiles';
@@ -21,7 +21,6 @@ import { clean, logDebug, logErr } from './lib/tools/tools';
 import csCheck from './lib/check';
 import csConfig from './lib/config';
 import path from 'path';
-import normalizeConfig from './lib/normalize/config';
 
 global.rootSrcDir = __dirname;
 global.silent = false;

@@ -3,9 +3,9 @@ import fs from 'fs';
 import propertyParser from 'properties-file';
 
 import { readConfigFile, writeConfigFile } from './tools/configFiles';
-import normalizeConfig from './normalize/config';
-import simplifyConfig from './simplify/config';
 import { logVerbose } from './tools/tools';
+import { simplifyConfig } from './simplify';
+import { normalizeConfig } from './normalize';
 
 function getConfigFromRuntimeProperties(runtimeProperties) {
     logVerbose(util.format("Loading properties %s ...", runtimeProperties));

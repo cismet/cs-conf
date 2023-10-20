@@ -5,11 +5,10 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { logInfo, logOut } from './tools/tools';
 import { readConfigFiles, writeConfigFiles } from './tools/configFiles';
-import { normalizeUser } from './normalize/usermanagement';
-import reorganizeUsermanagement from './reorganize/usermanagement';
+import { normalizeConfig, normalizeUser } from './normalize';
 import stringify from 'json-stringify-pretty-compact';
-import { simplifyUser } from './simplify/usermanagement';
-import normalizeConfig from './normalize/config';
+import { simplifyUser } from './simplify';
+import { reorganizeUsermanagement } from './reorganize';
 
 dayjs.extend(customParseFormat);
 

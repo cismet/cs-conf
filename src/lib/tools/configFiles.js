@@ -3,7 +3,7 @@ import util from 'util';
 import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
 import { logOut, logVerbose } from './tools';
-import normalizeConfig from '../normalize/config.js';
+import { normalizeConfig } from '../normalize';
 
 const structureDynamicChildrenFolderConst = "structure-dyn-children-stmnts";
 const structureHelperStatementsFolderConst = "structure-helper-stmnts";
@@ -20,7 +20,7 @@ export function readConfigJsonFile(file) {
 
 export function readConfigFile(file, sub = false) {    
     logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "Reading", file));
-    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : null
+    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : undefined
 }
 
 export function writeConfigFile(config, file, sub = false) {    

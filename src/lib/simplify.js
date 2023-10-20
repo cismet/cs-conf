@@ -1,18 +1,51 @@
-import simplifyAttrPerms from "./simplify/attrPerms";
-import simplifyClasses from "./simplify/classes";
-import simplifyClassPerms from "./simplify/classPerms";
-import simplifyDomains from "./simplify/domains";
-import simplifyDynchildhelpers from "./simplify/dynchildhelpers";
-import simplifyPolicyRules from "./simplify/policyRules";
-import simplifyStructure from "./simplify/structure";
-import simplifyUsergroups from "./simplify/usergroups";
-import simplifyUsermanagement from "./simplify/usermanagement";
-import { reorganizeConfigs } from './reorganize';
-import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
-import simplifyConfig from "./simplify/config";
-import simplifyAdditionalInfos from "./simplify/additionalInfo";
+import util from "util";
 
-async function csSimplify(options) {
+import { removeLocalDomain } from "./tools/cids";
+import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
+
+import { 
+    reorganizeConfigs 
+} from './reorganize';
+
+import { 
+    copyFromTemplate, 
+    defaultAttribute, 
+    defaultAttributePrimary, 
+    defaultAttrPerm,
+    defaultClass, 
+    defaultClassPerm, 
+    defaultConfig, 
+    defaultConfigConnection, 
+    defaultConfigSync, 
+    defaultConfigurationAttributes, 
+    defaultDomain, 
+    defaultDynchildhelper, 
+    defaultUser, 
+    defaultUserGroup, 
+    defaultNode, 
+    defaultPolicyRule, 
+} from "./tools/defaultObjects";
+
+import { 
+    normalizeAdditionalInfos, 
+    normalizeAttrPerms, 
+    normalizeAttributes, 
+    normalizeClasses, 
+    normalizeClassPerms, 
+    normalizeConfig, 
+    normalizeConfigurationAttributes, 
+    normalizeDomains, 
+    normalizeDynchildhelpers, 
+    normalizeStructure, 
+    normalizeUsergroups, 
+    normalizeUsermanagement, 
+    normalizePerms, 
+    normalizePolicyRules, 
+} from "./normalize";
+
+// ---
+
+export default async function csSimplify(options) {
     let { targetDir, reorganize } = options;
 
     let configsDir = global.configsDir;
@@ -28,12 +61,14 @@ async function csSimplify(options) {
     return simplified;
 }
 
+// ---
+
 export function simplifyConfigs(configs) {
     let mainDomain = configs.config.domainName;
     return Object.assign({}, configs, {
         config: simplifyConfig(configs.config), 
         additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
-        attrPerms: simplifyAttrPerms(configs.attrPerms, configs.mainDomain), 
+        attrPerms: simplifyAttrPerms(configs.attrPerms, mainDomain), 
         classes: simplifyClasses(configs.classes), 
         classPerms: simplifyClassPerms(configs.classPerms, mainDomain), 
         domains: simplifyDomains(configs.domains, mainDomain), 
@@ -41,8 +76,327 @@ export function simplifyConfigs(configs) {
         policyRules: simplifyPolicyRules(configs.policyRules), 
         structure: simplifyStructure(configs.structure, mainDomain), 
         usergroups: simplifyUsergroups(configs.usergroups, mainDomain), 
-        usermanagement: simplifyUsermanagement(configs.usermanagement, mainDomain), 
+        usermanagement: simplifyUsermanagement(configs.usermanagement, configs.additionalInfos, mainDomain), 
     });
 }
 
-export default csSimplify;
+export function simplifyConfig(config) {
+    if (config == null) return null;
+
+    let simplified = {};
+    let normalized = normalizeConfig(config);
+    if (normalized != null) {
+        Object.assign(simplified, copyFromTemplate(normalized, defaultConfig), {
+            connection: copyFromTemplate(normalized.connection, defaultConfigConnection),
+            sync: copyFromTemplate(normalized.sync, defaultConfigSync),
+        });
+        if (Object.keys(simplified.connection).length === 0) {
+            delete simplified.connection;
+        }
+        if (Object.keys(simplified.sync).length === 0) {
+            delete simplified.sync;
+        }
+    }
+    return Object.keys(simplified).length === 0 ? undefined : simplified;
+}
+
+export function simplifyAdditionalInfos(additionalInfos) {
+    let simplified = {};
+    if (additionalInfos) {
+        let normalized = normalizeAdditionalInfos(additionalInfos);
+        for (let type of Object.keys(normalized)) {
+            if (normalized[type]) {
+                let simplifiedType = {};
+                for (let key of Object.keys(normalized[type])) {
+                    simplifiedType[key] = normalized[type][key];
+                }
+                if (Object.keys(simplifiedType).length > 0) {
+                    simplified[type] = simplifiedType;
+                }
+            }
+        }
+    }
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
+}
+
+export function simplifyAttrPerms(attrPerms, mainDomain = null) {
+    if (attrPerms == null) return null;
+
+    let simplified = [];
+    for (let attrPerm of normalizeAttrPerms(attrPerms)) {
+        if (attrPerm != null) {
+            simplified.push(copyFromTemplate(Object.assign({}, attrPerm, { 
+                read: simplifyPerms(attrPerm.read, mainDomain), 
+                write: simplifyPerms(attrPerm.write, mainDomain) 
+            }), defaultAttrPerm));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyClasses(classes) {
+    if (classes == null) return null;
+
+    let simplified = [];
+    for (let clazz of normalizeClasses(classes)) {
+        if (clazz != null) {
+            let classWithSimplifiedIcon = Object.assign(clazz, {
+                icon: clazz.icon == null && clazz.classIcon == clazz.objectIcon ? clazz.classIcon : clazz.icon,
+                classIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.classIcon,
+                objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
+            });
+            let simplifiedClazz = copyFromTemplate(classWithSimplifiedIcon, defaultClass);
+            if (clazz.attributes !== undefined) {
+                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk, clazz.table);
+            }
+            if (simplifiedClazz.name == simplifiedClazz.table) {
+                delete simplifiedClazz.name;
+            }
+            simplified.push(simplifiedClazz);
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyClassPerms(classPerms, mainDomain = null) {
+    if (classPerms == null) return null;
+
+    let simplified = [];
+    for (let classPerm of normalizeClassPerms(classPerms)) {
+        if (classPerm != null) {
+            simplified.push(copyFromTemplate(Object.assign({}, classPerm, { 
+                read: simplifyPerms(classPerm.read, mainDomain), 
+                write: simplifyPerms(classPerm.write, mainDomain) 
+            }), defaultClassPerm));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyDomains(domains, mainDomain = null) {
+    if (domains == null) return null;
+
+    let simplifiedBeforeLocal = [];
+    let simpleMain = null;
+    let domainnames = [];
+    for (let domain of normalizeDomains(domains, mainDomain)) {
+        if (domain != null) {
+            domainnames.push(domain.domainname);
+            if (domain.domainname == mainDomain && domain.configurationAttributes.length == 0 && domain.comment == null) {
+                simpleMain = domain;
+            }
+            let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
+            if (domain.configurationAttributes !== undefined && domain.configurationAttributes.length > 0) {
+                simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes, mainDomain);
+            }
+            simplifiedBeforeLocal.push(simplifiedDomain);
+        }
+    }
+    
+    let simplified = [];
+    for (let domain of simplifiedBeforeLocal) {  
+        if (simpleMain != null) {
+            if (domain.domainname === simpleMain.domainname) {
+                continue;
+            } else if (domain.domainname === "LOCAL") {               
+                simplified.unshift(copyFromTemplate(Object.assign({}, domain, { 
+                    domainname: simpleMain.domainname,
+                }), defaultDomain));                
+            } else {
+                simplified.push(domain);
+            }
+        } else {
+            simplified.push(domain);
+        }
+    }
+
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyDynchildhelpers(dynchildhelpers) {
+    if (dynchildhelpers == null) return null;
+
+    let simplified = [];
+    for (let dynchildhelper of normalizeDynchildhelpers(dynchildhelpers)) {
+        if (dynchildhelper != null) {
+            simplified.push(copyFromTemplate(dynchildhelper, defaultDynchildhelper));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyPolicyRules(policyRules) {
+    if (policyRules == null) return null;
+
+    let simplified = [];
+    for (let policyRule of normalizePolicyRules(policyRules)) {
+        if (policyRule != null) {
+            simplified.push(copyFromTemplate(policyRule, defaultPolicyRule));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyStructure(structure, mainDomain = null) {
+    if (structure == null) return null;
+
+    return simplifyNodes(structure, mainDomain);
+}
+
+
+export function simplifyUsergroups(usergroups, mainDomain = null) {
+    if (usergroups == null) return null;
+
+    let simplified = [];
+    for (let group of normalizeUsergroups(usergroups)) {
+        if (group != null && group.key != null) {
+            simplified.push(copyFromTemplate(Object.assign({}, group, { 
+                key: removeLocalDomain(group.key, mainDomain),
+                configurationAttributes: simplifyConfigurationAttributes(group.configurationAttributes, mainDomain),
+            }), defaultUserGroup));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyUsermanagement(usermanagement, additionalInfos, mainDomain = null) {
+    if (usermanagement == null) return null;
+
+    let simplified = [];
+    for (let user of normalizeUsermanagement(usermanagement)) {
+        let simplifiedUser = simplifyUser(user, additionalInfos, mainDomain);
+        if (simplifiedUser != null) {
+            simplified.push(simplifiedUser);
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+export function simplifyUser(user, additionalInfos = {}, mainDomain = null) {
+    let simplified = null;
+    if (user != null) {
+        let userKey = user.login_name;
+        let additionalInfosUser = additionalInfos.user ?? {};
+        let additionalInfo = additionalInfosUser[userKey] ?? {};
+        let groups = additionalInfo._unshadowed_groups ?? user.groups;
+        let configurationAttributes = additionalInfo._unshadowed_configurationAttributes ?? user.configurationAttributes;        
+        simplified = copyFromTemplate(Object.assign({}, user, { 
+            groups: simplifyGroups(groups, mainDomain),
+            configurationAttributes: simplifyConfigurationAttributes(configurationAttributes, mainDomain),
+        }), defaultUser)
+        if (additionalInfo) {
+            delete additionalInfo._unshadowed_groups
+            delete additionalInfo._unshadowed_configurationAttributes
+            if (Object.keys(additionalInfo).length == 0) {
+                delete additionalInfosUser[userKey];
+            }
+        }
+    }
+    return simplified
+}
+
+export function simplifyGroup(group, mainDomain = null) {
+    let simplified = null;
+    if (group != null) {
+        simplified = removeLocalDomain(group, mainDomain);
+    }
+    return simplified;
+}
+
+export function simplifyGroups(groups, mainDomain = null) {
+    let simplified = [];
+
+    if (groups != null) {
+        for (let group of groups) {
+            let simplifiedGroup = simplifyGroup(group, mainDomain);
+            if (simplifiedGroup != null) {
+                simplified.push(simplifiedGroup);
+            }
+        }
+    }
+
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+// ---
+
+function simplifyNodes(nodes, mainDomain = null) {
+    if (nodes == null) return null;
+
+    let simplified = [];
+    for (let node of normalizeStructure(nodes)) {
+        if (node != null) {
+            simplified.push(copyFromTemplate(Object.assign({}, node, { 
+                readPerms: simplifyPerms(node.readPerms, mainDomain),
+                writePerms: simplifyPerms(node.writePerms, mainDomain),
+                children: simplifyNodes(node.children, mainDomain),
+            }), defaultNode));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
+    if (attributes == null) return null;
+
+    let simplified = [];
+    for (let attribute of normalizeAttributes(attributes, pk, table)) {
+        if (attribute != null && attribute.field != null) {
+            let simplifiedAttribute = copyFromTemplate(attribute, defaultAttribute);
+            if (pk !== undefined && attribute.field == pk) {
+                let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttributePrimary(table, pk)));
+                if (simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table)) {
+                    delete simplifiedPkAttribute.defaultValue;
+                }
+                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                    delete simplifiedAttribute.name;
+                }
+                if (Object.entries(simplifiedPkAttribute).length > 0) {
+                    simplified.push(Object.assign({field: pk}, simplifiedPkAttribute));
+                }
+            } else {
+                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                    delete simplifiedAttribute.name;
+                }
+                simplified.push(simplifiedAttribute);
+            }
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+function simplifyPerms(perms, mainDomain = null) {
+    if (perms == null) return null;
+
+    let simplified = [];
+    for (let perm of normalizePerms(perms)) {
+        simplified.push(removeLocalDomain(perm, mainDomain));
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+function simplifyConfigurationAttributes(configurationAttributes, mainDomain = null) {
+    if (configurationAttributes == null) return null;
+
+    let simplified = [];
+    for (let configurationAttribute of normalizeConfigurationAttributes(configurationAttributes)) {
+        if (configurationAttribute != null) {
+            simplified.push(copyFromTemplate(Object.assign({}, configurationAttribute, { 
+                groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain) 
+            }), defaultConfigurationAttributes));
+        }
+    }
+    return simplified.length > 0 ? simplified : undefined;
+}
+
+function simplifyConfigurationAttributeGroups(groups, mainDomain = null) {
+    let simplified = [];
+
+    if (groups != null) {
+        for (let group of groups) {
+            simplified.push(removeLocalDomain(group, mainDomain));
+        }
+    }
+
+    return simplified.length > 0 ? simplified : undefined;
+}

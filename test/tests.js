@@ -1,35 +1,38 @@
 import chai from 'chai';
 import util from 'util';
 import { readConfigFile } from '../src/lib/tools/configFiles';
-import normalizeAttrPerms from '../src/lib/normalize/attrPerms';
-import normalizeClasses from '../src/lib/normalize/classes';
-import normalizeClassPerms from '../src/lib/normalize/classPerms';
-import normalizeDomains from '../src/lib/normalize/domains';
-import normalizeDynchildhelpers from '../src/lib/normalize/dynchildhelpers';
-import normalizePolicyRules from '../src/lib/normalize/policyRules';
-import normalizeStructure from '../src/lib/normalize/structure';
-import normalizeUsergroups from '../src/lib/normalize/usergroups';
-import normalizeUsermanagement from '../src/lib/normalize/usermanagement';
-import normalizeConfigurationAttributes from '../src/lib/normalize/configurationAttributes';
-import simplifyConfigurationAttributes from '../src/lib/simplify/configurationAttributes';
-import simplifyAttrPerms from '../src/lib/simplify/attrPerms';
-import simplifyClassPerms from '../src/lib/simplify/classPerms';
-import simplifyClasses from '../src/lib/simplify/classes';
-import simplifyDomains from '../src/lib/simplify/domains';
-import simplifyDynchildhelpers from '../src/lib/simplify/dynchildhelpers';
-import simplifyPolicyRules from '../src/lib/simplify/policyRules';
-import simplifyUsergroups from '../src/lib/simplify/usergroups';
-import simplifyUsermanagement from '../src/lib/simplify/usermanagement';
-import simplifyStructure from '../src/lib/simplify/structure';
-import reorganizeAttrPerms from '../src/lib/reorganize/attrPerms';
-import reorganizeClassPerms from '../src/lib/reorganize/classPerms';
-import reorganizeClasses from '../src/lib/reorganize/classes';
-import reorganizeDomains from '../src/lib/reorganize/domains';
-import reorganizeDynchildhelpers from '../src/lib/reorganize/dynchildhelpers';
-import reorganizePolicyRules from '../src/lib/reorganize/policyRules';
-import reorganizeStructure from '../src/lib/reorganize/usergroups';
-import reorganizeUsermanagement from '../src/lib/reorganize/usermanagement';
-import reorganizeConfigurationAttributes from '../src/lib/reorganize/configurationAttributes';
+import { 
+    normalizeAttrPerms, 
+    normalizeClasses, 
+    normalizeClassPerms, 
+    normalizeDomains, 
+    normalizeDynchildhelpers, 
+    normalizePolicyRules, 
+    normalizeStructure, 
+    normalizeUsergroups, 
+    normalizeUsermanagement 
+} from '../src/lib/normalize';
+import { 
+    reorganizeAttrPerms, 
+    reorganizeClassPerms, 
+    reorganizeClasses, 
+    reorganizeDomains, 
+    reorganizeDynchildhelpers, 
+    reorganizePolicyRules, 
+    reorganizeStructure, 
+    reorganizeUsermanagement 
+} from '../src/lib/reorganize';
+import { 
+    simplifyAttrPerms, 
+    simplifyClassPerms, 
+    simplifyClasses, 
+    simplifyDomains, 
+    simplifyDynchildhelpers, 
+    simplifyPolicyRules, 
+    simplifyStructure, 
+    simplifyUsergroups, 
+    simplifyUsermanagement 
+} from '../src/lib/simplify';
 
 let should = chai.should();
 let expect = chai.expect;
@@ -42,7 +45,6 @@ const folderReorganize = "./test/configs/reorganize"; // TODO
 const folderReorganized = "./test/configs/reorganized"; // TODO
 
 const allFunctions = {
-    'configurationAttributes': { normalize: normalizeConfigurationAttributes, simplify: simplifyConfigurationAttributes, reorganize: reorganizeConfigurationAttributes, },
     'attrPerms': { normalize: normalizeAttrPerms, simplify: simplifyAttrPerms, reorganize: reorganizeAttrPerms, },
     'classPerms': { normalize: normalizeClassPerms, simplify: simplifyClassPerms, reorganize: reorganizeClassPerms, },
     'classes': { normalize: normalizeClasses, simplify: simplifyClasses, reorganize: reorganizeClasses, },
