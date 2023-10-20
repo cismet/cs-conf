@@ -1,24 +1,17 @@
 import util from 'util';
-import prepareDomains from './import/domains';
-import preparePolicyRules from './import/policyRules';
-import prepareUsergroups from './import/usergroups';
-import prepareUsermanagement from './import/usermanagement';
-import prepareConfigAttrs from './import/configAttrs';
-import prepareClasses from './import/classes';
-import prepareClassPermissions from './import/classPermissions';
-import prepareAttributePermissions from './import/attrPermissions';
-import prepareStructure from './import/structure';
-import prepareAdditionalInfos from './import/additionalInfos';
-import csCreate from './create';
-import csTruncate from './truncate';
-import csBackup from './backup';
+
 import { singleRowFiller, nestedFiller } from './tools/db';
-import { normalizeConfigs } from './normalize';
 import { getClientInfo, initClient } from './tools/db';
 import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
 import { readConfigFiles } from './tools/configFiles';
+import { extractGroupAndDomain } from './tools/cids';
 
-async function csImport(options) {
+import csCreate from './create';
+import csTruncate from './truncate';
+import csBackup from './backup';
+import { normalizeConfigs } from './normalize';
+
+export default async function csImport(options) {
     let { backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
 
     if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
@@ -248,6 +241,640 @@ export function prepareImport(configs) {
 
     return csEntries;        
 }
+
+// ---
+
+function prepareAdditionalInfos({ additionalInfos }) {
+    let csInfoEntries = [];
+    if (additionalInfos) {
+        for (let type of Object.keys(additionalInfos)) {
+            if (additionalInfos[type]) {
+                for (let key of Object.keys(additionalInfos[type])) {
+                    csInfoEntries.push([type, key, JSON.stringify(additionalInfos[type][key])]);
+                }
+            }
+        }
+    }
+    return { csInfoEntries };
+}
+
+function createPermsEntry(groupkey, table, type, id) {
+    const { group, domain } = extractGroupAndDomain(groupkey);
+    return [
+        group,
+        domain,
+        table,
+        type,
+        id,
+    ];
+}
+
+function prepareAttributePermissions({ attrPerms }) {
+    let csAttrPermEntries = [];
+    for (let attrPerm of attrPerms) {
+        if (attrPerm.read) {
+            for (let groupkey of attrPerm.read) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "read", csAttrPermEntries.length + 1));
+            }
+        }
+        if (attrPerm.write) {
+            for (let groupkey of attrPerm.write) {
+                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "write", csAttrPermEntries.length + 1));
+            }
+        }  
+    }
+    return { csAttrPermEntries };
+}
+
+function prepareClasses({ classes, additionalInfos }) {
+    let csTypeEntries = [];
+    let csJavaClassEntries = [];
+    let icons = [];
+    let csClassAttrEntries = [];
+    let csClassEntries = [];
+    let csAttrDbTypeEntries = [];
+    let csAttrCidsTypeEntries = [];        
+    let javaClasses = new Set();
+
+    for (let clazz of classes) {
+        let enforcedId = clazz.enforcedId;
+        let enforcedIdReason = clazz.enforcedIdReason;
+        let name = clazz.name;
+        let classKey = clazz.table;
+        let descr = clazz.descr;
+        let pk = clazz.pk;
+        let array_link = clazz.array_link;
+        let indexed = clazz.indexed;
+        let policy = clazz.policy;
+        let attributesOrder = clazz.attributesOrder;
+        let attributePolicy = clazz.attribute_policy;
+        let classIcon = clazz.classIcon;
+        let objectIcon = clazz.objectIcon;
+        let toStringClass = clazz.toString != null ? clazz.toString.class : null;
+        let toStringType = clazz.toString != null ? clazz.toString.type : null;
+        let editorClass = clazz.editor != null ? clazz.editor.class : null;
+        let editorType = clazz.editor != null ? clazz.editor.type : null;
+        let rendererClass = clazz.renderer != null ? clazz.renderer.class : null;
+        let rendererType = clazz.renderer != null ? clazz.renderer.type : null;
+
+        if (classIcon != null && !icons.includes(classIcon)) {
+            icons.push(classIcon);
+        }
+
+        if (objectIcon != null && !icons.includes(objectIcon)) {
+            icons.push(objectIcon);
+        }
+
+        if (clazz.toString != null) {
+            let fullKey = util.format("%s.%s", clazz.toString.type, clazz.toString.class);
+            if (!javaClasses.has(fullKey)) {
+                if (clazz.toString.class != null && clazz.toString.type != null) {
+                    javaClasses.add(fullKey);
+                    csJavaClassEntries.push([
+                        clazz.toString.class,
+                        clazz.toString.type
+                    ]);
+                }
+            }
+        }
+
+        if (clazz.editor != null) {
+            let fullKey = util.format("%s.%s", clazz.editor.type, clazz.editor.class);
+            if (!javaClasses.has(fullKey)) {
+                if (clazz.editor.class != null && clazz.editor.type != null) {
+                    javaClasses.add(fullKey);
+                    csJavaClassEntries.push([
+                        clazz.editor.class,
+                        clazz.editor.type
+                    ]);
+                }
+            }
+        }
+
+        if (clazz.renderer != null) {
+            let fullKey = util.format("%s.%s", clazz.renderer.type, clazz.renderer.class);
+            if (!javaClasses.has(fullKey)) {
+                if (clazz.renderer.class != null && clazz.renderer.type != null) {
+                    javaClasses.add(fullKey);
+                    csJavaClassEntries.push([
+                        clazz.renderer.class,
+                        clazz.renderer.type
+                    ]);
+                }
+            }
+        }
+
+        csClassEntries.push([
+            name, 
+            descr, 
+            classIcon, 
+            objectIcon, 
+            classKey,
+            pk,
+            indexed,
+            toStringClass,
+            toStringType,
+            editorClass,
+            editorType,
+            rendererClass,
+            rendererType,
+            array_link,
+            policy,
+            attributePolicy,
+            attributesOrder,
+            enforcedId,
+            enforcedId ? enforcedIdReason ?? 'enforced by cs-conf' : null,
+        ]);
+
+        //For Types
+        csTypeEntries.push([
+            name, 
+            classKey
+        ]);
+
+        if (Object.keys(clazz.additional_info).length > 0) {
+            additionalInfos.class[classKey] = Object.assign({type: 'class'}, clazz.additional_info);
+        }        
+
+        let posCounter = 0;
+        for (let attribute of clazz.attributes) {
+            let isArray = false;
+            let xx = 1;
+            let name = attribute.name;
+            let attributeKey = classKey + "." + attribute.field;
+            let field = attribute.field;
+            let substitute = attribute.substitute;
+            let descr = attribute.descr;
+            let visible = !attribute.hidden;
+            let indexed = attribute.indexed;
+            let arrayKey = attribute.arrayKey;
+            let optional = !attribute.mandatory;
+            let editorClass = attribute.editor != null ? attribute.editor.class : null;
+            let editorType = attribute.editor != null ? attribute.editor.type : null;
+            let toStringClass =attribute.toString != null ? attribute.toString.class : null;
+            let toStringType = attribute.toString != null ? attribute.toString.type : null;
+            let complexEditorClass = attribute.complexEditor != null ? attribute.complexEditor.class : null;
+            let complexEditortype = attribute.complexEditor != null ? attribute.complexEditor.type : null;
+            let fromStringClass = attribute.fromString != null ? attribute.fromString.class : null;
+            let fromStringType = attribute.fromString != null ? attribute.fromString.type : null;
+            let defaultValue = attribute.defaultValue;
+            let pos = posCounter;
+            let precision = attribute.precision;
+            let scale = attribute.scale;
+            let extensionAttribute = attribute.extension_attr; 
+
+            let foreign_key;
+            let foreign_key_references_to_table_name;
+            let type_name;
+            if (attribute.dbType) {
+                foreign_key = false;    
+                type_name = attribute.dbType;
+            } else if (attribute.cidsType) {
+                foreign_key = true;
+                type_name = attribute.cidsType;
+                // Takes the info out of the type
+                // not needed
+                foreign_key_references_to_table_name = attribute.cidsType; //TODO
+            } else if (attribute.manyToMany) {
+                foreign_key = true;
+                isArray = true;
+                type_name = attribute.manyToMany;
+                foreign_key_references_to_table_name = attribute.manyToMany;
+            } else if (attribute.oneToMany) {
+                foreign_key = true;
+                type_name = attribute.oneToMany;
+                xx = -1;
+                isArray = false;
+            }              
+
+            posCounter += 10;
+            
+            if (attribute.dbType) {
+                csAttrDbTypeEntries.push([
+                    classKey,
+                    type_name,
+                    name,
+                    field,
+                    foreign_key,
+                    substitute,
+                    foreign_key_references_to_table_name,
+                    descr,
+                    visible,
+                    indexed,
+                    isArray,
+                    arrayKey,
+                    editorClass,
+                    editorType,
+                    toStringClass,
+                    toStringType,
+                    complexEditorClass,
+                    complexEditortype,
+                    optional,
+                    defaultValue,
+                    fromStringClass,
+                    fromStringType,
+                    pos,
+                    precision,
+                    scale,
+                    extensionAttribute
+                ]);
+            } else {                
+                csAttrCidsTypeEntries.push([
+                    classKey,
+                    type_name,
+                    name,
+                    field,
+                    foreign_key,
+                    substitute,
+                    foreign_key_references_to_table_name,
+                    descr,
+                    visible,
+                    indexed,
+                    isArray,
+                    arrayKey,
+                    editorClass,
+                    editorType,
+                    toStringClass,
+                    toStringType,
+                    complexEditorClass,
+                    complexEditortype,
+                    optional,
+                    defaultValue,
+                    fromStringClass,
+                    fromStringType,
+                    pos,
+                    precision,
+                    scale,
+                    extensionAttribute,
+                    xx
+                ]);            
+            }
+
+            if (Object.keys(attribute.additional_info).length > 0) {
+                additionalInfos.attribute[attributeKey] = Object.assign({type: 'attribute'}, attribute.additional_info);
+            }        
+    
+        }
+        if (clazz.additionalAttributes){
+            for (let additionalAttributes in clazz.additionalAttributes) {
+                csClassAttrEntries.push([
+                    classKey,
+                    additionalAttributes,
+                    clazz.additionalAttributes[additionalAttributes],
+                    csClassAttrEntries.length + 1,
+                ]);
+            }
+        }
+    }
+
+    const csIconEntries = []
+    for (let i of icons){
+        if (i) {
+            csIconEntries.push([ i.substr(0, i.indexOf('.')), i ]);
+        }
+    }
+
+    return { 
+        csTypeEntries, 
+        csJavaClassEntries, 
+        csIconEntries, 
+        csClassAttrEntries,
+        csClassEntries,
+        csAttrDbTypeEntries,
+        csAttrCidsTypeEntries
+     };
+}
+
+function prepareClassPermissions({ classPerms }) {
+    let csClassPermEntries = [];
+    for (let classPerm of classPerms) {
+        if (classPerm.read) {
+            for (let groupkey of classPerm.read) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "read", csClassPermEntries.length + 1));
+            }
+        }
+        if (classPerm.write) {
+            for (let groupkey of classPerm.write) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "write", csClassPermEntries.length + 1));
+            }
+        }  
+    }
+    return { csClassPermEntries };
+}
+
+function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
+    let csConfigAttrKeyEntries = []
+    let csConfigAttrValueEntries = new Map([['true', ['true', null]]]);
+    let csConfigAttrValues4A = []; //only action attrs
+    let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
+    
+    if (configurationAttributes) {
+        let id = 1;
+        let duplicateKeyFinder = new Set();
+        for (let configurationAttribute of configurationAttributes) {
+            let type;
+            if (configurationAttribute.value != null) {
+                type = 'C';
+            } else if (configurationAttribute.xmlfile != null) {
+                type = 'X';
+            } else {
+                type = 'A';
+            }
+
+            let fullKey = util.format("%s.%s", configurationAttribute.key, configurationAttribute.keygroup);
+            if (!duplicateKeyFinder.has(fullKey)) {
+                csConfigAttrKeyEntries.push([
+                    configurationAttribute.key, 
+                    configurationAttribute.keygroup
+                ]);
+                duplicateKeyFinder.add(fullKey);
+            }
+
+            if (type === 'X' || type === 'C') {
+                let value = (type === 'X') ? xmlFiles.get(configurationAttribute.xmlfile) : configurationAttribute.value;
+                let filename = (type === 'X') ? configurationAttribute.xmlfile : null;
+                csConfigAttrValueEntries.set(value, [ 
+                    value, 
+                    filename 
+                ]);
+                csConfigAttrValues4CandX.push([
+                    configurationAttribute.domain, 
+                    configurationAttribute.group, 
+                    configurationAttribute.user, 
+                    configurationAttribute.key, 
+                    type, 
+                    value,
+                    id++, 
+                ]);
+            } else {
+                csConfigAttrValues4A.push([
+                    configurationAttribute.domain, 
+                    configurationAttribute.group, 
+                    configurationAttribute.user, 
+                    configurationAttribute.key,
+                    id++, 
+                ]);
+            }   
+        }
+    }
+    let csConfigAttrValueEntriesArray = Array.from(csConfigAttrValueEntries.values());
+
+    return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
+}
+
+function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
+    let csDomainEntries = [];
+    for (let domain of domains) {
+        let domainKey = domain.domainname;
+        csDomainEntries.push([ 
+            domainKey,
+            csDomainEntries.length + 1,
+        ]);
+
+        if (domain.configurationAttributes) {
+            for (let configurationAttribute of domain.configurationAttributes) {
+                configurationAttribute.domain = domainKey;
+                configurationAttributes.push(configurationAttribute);
+            } 
+        }
+
+        if (Object.keys(domain.additional_info).length > 0) {
+            additionalInfos.domain[domainKey] = Object.assign({type: 'domain'}, domain.additional_info);
+        }        
+    }
+    return { csDomainEntries };
+}
+
+function preparePolicyRules({ policyRules }) {
+    let csPolicyRulesEntries = [];    
+    for (let policyRule of policyRules) {
+        csPolicyRulesEntries.push([ 
+            policyRule.policy, 
+            policyRule.permission, 
+            policyRule.default_value,
+            csPolicyRulesEntries.length + 1,
+        ]);
+    }
+    return { csPolicyRulesEntries };
+}
+
+function flattenStructure(children, linkToNode, level = 0) {
+    let flattenNodes = [];
+    for (let node of children) { 
+        node.root = level === 0;
+        
+        if (node.key != null) {
+            linkToNode.set(node.key, node);
+        }
+        flattenNodes.push(node);
+        if (node.children != null) {
+            flattenNodes.push(... flattenStructure(node.children, linkToNode, level + 1));
+        }
+    } 
+    return flattenNodes;
+}
+
+function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
+    let csDynamicChildrenHelperEntries = [];
+    for (let dynchildhelper of dynchildhelpers) {
+        csDynamicChildrenHelperEntries.push([
+            dynchildhelper.name, 
+            helperSqlFiles.get(dynchildhelper.code_file),
+            dynchildhelper.code_file,
+            csDynamicChildrenHelperEntries.length + 1,
+        ]);
+    }
+    return csDynamicChildrenHelperEntries;
+}
+
+function prepareCatNodes(nodes, structureSqlFiles) {    
+    let csCatNodeEntries = [];
+
+    for (let node of nodes) {
+        if (node.link == null) {
+            node.id = csCatNodeEntries.length;
+            let catNode = [
+                node.name,
+                node.url,
+                node.table,
+                node.object_id,
+                node.node_type,
+                node.root,
+                node.org,
+                structureSqlFiles.get(node.dynamic_children_file),
+                node.dynamic_children_file,
+                node.sql_sort,
+                node.policy,
+                node.derive_permissions_from_class,
+                node.iconfactory,
+                node.icon,
+                node.artificial_id,
+                node.id          
+            ];
+            csCatNodeEntries.push(catNode);
+            delete node.root;
+        }
+    }
+    return csCatNodeEntries;
+}
+
+function generateCsCatLinkEntries(node, linkToNode) {
+    let csCatLinkEntries = [];
+    if (node.children != null) {
+        for (let child of node.children) {
+            let catLink = [ node.id, child.link != null ? linkToNode.get(child.link).id : child.id ];
+            csCatLinkEntries.push(catLink);    
+            csCatLinkEntries.push(... generateCsCatLinkEntries(child, linkToNode));
+        }
+    }    
+    return csCatLinkEntries;
+}
+
+function prepareCatLinks(structure, linkToNode) {
+    let csCatLinkEntries = [];
+    for (let parent of structure) { 
+        csCatLinkEntries.push(... generateCsCatLinkEntries(parent, linkToNode));
+    }
+    return csCatLinkEntries;
+}
+
+function prepareCatNodePerms(nodes) {
+    let csCatNodePermEntries=[];
+    for (let node of nodes) {
+        if (node.readPerms != null) {
+            for (let groupkey of node.readPerms) {
+                let {group, domain} = extractGroupAndDomain(groupkey);
+                csCatNodePermEntries.push([
+                    group,
+                    domain,
+                    node.id,
+                    "read"
+            ]);
+            }
+        }
+        if (node.writePerms != null) {
+            for (let groupkey of node.writePerms){
+                let {group, domain} = extractGroupAndDomain(groupkey);
+                csCatNodePermEntries.push([
+                    group,
+                    domain,
+                    node.id,
+                    "write"
+                ]);
+            }
+        }
+    }
+    return csCatNodePermEntries;
+}
+
+function prepareStructure({ structure, structureSqlFiles, dynchildhelpers, helperSqlFiles }) {
+    let linkToNode = new Map();
+    let nodes = flattenStructure(structure, linkToNode);
+
+    let csCatNodeEntries = prepareCatNodes(nodes, structureSqlFiles);
+    let csCatLinkEntries = prepareCatLinks(structure, linkToNode);
+    let csCatNodePermEntries = prepareCatNodePerms(nodes);
+    let csDynamicChildrenHelperEntries = prepareDataDynchilds(dynchildhelpers, helperSqlFiles);
+
+    return {
+        csCatNodeEntries,
+        csCatLinkEntries,
+        csCatNodePermEntries,
+        csDynamicChildrenHelperEntries
+    };
+}
+
+function prepareUsergroups({ usergroups, configurationAttributes, additionalInfos }) {
+    let csUgEntries = [];
+    let prioCounter = 0;
+    for (let group of usergroups) {
+        let groupKey = group.key.split('@');        
+        let descr = group.descr;
+        let groupName = groupKey[0];
+        let domainKey = groupKey[1];
+        csUgEntries.push([ 
+            groupName, 
+            descr, 
+            domainKey, 
+            prioCounter,
+            csUgEntries.length + 1,
+        ]);
+        prioCounter += 10;
+
+        if (group.configurationAttributes) {
+            let groupAndDomain = extractGroupAndDomain(group.key);
+            for (let configurationAttribute of group.configurationAttributes) {
+                configurationAttribute.group = groupAndDomain.group;
+                configurationAttribute.domain = groupAndDomain.domain;
+                configurationAttributes.push(configurationAttribute);
+            }
+        }
+
+        if (Object.keys(group.additional_info).length > 0) {
+                additionalInfos.group[groupKey] = Object.assign({type: 'group'}, group.additional_info);
+        }        
+    }
+    return { csUgEntries };
+}
+
+function prepareUsermanagement({ usermanagement, configurationAttributes, additionalInfos }) {
+    let csUserEntries = [];
+    let csUgMembershipEntries = [];
+
+    for (let user of usermanagement) {
+        let userKey = user.login_name;
+        csUserEntries.push([ 
+            userKey, 
+            user.pw_hash, 
+            user.salt,
+            user.last_pwd_change,
+            csUserEntries.length + 1,
+        ]);
+        if (user.groups) {
+            for (let group of user.groups) {
+                let groupAndDomain = group.split('@');        
+                let groupName = groupAndDomain[0];
+                let domainKey = groupAndDomain[1];
+                csUgMembershipEntries.push([
+                    groupName, 
+                    userKey, 
+                    domainKey,
+                    csUgMembershipEntries.length + 1,
+                ]);
+            }
+        }
+
+        if (user.configurationAttributes) {
+            for (let configurationAttribute of user.configurationAttributes) {
+                if (configurationAttribute.groups != null && configurationAttribute.groups.length > 0) {
+                    for (let group of configurationAttribute.groups) {
+                        let groupAndDomain = extractGroupAndDomain(group);   
+                        let groupKey = groupAndDomain != null ? groupAndDomain.group : null;
+                        let domainKey = groupAndDomain != null ? groupAndDomain.domain : 'LOCAL';
+                        configurationAttributes.push(Object.assign({}, configurationAttribute, {
+                            user: userKey,
+                            group: groupKey,
+                            domain: domainKey,
+                        }));
+                    }
+                } else {
+                    configurationAttribute.user = userKey;
+                    configurationAttributes.push(Object.assign({}, configurationAttribute, {
+                        user: userKey,
+                        domain: 'LOCAL',
+                    }));
+                }
+            }
+        }
+
+        if (Object.keys(user.additional_info).length > 0) {
+            additionalInfos.user[userKey] = Object.assign({type: 'user'}, user.additional_info);
+        }
+    }
+    return { csUserEntries, csUgMembershipEntries };
+}
+
+// ---
 
 const additionalInfosImportStatement = `
 INSERT INTO cs_info (type, key, json) VALUES ($1, $2, $3::jsonb);
@@ -690,5 +1317,3 @@ INSERT INTO cs_ug_cat_node_perm (ug_id, "domain", cat_node_id, "permission" )
    JOIN cs_permission ON (p=cs_permission.key)
 ;
 `;
-
-export default csImport;
