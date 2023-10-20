@@ -1,25 +1,18 @@
 import util from 'util';
+import zeroFill from 'zero-fill';
+import xmlFormatter from 'xml-formatter';
+import slug from 'slug';
+import striptags from 'striptags';
 
 import { writeConfigFiles } from './tools/configFiles';
-import { logOut, logVerbose } from './tools/tools';
-import { initClient } from './tools/db';
-import { getClientInfo } from './tools/db';
-
-import exportConfigAttributes from './export/configAttributes';
-import exportDomains from './export/domains';
-import exportPolicyRules from './export/policyRules';
-import exportUserManagement from './export/usermanagement';
-import exportClasses from './export/classes';
-import exportClassPermissions from './export/classPermissions.js';
-import exportAttrPermissions from './export/attrPermissions.js';
-import exportStructure from './export/structure.js';
-import exportDynchildhelpers from './export/dynchildhelpers';
-import exportUsergroups from './export/usergroups';
-import exportAdditionalInfos from './export/additionalInfos';
+import { clean, logOut, logWarn, logVerbose } from './tools/tools';
+import { getClientInfo, initClient } from './tools/db';
 
 import { simplifyConfigs } from './simplify';
 import { reorganizeConfigs } from './reorganize';
 import { normalizeConfig } from './normalize';
+
+import { defaultDomain } from './tools/defaultObjects';
 
 export default async function csExport(options) {
     let  { targetDir, normalized = false } = options;
@@ -133,6 +126,626 @@ function exportConfigs(fetchedData, config) {
 
     return configs;
 }
+
+// ---
+
+function exportAdditionalInfos({ csAdditionalInfos }, { config, domainConfigAttrs }) {
+    let additionalInfos = {};
+
+    for (let csAdditionalInfo of csAdditionalInfos) {
+        let additionalInfo = Object.assign({}, csAdditionalInfo);
+        let type = additionalInfo.type;
+        let key = additionalInfo.key;
+        delete additionalInfo.type;
+        delete additionalInfo.key;
+        
+        let additionalInfosOfType = additionalInfos[type] ?? {};
+        additionalInfos[type] = additionalInfosOfType;
+        additionalInfosOfType[key] = additionalInfo.json;
+    }
+    return { additionalInfos };
+}
+
+function exportAttrPermissions({ csUgAttrPerms }, { attributes }) {
+    let attrReadPerms = new Map();
+    let attrWritePerms = new Map();
+
+    for (let csUgAttrPerm of csUgAttrPerms) {
+        let ug = util.format("%s@%s", csUgAttrPerm.group, csUgAttrPerm.domain);
+        let key = util.format("%s.%s", csUgAttrPerm.table, csUgAttrPerm.field);
+        let attrReadPermissions = attrReadPerms.get(key);
+        if (csUgAttrPerm.permission === "read") {
+            if (!attrReadPermissions) {
+                attrReadPermissions = [];
+                attrReadPerms.set(key, attrReadPermissions);
+            }
+            attrReadPermissions.push(ug);
+        } else if (csUgAttrPerm.permission === "write") {
+            let attrWritePermissions = attrWritePerms.get(key);
+            if (!attrWritePermissions) {
+                attrWritePermissions = [];
+                attrWritePerms.set(key, attrWritePermissions);
+            }
+            attrWritePermissions.push(ug);
+        }
+    }
+    
+    let attrPerms = [];
+    for (let attribute of attributes) {
+        let key = util.format("%s.%s", attribute.table, attribute.field);
+        let entry = {
+            attribute: key
+        }
+
+        let attrReadPermissions = attrReadPerms.get(key);
+        if (attrReadPermissions) {
+            entry.read = attrReadPermissions;
+        }
+
+        let attrWritePermissions = attrWritePerms.get(key);
+        if (attrWritePermissions) {
+            entry.write = attrWritePermissions;
+        }
+        if (attrReadPermissions || attrWritePermissions) {
+            attrPerms.push(entry);
+        }
+    }
+
+    return {
+        attrPerms,
+    };
+}
+
+function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
+    let classAttrsPerTable = new Map(); 
+    
+    for (let csClassAttr of csClassAttrs) {
+        let classAttribute = classAttrsPerTable.get(csClassAttr.table);
+        if (!classAttribute) {
+            classAttribute = {};
+            classAttrsPerTable.set(csClassAttr.table, classAttribute);
+        }
+        classAttribute[csClassAttr.key] = csClassAttr.value;
+    }
+
+    let attrsPerTable = new Map();
+    let attributes = [];
+    for (let csAttr of csAttrs) {
+        let attribute = Object.assign({}, csAttr);
+        let tableAttributes = attrsPerTable.get(attribute.table);
+        if (!tableAttributes) {
+            tableAttributes = [];
+            attrsPerTable.set(attribute.table, tableAttributes);
+        }
+
+        // clean up
+
+        delete attribute.table;
+        if (attribute.field === attribute.name) {
+            delete attribute.name;
+        }
+
+        if (attribute.cidsType !== null) {
+            delete attribute.dbType;
+            delete attribute.precision;
+            delete attribute.scale;
+            if (attribute.foreignKeyTableId < 0) {
+                delete attribute.cidsType;
+                delete attribute.optional;
+                delete attribute.manyToMany;
+            } else if (attribute.isArrray === true) {
+                delete attribute.cidsType;
+                delete attribute.optional;
+                delete attribute.oneToMany;
+            } else {
+                delete attribute.oneToMany;
+                delete attribute.manyToMany
+            }
+        } else {
+            delete attribute.cidsType;
+            delete attribute.oneToMany;
+            delete attribute.manyToMany
+        }
+
+        if (attribute.mandatory === false) {
+            delete attribute.mandatory;
+        }
+
+        if (attribute.hidden === false) {
+            delete attribute.hidden;
+        }
+        if (attribute.indexed === false) {
+            delete attribute.indexed;
+        }
+        if (attribute.substitute === false) {
+            delete attribute.substitute;
+        }
+        if (attribute.extension_attr === false) {
+            delete attribute.extension_attr;
+        }
+
+        //remove all fields that are not needed anymore
+        delete attribute.foreign_key;
+        delete attribute.foreignKeyTableId;
+        delete attribute.foreignkeytable; // check whether this should better be used instead of tc.table_name
+        delete attribute.isArrray;
+
+        //finally remove all field that are null
+        clean(attribute);
+
+        tableAttributes.push(attribute);
+        attributes.push(attribute);
+    }
+
+    let classes = [];
+    for (let csClass of csClasses) {        
+        let clazz = Object.assign({}, csClass);
+
+        //clean up
+        if (clazz.table === clazz.name) {
+            delete clazz.name;
+        }
+        if (clazz.descr === null) {
+            delete clazz.descr;
+        }
+        if (clazz.indexed === false) {
+            delete clazz.indexed;
+        }
+
+        if (clazz.classIcon === clazz.objectIcon) {
+            clazz.icon = clazz.classIcon;
+            delete clazz.classIcon;
+            delete clazz.objectIcon;
+        } else {
+            delete clazz.icon;
+        }
+        if (clazz.array_link === false) {
+            delete clazz.array_link;
+        }
+        if (clazz.policy === null) {
+            delete clazz.policy;
+        }
+        if (clazz.attribute_policy === null) {
+            delete clazz.attribute_policy;
+        }
+
+        //toString
+        if (clazz.toStringType !== null && clazz.toStringClass != null) {
+            clazz.toString = {
+                type: clazz.toStringType,
+                class: clazz.toStringClass
+            };
+        }
+        delete clazz.toStringType;
+        delete clazz.toStringClass;
+        //editor
+        if (clazz.editorType !== null && clazz.editorClass != null) {
+            clazz.editor = {
+                type: clazz.editorType,
+                class: clazz.editorClass
+            };
+        }
+        delete clazz.editorType;
+        delete clazz.editorClass;
+        //renderer
+        if (clazz.rendererType !== null && clazz.rendererClass != null) {
+            clazz.renderer = {
+                type: clazz.rendererType,
+                class: clazz.rendererClass
+            };
+        }
+        delete clazz.rendererType;
+        delete clazz.rendererClass;
+
+        //add attributes
+        let attrs = attrsPerTable.get(clazz.table);
+        if (attrs) {
+            clazz.attributes = attrs;
+        }
+
+        //add class attributes
+        let cattrs = classAttrsPerTable.get(clazz.table);
+        if (cattrs) {
+            clazz.additionalAttributes = cattrs;
+        }
+        classes.push(clazz);
+    }
+    return { classes, attributes };
+}
+
+function exportClassPermissions({ csUgClassPerms }, { classes }) {
+    let classReadPerms = new Map();
+    let classWritePerms = new Map();
+
+    for (let csUgClassPerm of csUgClassPerms) {
+        let ug = util.format("%s@%s", csUgClassPerm.group, csUgClassPerm.domain);
+        let tableReadPermissions = classReadPerms.get(csUgClassPerm.table);
+        if (csUgClassPerm.permission === "read") {
+            if (!tableReadPermissions) {
+                tableReadPermissions = [];
+                classReadPerms.set(csUgClassPerm.table, tableReadPermissions);
+            }
+            tableReadPermissions.push(ug);
+        } else if (csUgClassPerm.permission === "write") {
+            let tableWritePermissions = classWritePerms.get(csUgClassPerm.table);
+            if (!tableWritePermissions) {
+                tableWritePermissions = [];
+                classWritePerms.set(csUgClassPerm.table, tableWritePermissions);
+            }
+            tableWritePermissions.push(ug);
+        }
+    }
+
+    let classPerms = [];
+    for (let clazz of classes) {
+        let table = clazz.table;
+        let classPerm = {
+            table: table
+        }
+        let tableReadPermissions = classReadPerms.get(table);
+        if (tableReadPermissions) {
+            classPerm.read = tableReadPermissions;
+        }
+        let tableWritePermissions = classWritePerms.get(table);
+        if (tableWritePermissions) {
+            classPerm.write = tableWritePermissions;
+        }
+        if (tableReadPermissions || tableWritePermissions) {
+            classPerms.push(classPerm);
+        }
+    }
+
+    return {
+        classPerms
+    }
+}
+
+function exportConfigAttributes({ csConfigAttrs }, {}) {
+    const userConfigAttrs = new Map();
+    const groupConfigAttrs = new Map();
+    const domainConfigAttrs = new Map();
+    const xmlFiles = new Map();
+
+    let valuesToFilename = new Map();
+    let xmlDocCounter = new Map();
+    for (let csConfigAttr of csConfigAttrs) {
+        let attrInfo = {
+            key: csConfigAttr.key,
+            keygroup: csConfigAttr.keygroup
+        }
+        switch (csConfigAttr.type) {
+            case 'C': {
+                attrInfo.value = csConfigAttr.value                
+            } break;
+            case 'X': {
+                let xmlToSave;
+                try {
+                    xmlToSave = xmlFormatter(csConfigAttr.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
+                } catch (formatterProblem) {
+                    xmlToSave = csConfigAttr.value;
+                }                    
+
+                let fileName;
+                if (csConfigAttr.filename != null) {
+                    fileName = csConfigAttr.filename;
+                } else if (valuesToFilename.has(csConfigAttr.value)) {
+                    fileName = valuesToFilename.get(csConfigAttr.value);
+                } else {
+                    let counter = xmlDocCounter.has(csConfigAttr.key) ? xmlDocCounter.get(csConfigAttr.key) + 1 : 1;
+                    xmlDocCounter.set(csConfigAttr.key, counter);
+                    fileName = util.format("%s.%s.xml", csConfigAttr.key, zeroFill(4, counter));
+                }
+                valuesToFilename.set(csConfigAttr.value, fileName);
+                xmlFiles.set(fileName, xmlToSave);
+                attrInfo.xmlfile = fileName;
+            } break;
+        }
+        if (csConfigAttr.login_name) {
+            attrInfo = Object.assign(attrInfo, { groups: [ csConfigAttr.groupkey ] });
+            if (userConfigAttrs.has(csConfigAttr.login_name)) {
+                let found = false;
+                for (let userConfigAttr of userConfigAttrs.get(csConfigAttr.login_name)) {
+                    if (userConfigAttr != null && userConfigAttr.key == attrInfo.key) {
+                        found = true;
+                        if (csConfigAttr.groupkey != null && userConfigAttr.groups != null && !userConfigAttr.groups.contains(csConfigAttr.groupkey)) {
+                            userConfigAttr.groups.push(csConfigAttr.groupkey);
+                        }
+                        break;
+                    }
+                }
+                if (!found) {
+                    userConfigAttrs.get(csConfigAttr.login_name).push(attrInfo);
+                }
+            } else {
+                userConfigAttrs.set(csConfigAttr.login_name, [attrInfo]);
+            }
+        } else if (csConfigAttr.groupkey) {
+            if (groupConfigAttrs.has(csConfigAttr.groupkey)) {
+                groupConfigAttrs.get(csConfigAttr.groupkey).push(attrInfo);
+            } else {
+                groupConfigAttrs.set(csConfigAttr.groupkey, [attrInfo]);
+            }
+        } else if (csConfigAttr.domainname) {
+            if (domainConfigAttrs.has(csConfigAttr.domainname)) {
+                domainConfigAttrs.get(csConfigAttr.domainname).push(attrInfo);
+            } else {
+                domainConfigAttrs.set(csConfigAttr.domainname, [attrInfo]);
+            }
+        }
+    }
+    return {
+        userConfigAttrs,
+        groupConfigAttrs,
+        domainConfigAttrs,
+        xmlFiles
+    }
+}
+
+function exportDomains({ csDomains }, { config, domainConfigAttrs }) {
+    let mainDomain = config.domainName;
+    
+    let domains = [];
+    let mainDomainFound = false
+    for (let csDomain of csDomains) {
+        let domain = Object.assign({}, csDomain);
+        
+        //add the configuration attributes
+        let attributes = domainConfigAttrs.get(domain.domainname);
+        if (attributes) {
+            domain.configurationAttributes = attributes;        
+        }
+        if (domain.domainname == mainDomain) {
+            mainDomainFound = true;
+        }
+        domains.push(domain);
+    }
+    if (!mainDomainFound) {
+        domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain }));
+    }
+    return { domains };
+}
+
+function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
+    let dynchildhelpers = [];
+    let helperSqlFiles = new Map();
+
+    for (let csDynamicChildreHelper of csDynamicChildreHelpers) {
+        let dynchildhelper = Object.assign({}, csDynamicChildreHelper);
+        let fileName;
+        if (dynchildhelper.filename != null) {
+            fileName = dynchildhelper.filename;
+        } else {
+            fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
+        }
+        delete dynchildhelper.filename;
+        helperSqlFiles.set(fileName, dynchildhelper.code);
+        dynchildhelper.code_file = fileName;    
+        delete dynchildhelper.id;
+        delete dynchildhelper.code;
+        dynchildhelpers.push(dynchildhelper);
+    }
+
+    return {
+        dynchildhelpers,
+        helperSqlFiles,
+    };
+}
+
+function exportPolicyRules({ csPolicyRules }, {}) {
+    let policyRules = [];
+    for (let csPolicyRule of csPolicyRules) {
+        policyRules.push(Object.assign({}, csPolicyRule));
+    }
+    return { policyRules };
+}
+
+function exportStructure({ csCatNodes, csCatLinks, csUgCatNodePerms }, {}) {
+    let structureSqlFiles = new Map();
+    let structure = [];
+
+    let nodeReadPerms = [];
+    let nodeWritePerms = [];
+    for (let csUgCatNodePerm of csUgCatNodePerms) {
+        let ug = util.format("%s@%s", csUgCatNodePerm.group, csUgCatNodePerm.domain);
+        let nodeReadPermissions = nodeReadPerms[csUgCatNodePerm.cat_node_id];
+        if (csUgCatNodePerm.permission === "read") {
+            if (!nodeReadPermissions) {
+                nodeReadPermissions = [];
+                nodeReadPerms[csUgCatNodePerm.cat_node_id] = nodeReadPermissions;
+            }
+            nodeReadPermissions.push(ug);
+        } else if (csUgCatNodePerm.permission === "write") {
+            let nodeWritePermissions = nodeWritePerms[csUgCatNodePerm.cat_node_id];
+            if (!nodeWritePermissions) {
+                nodeWritePermissions = [];
+                nodeWritePerms[csUgCatNodePerm.cat_node_id] = nodeWritePermissions;
+            }
+            nodeWritePermissions.push(ug);
+        }
+    }
+
+
+    let allNodes = new Map();
+    for (let csCatNode of csCatNodes) {
+        let node = Object.assign({}, csCatNode);
+        //delete node.derive_permissions_from_class;
+        if (node.sql_sort === false) {
+            delete node.sql_sort;
+        }
+        if (node.node_type === 'N') {
+            delete node.node_type;
+        }
+        if (!node.table && node.derive_permissions_from_class === false) {
+            delete node.derive_permissions_from_class;
+        }
+
+        clean(node);
+        allNodes.set(node.id, node);
+        if (node.is_root === true && node.node_type !== 'C') {
+            structure.push(node);
+        }
+        delete node.is_root;
+
+        //Permissions
+        let readPerms = nodeReadPerms[node.id];
+        if (readPerms) {
+            node.readPerms = readPerms;
+        }
+        let writePerms = nodeWritePerms[node.id];
+        if (writePerms) {
+            node.writePerms = writePerms;
+        }
+
+    }
+
+    let links = new Map();
+    for (let csCatLink of csCatLinks) {
+        let toLinks = links.get(csCatLink.id_from);
+        if (!toLinks) {
+            toLinks = [];
+            links.set(csCatLink.id_from, toLinks);
+        }
+        if (csCatLink.id_from !== csCatLink.id_to) { //no direct recursions
+            if (toLinks.indexOf(csCatLink.id_to) === -1) {
+                toLinks.push(csCatLink.id_to);
+            }
+        }
+    }
+
+    let structureSqlCounter = 0;
+
+    visitingNodesByChildren(structure, allNodes, links, []);
+
+    // removing all orphan nodes
+    for (let node of allNodes.values()) {
+        let nodeId = node.id;
+        if (nodeId) {
+            logWarn(util.format("ignoring orphan node with id: %d", nodeId));
+            allNodes.delete(nodeId);
+        }
+    }
+
+    let sortedNodes = Array.from(allNodes.values());
+    for (let node of sortedNodes) {        
+        if (node.dynamic_children) {
+            let fileName = node.dynamic_children_filename ?? util.format("%s.%s.sql", zeroFill(3, ++structureSqlCounter), slug(striptags(node.name)).toLowerCase());
+            delete node.dynamic_children_filename;
+            structureSqlFiles.set(fileName, node.dynamic_children);
+            node.dynamic_children_file = fileName;        
+            delete node.dynamic_children;
+        }
+    }
+
+    return {
+        structure,
+        structureSqlFiles,
+    };
+}
+
+function visitingNodesByChildren(nodes, allNodes, links, duplicates) {
+    let childrenIdsVisited = [];
+    for (let parent of nodes) {
+        if (!parent) {
+            continue;
+        }
+        let parentId = parent.id;
+        childrenIdsVisited.push(parentId);                    
+
+        let children = [];
+        let childrenIds = links.get(parentId);
+        delete parent.id;
+        
+        if (childrenIds) {
+            for (let childId of childrenIds) {
+                let child = allNodes.get(childId);
+                if (child) {
+                    if (child.id) {
+                        children.push(child);
+                    } else {
+                        let key;
+                        if (child.key) {
+                            key = child.key;
+                        } else {
+                            duplicates.push(childId);
+                            key = util.format("%s.%s", zeroFill(3, duplicates.length), slug(striptags(child.name)).toLowerCase());
+                            child.key = key;
+                        }
+                        children.push( { link : key } );
+                    }
+                }
+            }
+        }
+        if (children.length > 0) {
+            childrenIdsVisited.push(... visitingNodesByChildren(children, allNodes, links, duplicates));            
+            parent.children = children;
+        }
+    }
+    return childrenIdsVisited;
+}
+
+function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
+    let usergroups = [];
+
+    for (let csUg of csUgs) {
+        let groupKey = csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain);
+        let group = {
+            key: groupKey
+        };
+        if (csUg.descr) {
+            group.descr = csUg.descr;
+        }
+        let attributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
+        if (attributes) {
+            group.configurationAttributes = attributes;
+        }
+        
+        usergroups.push(group);
+    }
+
+    return {
+        usergroups
+    }
+}
+
+function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) {
+    let userGroupMap = new Map();
+    for (let csUgMembership of csUgMemberships) {
+        let user = userGroupMap.get(csUgMembership.login_name);
+        let gkey = csUgMembership.groupname + (csUgMembership.domainname.toUpperCase() == 'LOCAL' ? '' : '@' + csUgMembership.domainname)
+        if (user) {
+            user.push(gkey);
+        } else {
+            userGroupMap.set(csUgMembership.login_name, [gkey]);
+        }
+    }
+
+    let usermanagement = [];
+
+    for (let csUsr of csUsrs) {
+        let user = Object.assign({}, csUsr);
+        let userKey = user.login_name;        
+
+        //add the usergroups
+        let groups = userGroupMap.get(userKey);
+        if (groups) {
+            user.groups = groups;
+        }
+
+        //add the configuration attributes
+        let attributes = userConfigAttrs.get(userKey);
+        if (attributes) {
+            user.configurationAttributes = attributes;
+        }
+
+        usermanagement.push(user);
+    }
+
+    return {
+        usermanagement
+    }
+}
+
+// ---
 
 const additionalInfosStatement = `
 SELECT 
