@@ -393,7 +393,7 @@ function prepareClasses({ classes, additionalInfos }) {
         ]);
 
         if (Object.keys(clazz.additional_info).length > 0) {
-            additionalInfos.class[classKey] = Object.assign({type: 'class'}, clazz.additional_info);
+            additionalInfos.class[classKey] = Object.assign({}, clazz.additional_info);
         }        
 
         let posCounter = 0;
@@ -511,7 +511,7 @@ function prepareClasses({ classes, additionalInfos }) {
             }
 
             if (Object.keys(attribute.additional_info).length > 0) {
-                additionalInfos.attribute[attributeKey] = Object.assign({type: 'attribute'}, attribute.additional_info);
+                additionalInfos.attribute[attributeKey] = Object.assign({}, attribute.additional_info);
             }        
     
         }
@@ -639,7 +639,7 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
         }
 
         if (Object.keys(domain.additional_info).length > 0) {
-            additionalInfos.domain[domainKey] = Object.assign({type: 'domain'}, domain.additional_info);
+            additionalInfos.domain[domainKey] = Object.assign({}, domain.additional_info);
         }        
     }
     return { csDomainEntries };
@@ -811,7 +811,7 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
         }
 
         if (Object.keys(group.additional_info).length > 0) {
-                additionalInfos.group[groupKey] = Object.assign({type: 'group'}, group.additional_info);
+                additionalInfos.group[groupKey] = Object.assign({}, group.additional_info);
         }        
     }
     return { csUgEntries };
@@ -868,7 +868,7 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
         }
 
         if (Object.keys(user.additional_info).length > 0) {
-            additionalInfos.user[userKey] = Object.assign({type: 'user'}, user.additional_info);
+            additionalInfos.user[userKey] = Object.assign({}, user.additional_info);
         }
     }
     return { csUserEntries, csUgMembershipEntries };
