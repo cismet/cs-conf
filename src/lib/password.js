@@ -81,7 +81,7 @@ async function csPassword(options) {
                 throw util.format('user %s already exists', loginName);
             }
         }
-        usermanagement.push(newUser);
+        usermanagement[loginName] = newUser;
         logInfo(util.format("user '%s' added", loginName));
         logOut(stringify(normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser, loginName)), { noSilent: true });
     } else {
