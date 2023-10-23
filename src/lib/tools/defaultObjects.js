@@ -30,7 +30,6 @@ export const defaultAdditionalInfos = {
 
 // classes
 export const defaultAttribute = {
-    field: null,
     name: null,
     descr: '',
     dbType: null,
@@ -53,7 +52,6 @@ export const defaultAttribute = {
 
 export const defaultAttributePrimary = (table_name, pk) => { 
         return Object.assign({}, defaultAttribute, {
-        field: pk,
         name: pk,
         descr: 'Primary Key',
         dbType: 'INTEGER',

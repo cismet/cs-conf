@@ -309,36 +309,39 @@ function simplifyNodes(nodes, mainDomain = null) {
 function simplifyAttributes(attributes, pk = defaultClass.pk, table, mainDomain) {
     if (attributes == null) return null;
 
-    let simplified = [];
-    for (let attribute of normalizeAttributes(attributes, pk, table)) {
-        if (attribute != null && attribute.field != null) {
+    let simplified = {};
+
+    let normalized = normalizeAttributes(attributes, pk, table);
+    for (let attributeKey of Object.keys(normalized)) {
+        let attribute = normalized[attributeKey];
+        if (attribute != null) {
             let simplifiedAttribute = copyFromTemplate(attribute, defaultAttribute);
-            if (pk !== undefined && attribute.field == pk) {
+            if (pk !== undefined && attributeKey == pk) {
                 let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttributePrimary(table, pk)));
                 if (simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table)) {
                     delete simplifiedPkAttribute.defaultValue;
                 }
-                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                if (simplifiedAttribute.name == attributeKey) {
                     delete simplifiedAttribute.name;
                 }
                 if (Object.entries(simplifiedPkAttribute).length > 0) {
-                    simplified.push(Object.assign(
+                    simplified[attributeKey] = Object.assign(
                         {
                             field: pk,
                             readPerms: simplifyPerms(attribute.readPerms, mainDomain), 
                             writePerms: simplifyPerms(attribute.writePerms, mainDomain),
-                        }, simplifiedPkAttribute)
+                        }, simplifiedPkAttribute
                     );
                 }
             } else {
-                if (simplifiedAttribute.name == simplifiedAttribute.field) {
+                if (simplifiedAttribute.name == attributeKey) {
                     delete simplifiedAttribute.name;
                 }
-                simplified.push(simplifiedAttribute);
+                simplified[attributeKey] = simplifiedAttribute;
             }
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 function simplifyPerms(perms, mainDomain = null) {

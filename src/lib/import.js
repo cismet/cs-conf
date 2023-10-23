@@ -387,12 +387,12 @@ function prepareClasses({ classes, additionalInfos }) {
         }        
 
         let posCounter = 0;
-        for (let attribute of clazz.attributes) {
+        let attributes = clazz.attributes;
+        for (let attributeKey of Object.keys(attributes)) {
+            let attribute = attributes[attributeKey];
             let isArray = false;
             let xx = 1;
             let name = attribute.name;
-            let attributeKey = classKey + "." + attribute.field;
-            let field = attribute.field;
             let substitute = attribute.substitute;
             let descr = attribute.descr;
             let visible = !attribute.hidden;
@@ -456,7 +456,7 @@ function prepareClasses({ classes, additionalInfos }) {
                     classKey,
                     type_name,
                     name,
-                    field,
+                    attributeKey,
                     foreign_key,
                     substitute,
                     foreign_key_references_to_table_name,
@@ -485,7 +485,7 @@ function prepareClasses({ classes, additionalInfos }) {
                     classKey,
                     type_name,
                     name,
-                    field,
+                    attributeKey,
                     foreign_key,
                     substitute,
                     foreign_key_references_to_table_name,
@@ -513,7 +513,7 @@ function prepareClasses({ classes, additionalInfos }) {
             }
 
             if (Object.keys(attribute.additional_info).length > 0) {
-                additionalInfos.attribute[attributeKey] = Object.assign({}, attribute.additional_info);
+                additionalInfos.attribute[classKey + "." + attributeKey] = Object.assign({}, attribute.additional_info);
             }        
     
         }

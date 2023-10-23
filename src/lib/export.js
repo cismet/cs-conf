@@ -148,12 +148,12 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgA
     }
     
     let attrsPerTable = new Map();
-    let attributes = [];
+    let attributes = {};
     for (let csAttr of csAttrs) {
         let attribute = Object.assign({}, csAttr);
         let attributes = attrsPerTable.get(attribute.table);
         if (!attributes) {
-            attributes = [];
+            attributes = {};
             attrsPerTable.set(attribute.table, attributes);
         }
 
@@ -213,10 +213,13 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgA
         attribute.readPerms = attrReadPerms.get(permKey);
         attribute.writePerms = attrWritePerms.get(permKey);
     
+        let attributeKey = attribute.field;
+        delete attribute.field;
+
         //finally remove all field that are null
         clean(attribute);
 
-        attributes.push(attribute);
+        attributes[attributeKey] = attribute;
     }
 
     let classReadPerms = new Map();
@@ -745,7 +748,7 @@ ORDER BY id
 
 const classesExportStatement = `
 SELECT 
-    c.table_name AS "table", 
+    lower(c.table_name) AS "table", 
     c.name AS "name",
     c.descr AS "descr",
     c.primary_key_field AS "pk",
@@ -780,7 +783,7 @@ ORDER BY c.id
 
 const attributesExportStatement = `
 SELECT 
-    a.field_name field, a.name, c.table_name "table" ,a.descr,
+    lower(a.field_name) field, a.name, lower(c.table_name) "table", a.descr,
     t.name "dbType",tc.table_name "cidsType",tc.table_name "oneToMany", tc.table_name "manyToMany", a.precision, a.scale, a.extension_attr, NOT a.optional mandatory, a.default_value "defaultValue",
     a.foreign_key, a.foreign_key_references_to "foreignKeyTableId", fkc.table_name foreignkeytable, a.substitute,
     NOT a.visible hidden, a.indexed,

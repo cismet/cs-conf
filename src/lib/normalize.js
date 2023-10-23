@@ -114,7 +114,7 @@ export function normalizeClass(clazz) {
 }
 
 export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
-    let normalized = [];
+    let normalized = {};
 
     if (attributes != null) {
         let pkMissing = true;
@@ -125,12 +125,9 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
             defaultValue: util.format("nextval('%s_seq')", table),
             hidden: true,
         });
-        for (let attribute of attributes) {
-            if (attribute.field == null) throw util.format("normalizeAttributes: [%s] missing field for attribute", table);
-
-            if (attribute.field != null) {
-                attribute.field = attribute.field.toLowerCase();
-            }
+        for (let attributeKey of Object.keys(attributes)) {
+            let attribute = attributes[attributeKey];
+            
             if (attribute.cidsType != null) {
                 attribute.cidsType = attribute.cidsType.toLowerCase();
             }
@@ -141,9 +138,9 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 attribute.manyToMany = attribute.manyToMany.toLowerCase();
             }
 
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attribute.field);
+            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attributeKey);
 
-            if (pk !== undefined && attribute.field == pk) {
+            if (pk !== undefined && attributeKey == pk) {
                 pkMissing = false;
                 if (
                     attribute.cidsType != null ||
@@ -151,10 +148,10 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                     attribute.manyToMany != null                
                 ) throw "normalizeAttributes: primary key can only have dbType, no cidsType allowed";
                 
-                normalized.push(Object.assign({}, pkDummy, attribute, {
+                normalized[attributeKey] = Object.assign({}, pkDummy, attribute, {
                     defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
-                    name: attribute.name || attribute.field,
-                }));    
+                    name: attribute.name || attributeKey,
+                });    
             } else {
                 let types = [];
                 if (attribute.dbType != null) types.push(attribute.dbType);
@@ -162,21 +159,20 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 if (attribute.oneToMany != null) types.push(attribute.oneToMany);
                 if (attribute.manyToMany != null) types.push(attribute.manyToMany);
 
-                if (types.length == 0) throw util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attribute.field);    
-                if (types.length > 1) throw util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attribute.field);    
+                if (types.length == 0) throw util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attributeKey);    
+                if (types.length > 1) throw util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attributeKey);    
 
-                normalized.push(Object.assign({}, defaultAttribute, attribute, {
-                    name: attribute.name || attribute.field,
+                normalized[attributeKey] = Object.assign({}, defaultAttribute, attribute, {
+                    name: attribute.name || attributeKey,
                     readPerms: normalizePerms(attribute.readPerms),
                     writePerms: normalizePerms(attribute.writePerms),    
-                }));    
+                });    
             }
         }
         if (pkMissing) {
-            normalized.unshift(Object.assign({}, pkDummy, {
-                field: pk,
+            normalized[pk] = Object.assign({}, pkDummy, {
                 name: pk,
-            }));
+            });
         }
     }
 
