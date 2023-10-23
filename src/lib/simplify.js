@@ -11,9 +11,7 @@ import {
     copyFromTemplate, 
     defaultAttribute, 
     defaultAttributePrimary, 
-    defaultAttrPerm,
     defaultClass, 
-    defaultClassPerm, 
     defaultConfig, 
     defaultConfigConnection, 
     defaultConfigSync, 
@@ -28,10 +26,8 @@ import {
 
 import { 
     normalizeAdditionalInfos, 
-    normalizeAttrPerms, 
     normalizeAttributes, 
     normalizeClasses, 
-    normalizeClassPerms, 
     normalizeConfig, 
     normalizeConfigurationAttributes, 
     normalizeDomains, 
@@ -68,9 +64,7 @@ export function simplifyConfigs(configs) {
     return Object.assign({}, configs, {
         config: simplifyConfig(configs.config), 
         additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
-        attrPerms: simplifyAttrPerms(configs.attrPerms, mainDomain), 
-        classes: simplifyClasses(configs.classes), 
-        classPerms: simplifyClassPerms(configs.classPerms, mainDomain), 
+        classes: simplifyClasses(configs.classes, mainDomain), 
         domains: simplifyDomains(configs.domains, mainDomain), 
         dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
         policyRules: simplifyPolicyRules(configs.policyRules), 
@@ -119,22 +113,7 @@ export function simplifyAdditionalInfos(additionalInfos) {
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyAttrPerms(attrPerms, mainDomain = null) {
-    if (attrPerms == null) return null;
-
-    let simplified = [];
-    for (let attrPerm of normalizeAttrPerms(attrPerms)) {
-        if (attrPerm != null) {
-            simplified.push(copyFromTemplate(Object.assign({}, attrPerm, { 
-                read: simplifyPerms(attrPerm.read, mainDomain), 
-                write: simplifyPerms(attrPerm.write, mainDomain) 
-            }), defaultAttrPerm));
-        }
-    }
-    return simplified.length > 0 ? simplified : undefined;
-}
-
-export function simplifyClasses(classes) {
+export function simplifyClasses(classes, mainDomain) {
     if (classes == null) return null;
 
     let simplified = [];
@@ -144,30 +123,18 @@ export function simplifyClasses(classes) {
                 icon: clazz.icon == null && clazz.classIcon == clazz.objectIcon ? clazz.classIcon : clazz.icon,
                 classIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.classIcon,
                 objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
+                readPerms: simplifyPerms(clazz.readPerms, mainDomain), 
+                writePerms: simplifyPerms(clazz.writePerms, mainDomain),
+
             });
             let simplifiedClazz = copyFromTemplate(classWithSimplifiedIcon, defaultClass);
             if (clazz.attributes !== undefined) {
-                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk, clazz.table);
+                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk, clazz.table, mainDomain);
             }
             if (simplifiedClazz.name == simplifiedClazz.table) {
                 delete simplifiedClazz.name;
             }
             simplified.push(simplifiedClazz);
-        }
-    }
-    return simplified.length > 0 ? simplified : undefined;
-}
-
-export function simplifyClassPerms(classPerms, mainDomain = null) {
-    if (classPerms == null) return null;
-
-    let simplified = [];
-    for (let classPerm of normalizeClassPerms(classPerms)) {
-        if (classPerm != null) {
-            simplified.push(copyFromTemplate(Object.assign({}, classPerm, { 
-                read: simplifyPerms(classPerm.read, mainDomain), 
-                write: simplifyPerms(classPerm.write, mainDomain) 
-            }), defaultClassPerm));
         }
     }
     return simplified.length > 0 ? simplified : undefined;
@@ -336,7 +303,7 @@ function simplifyNodes(nodes, mainDomain = null) {
     return simplified.length > 0 ? simplified : undefined;
 }
 
-function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
+function simplifyAttributes(attributes, pk = defaultClass.pk, table, mainDomain) {
     if (attributes == null) return null;
 
     let simplified = [];
@@ -352,7 +319,13 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, table) {
                     delete simplifiedAttribute.name;
                 }
                 if (Object.entries(simplifiedPkAttribute).length > 0) {
-                    simplified.push(Object.assign({field: pk}, simplifiedPkAttribute));
+                    simplified.push(Object.assign(
+                        {
+                            field: pk,
+                            readPerms: simplifyPerms(attribute.readPerms, mainDomain), 
+                            writePerms: simplifyPerms(attribute.writePerms, mainDomain),
+                        }, simplifiedPkAttribute)
+                    );
                 }
             } else {
                 if (simplifiedAttribute.name == simplifiedAttribute.field) {

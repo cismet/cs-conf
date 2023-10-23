@@ -221,12 +221,6 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing classes (%d)", normalizedConfigs.classes.length));
     Object.assign(csEntries, prepareClasses(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing class permissions (%d)", normalizedConfigs.classPerms.length));
-    Object.assign(csEntries, prepareClassPermissions(normalizedConfigs));
-
-    logVerbose(util.format(" ↳ preparing attribute permissions (%d)", normalizedConfigs.attrPerms.length));
-    Object.assign(csEntries, prepareAttributePermissions(normalizedConfigs));
-
     logVerbose(util.format(" ↳ preparing structure (%d)", normalizedConfigs.structure.length));
     Object.assign(csEntries, prepareStructure(normalizedConfigs));
 
@@ -269,23 +263,6 @@ function createPermsEntry(groupkey, table, type, id) {
     ];
 }
 
-function prepareAttributePermissions({ attrPerms }) {
-    let csAttrPermEntries = [];
-    for (let attrPerm of attrPerms) {
-        if (attrPerm.read) {
-            for (let groupkey of attrPerm.read) {
-                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "read", csAttrPermEntries.length + 1));
-            }
-        }
-        if (attrPerm.write) {
-            for (let groupkey of attrPerm.write) {
-                csAttrPermEntries.push(createPermsEntry(groupkey, attrPerm.table, "write", csAttrPermEntries.length + 1));
-            }
-        }  
-    }
-    return { csAttrPermEntries };
-}
-
 function prepareClasses({ classes, additionalInfos }) {
     let csTypeEntries = [];
     let csJavaClassEntries = [];
@@ -295,6 +272,8 @@ function prepareClasses({ classes, additionalInfos }) {
     let csAttrDbTypeEntries = [];
     let csAttrCidsTypeEntries = [];        
     let javaClasses = new Set();
+    let csClassPermEntries = [];
+    let csAttrPermEntries = [];
 
     for (let clazz of classes) {
         let enforcedId = clazz.enforcedId;
@@ -363,6 +342,17 @@ function prepareClasses({ classes, additionalInfos }) {
                 }
             }
         }
+
+        if (clazz.readPerms) {
+            for (let groupkey of clazz.readPerms) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classKey, "read", csClassPermEntries.length + 1));
+            }
+        }
+        if (clazz.writePerms) {
+            for (let groupkey of clazz.writePerms) {
+                csClassPermEntries.push(createPermsEntry(groupkey, classKey, "write", csClassPermEntries.length + 1));
+            }
+        }  
 
         csClassEntries.push([
             name, 
@@ -446,6 +436,18 @@ function prepareClasses({ classes, additionalInfos }) {
                 xx = -1;
                 isArray = false;
             }              
+
+            if (attribute.readPerms) {
+                for (let groupkey of attribute.readPerms) {
+                    csAttrPermEntries.push(createPermsEntry(groupkey, classKey, "read", csAttrPermEntries.length + 1));
+                }
+            }
+            if (attribute.writePerms) {
+                for (let groupkey of attribute.writePerms) {
+                    csAttrPermEntries.push(createPermsEntry(groupkey, classKey, "write", csAttrPermEntries.length + 1));
+                }
+            }  
+    
 
             posCounter += 10;
             
@@ -541,25 +543,10 @@ function prepareClasses({ classes, additionalInfos }) {
         csClassAttrEntries,
         csClassEntries,
         csAttrDbTypeEntries,
-        csAttrCidsTypeEntries
+        csAttrCidsTypeEntries,
+        csClassPermEntries,
+        csAttrPermEntries,
      };
-}
-
-function prepareClassPermissions({ classPerms }) {
-    let csClassPermEntries = [];
-    for (let classPerm of classPerms) {
-        if (classPerm.read) {
-            for (let groupkey of classPerm.read) {
-                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "read", csClassPermEntries.length + 1));
-            }
-        }
-        if (classPerm.write) {
-            for (let groupkey of classPerm.write) {
-                csClassPermEntries.push(createPermsEntry(groupkey, classPerm.table, "write", csClassPermEntries.length + 1));
-            }
-        }  
-    }
-    return { csClassPermEntries };
 }
 
 function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {

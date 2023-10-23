@@ -25,9 +25,7 @@ export function reorganizeConfigs(configs) {
     return Object.assign({}, configs, {
         config: reorganizeConfig(configs.config), 
         additionalInfos: reorganizeAdditionalInfos(configs.additionalInfos, configs), 
-        attrPerms: reorganizeAttrPerms(configs.attrPerms), 
         classes: reorganizeClasses(configs.classes), 
-        classPerms: reorganizeClassPerms(configs.classPerms), 
         domains: reorganizeDomains(configs.domains), 
         dynchildhelpers: reorganizeDynchildhelpers(configs.dynchildhelpers),
         policyRules: reorganizePolicyRules(configs.policyRules), 
@@ -135,36 +133,30 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
     return additionalInfos;
 }
 
-export function reorganizeAttrPerms(attrPerms) {
-    if (attrPerms != null) {
-        for (let attrPerm of attrPerms) {
-            if (attrPerm.write) {
-                attrPerm.write = reorganizePerms(attrPerm.write);
-            }
-            if (attrPerm.read) {
-                attrPerm.read = reorganizePerms(attrPerm.read);
-            }
-        }
-
-        attrPerms = attrPerms.sort((a, b) => {
-            return a.key.toLowerCase().localeCompare(b.key.toLowerCase())
-        });
-    }
-    return attrPerms;
-}
-
 export function reorganizeClasses(classes) {
     if (classes != null) {
-        for (let clazz of classes) {
-            let classKey = clazz.table;
-
+        for (let clazz of classes) {    
             if (normalizeClass(clazz).attributesOrder == 'auto') {
                 let attributes = clazz.attributes;
                 if (attributes != null) {            
+                    for (let attribute of clazz.attributes) {
+                        if (attribute.writePerms) {
+                            attribute.writePerms = reorganizePerms(attribute.writePerms);
+                        }
+                        if (attribute.readPerms) {
+                            attribute.readPerms = reorganizePerms(attribute.readPerms);
+                        }            
+                    }
                     clazz.attributes = attributes.sort((a, b) => { 
                         return a.field.localeCompare(b.field);
                     });                
                 }
+            }
+            if (clazz.writePerms) {
+                clazz.writePerms = reorganizePerms(clazz.writePerms);
+            }
+            if (clazz.readPerms) {
+                clazz.readPerms = reorganizePerms(clazz.readPerms);
             }
         }
         // TODO additionalattributes (which is a Map, not an array) ?
@@ -175,24 +167,6 @@ export function reorganizeClasses(classes) {
     }
     
     return classes;
-}
-
-export function reorganizeClassPerms(classPerms) {
-    if (classPerms != null) {
-        for (let classPerm of classPerms) {
-            if (classPerm.write) {
-                classPerm.write = reorganizePerms(classPerm.write);
-            }
-            if (classPerm.read) {
-                classPerm.read = reorganizePerms(classPerm.read);
-            }
-        }
-
-        classPerms = classPerms.sort((a, b) => {
-            return a.table.toLowerCase().localeCompare(b.table.toLowerCase())
-        });
-    }
-    return classPerms;
 }
 
 export function reorganizeDomains(domains) {
@@ -282,7 +256,7 @@ export function reorganizeUsermanagement(usermanagement) {
 // ---
 
 /*
- * used by reorganizeAttrPerms, reorganizeClassPerms, reorganizeStructure
+ * used by reorganizeClasses, reorganizeStructure
  */
 function reorganizePerms(perms) {
     if (perms == null) return null;

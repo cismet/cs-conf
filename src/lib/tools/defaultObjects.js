@@ -28,20 +28,6 @@ export const defaultAdditionalInfos = {
     attribute: {},
 };
 
-// attrPerms
-export const defaultAttrPerm = {
-    key: null,
-    read: [],
-    write: [],
-};
-
-// classPerms
-export const defaultClassPerm = {
-    table: null,
-    read: [],
-    write: [],
-};
-
 // classes
 export const defaultAttribute = {
     field: null,
@@ -60,6 +46,8 @@ export const defaultAttribute = {
     hidden: false,
     indexed: false,
     arrayKey: null,
+    readPerms: [],
+    writePerms: [],
     additional_info: {},
 };
 
@@ -91,6 +79,8 @@ export const defaultClass = {
     objectIcon: null,
     array_link: false,
     policy: null,
+    readPerms: [],
+    writePerms: [],
     attribute_policy: null,
     toString: null,
     editor: null,

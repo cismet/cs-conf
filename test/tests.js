@@ -2,9 +2,7 @@ import chai from 'chai';
 import util from 'util';
 import { readConfigFile } from '../src/lib/tools/configFiles';
 import { 
-    normalizeAttrPerms, 
     normalizeClasses, 
-    normalizeClassPerms, 
     normalizeDomains, 
     normalizeDynchildhelpers, 
     normalizePolicyRules, 
@@ -13,8 +11,6 @@ import {
     normalizeUsermanagement 
 } from '../src/lib/normalize';
 import { 
-    reorganizeAttrPerms, 
-    reorganizeClassPerms, 
     reorganizeClasses, 
     reorganizeDomains, 
     reorganizeDynchildhelpers, 
@@ -23,8 +19,6 @@ import {
     reorganizeUsermanagement 
 } from '../src/lib/reorganize';
 import { 
-    simplifyAttrPerms, 
-    simplifyClassPerms, 
     simplifyClasses, 
     simplifyDomains, 
     simplifyDynchildhelpers, 
@@ -45,8 +39,6 @@ const folderReorganize = "./test/configs/reorganize"; // TODO
 const folderReorganized = "./test/configs/reorganized"; // TODO
 
 const allFunctions = {
-    'attrPerms': { normalize: normalizeAttrPerms, simplify: simplifyAttrPerms, reorganize: reorganizeAttrPerms, },
-    'classPerms': { normalize: normalizeClassPerms, simplify: simplifyClassPerms, reorganize: reorganizeClassPerms, },
     'classes': { normalize: normalizeClasses, simplify: simplifyClasses, reorganize: reorganizeClasses, },
     'domains': { normalize: normalizeDomains, simplify: simplifyDomains, reorganize: reorganizeDomains, },
     'dynchildhelpers': { normalize: normalizeDynchildhelpers, simplify: simplifyDynchildhelpers, reorganize: reorganizeDynchildhelpers, },

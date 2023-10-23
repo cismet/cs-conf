@@ -14,6 +14,8 @@
         "objectIcon": null,
         "array_link": false,
         "policy": null,
+        "readPerms": [], 
+        "writePerms": [], 
         "attribute_policy": null,
         "toString": null,
         "editor": null,
@@ -36,6 +38,8 @@
                 "hidden": true,
                 "indexed": false,
                 "arrayKey": null, 
+                "readPerms": [], 
+                "writePerms": [], 
                 "additional_info": {}
             },
             {
@@ -55,6 +59,8 @@
                 "hidden": false,
                 "indexed": false,
                 "arrayKey": null, 
+                "readPerms": [], 
+                "writePerms": [], 
                 "additional_info": {}
             }
         ],

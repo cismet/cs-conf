@@ -75,8 +75,6 @@ export function readConfigFiles(configsDir, topics) {
     }
 
     let policyRules = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/policyRules.json", configsDir), true) : null;
-    let classPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classPerms.json", configsDir), true) : null;
-    let attrPerms = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/attrPerms.json", configsDir), true) : null;
     let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configsDir), true) : null;
 
     let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configsDir), true) : null;
@@ -113,8 +111,6 @@ export function readConfigFiles(configsDir, topics) {
         usergroups, 
         usermanagement, 
         classes, 
-        classPerms, 
-        attrPerms, 
         structure, 
         dynchildhelpers,
         xmlFiles,
@@ -132,8 +128,6 @@ export function writeConfigFiles(configs, configsDir) {
         usermanagement,
         usergroups,
         classes,
-        classPerms,
-        attrPerms,
         structure,
         dynchildhelpers,
         structureSqlFiles,
@@ -195,8 +189,6 @@ export function writeConfigFiles(configs, configsDir) {
     writeConfigFile(usergroups, util.format("%s/usergroups.json", configsDir), true);
     writeConfigFile(usermanagement, util.format("%s/usermanagement.json", configsDir), true);
     writeConfigFile(classes, util.format("%s/classes.json", configsDir), true);
-    writeConfigFile(classPerms, util.format("%s/classPerms.json", configsDir), true);
-    writeConfigFile(attrPerms, util.format("%s/attrPerms.json", configsDir), true);
     writeConfigFile(structure, util.format("%s/structure.json", configsDir), true);
     writeConfigFile(dynchildhelpers, util.format("%s/dynchildhelpers.json", configsDir), true);
 

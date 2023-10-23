@@ -84,12 +84,6 @@ function exportConfigs(fetchedData, config) {
     logVerbose(" ↳ creating classes.json");
     Object.assign(configs, exportClasses(fetchedData, configs));
 
-    logVerbose(" ↳ creating classPerms.json");
-    Object.assign(configs, exportClassPermissions(fetchedData, configs));
-    
-    logVerbose(" ↳ creating attrPerms.json");
-    Object.assign(configs, exportAttrPermissions(fetchedData, configs));
-
     logVerbose(" ↳ creating dynchildhelpers.json and structure-helper-stmnts files");
     Object.assign(configs, exportDynchildhelpers(fetchedData, configs));
 
@@ -118,7 +112,18 @@ function exportAdditionalInfos({ csAdditionalInfos }) {
     return { additionalInfos };
 }
 
-function exportAttrPermissions({ csUgAttrPerms }, { attributes }) {
+function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgAttrPerms }, {}) {
+    let classAttrsPerTable = new Map(); 
+    
+    for (let csClassAttr of csClassAttrs) {
+        let classAttribute = classAttrsPerTable.get(csClassAttr.table);
+        if (!classAttribute) {
+            classAttribute = {};
+            classAttrsPerTable.set(csClassAttr.table, classAttribute);
+        }
+        classAttribute[csClassAttr.key] = csClassAttr.value;
+    }
+
     let attrReadPerms = new Map();
     let attrWritePerms = new Map();
 
@@ -142,52 +147,14 @@ function exportAttrPermissions({ csUgAttrPerms }, { attributes }) {
         }
     }
     
-    let attrPerms = [];
-    for (let attribute of attributes) {
-        let key = util.format("%s.%s", attribute.table, attribute.field);
-        let entry = {
-            attribute: key
-        }
-
-        let attrReadPermissions = attrReadPerms.get(key);
-        if (attrReadPermissions) {
-            entry.read = attrReadPermissions;
-        }
-
-        let attrWritePermissions = attrWritePerms.get(key);
-        if (attrWritePermissions) {
-            entry.write = attrWritePermissions;
-        }
-        if (attrReadPermissions || attrWritePermissions) {
-            attrPerms.push(entry);
-        }
-    }
-
-    return {
-        attrPerms,
-    };
-}
-
-function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
-    let classAttrsPerTable = new Map(); 
-    
-    for (let csClassAttr of csClassAttrs) {
-        let classAttribute = classAttrsPerTable.get(csClassAttr.table);
-        if (!classAttribute) {
-            classAttribute = {};
-            classAttrsPerTable.set(csClassAttr.table, classAttribute);
-        }
-        classAttribute[csClassAttr.key] = csClassAttr.value;
-    }
-
     let attrsPerTable = new Map();
     let attributes = [];
     for (let csAttr of csAttrs) {
         let attribute = Object.assign({}, csAttr);
-        let tableAttributes = attrsPerTable.get(attribute.table);
-        if (!tableAttributes) {
-            tableAttributes = [];
-            attrsPerTable.set(attribute.table, tableAttributes);
+        let attributes = attrsPerTable.get(attribute.table);
+        if (!attributes) {
+            attributes = [];
+            attrsPerTable.set(attribute.table, attributes);
         }
 
         // clean up
@@ -196,7 +163,7 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
         if (attribute.field === attribute.name) {
             delete attribute.name;
         }
-
+        
         if (attribute.cidsType !== null) {
             delete attribute.dbType;
             delete attribute.precision;
@@ -242,19 +209,44 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
         delete attribute.foreignkeytable; // check whether this should better be used instead of tc.table_name
         delete attribute.isArrray;
 
+        let permKey = util.format("%s.%s", attribute.table, attribute.field);
+        attribute.readPerms = attrReadPerms.get(permKey);
+        attribute.writePerms = attrWritePerms.get(permKey);
+    
         //finally remove all field that are null
         clean(attribute);
 
-        tableAttributes.push(attribute);
         attributes.push(attribute);
+    }
+
+    let classReadPerms = new Map();
+    let classWritePerms = new Map();
+    for (let csUgClassPerm of csUgClassPerms) {
+        let ug = util.format("%s@%s", csUgClassPerm.group, csUgClassPerm.domain);
+        let tableReadPermissions = classReadPerms.get(csUgClassPerm.table);
+        if (csUgClassPerm.permission === "read") {
+            if (!tableReadPermissions) {
+                tableReadPermissions = [];
+                classReadPerms.set(csUgClassPerm.table, tableReadPermissions);
+            }
+            tableReadPermissions.push(ug);
+        } else if (csUgClassPerm.permission === "write") {
+            let tableWritePermissions = classWritePerms.get(csUgClassPerm.table);
+            if (!tableWritePermissions) {
+                tableWritePermissions = [];
+                classWritePerms.set(csUgClassPerm.table, tableWritePermissions);
+            }
+            tableWritePermissions.push(ug);
+        }
     }
 
     let classes = [];
     for (let csClass of csClasses) {        
         let clazz = Object.assign({}, csClass);
+        let classKey = clazz.table;
 
         //clean up
-        if (clazz.table === clazz.name) {
+        if (classKey === clazz.name) {
             delete clazz.name;
         }
         if (clazz.descr === null) {
@@ -310,67 +302,26 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs }, {}) {
         delete clazz.rendererClass;
 
         //add attributes
-        let attrs = attrsPerTable.get(clazz.table);
+        let attrs = attrsPerTable.get(classKey);
         if (attrs) {
             clazz.attributes = attrs;
         }
 
         //add class attributes
-        let cattrs = classAttrsPerTable.get(clazz.table);
+        let cattrs = classAttrsPerTable.get(classKey);
         if (cattrs) {
             clazz.additionalAttributes = cattrs;
         }
+
+        clazz.readPerms = classReadPerms.get(classKey);
+        clazz.writePerms = classWritePerms.get(classKey);
+
         classes.push(clazz);
     }
+
     return { classes, attributes };
 }
 
-function exportClassPermissions({ csUgClassPerms }, { classes }) {
-    let classReadPerms = new Map();
-    let classWritePerms = new Map();
-
-    for (let csUgClassPerm of csUgClassPerms) {
-        let ug = util.format("%s@%s", csUgClassPerm.group, csUgClassPerm.domain);
-        let tableReadPermissions = classReadPerms.get(csUgClassPerm.table);
-        if (csUgClassPerm.permission === "read") {
-            if (!tableReadPermissions) {
-                tableReadPermissions = [];
-                classReadPerms.set(csUgClassPerm.table, tableReadPermissions);
-            }
-            tableReadPermissions.push(ug);
-        } else if (csUgClassPerm.permission === "write") {
-            let tableWritePermissions = classWritePerms.get(csUgClassPerm.table);
-            if (!tableWritePermissions) {
-                tableWritePermissions = [];
-                classWritePerms.set(csUgClassPerm.table, tableWritePermissions);
-            }
-            tableWritePermissions.push(ug);
-        }
-    }
-
-    let classPerms = [];
-    for (let clazz of classes) {
-        let table = clazz.table;
-        let classPerm = {
-            table: table
-        }
-        let tableReadPermissions = classReadPerms.get(table);
-        if (tableReadPermissions) {
-            classPerm.read = tableReadPermissions;
-        }
-        let tableWritePermissions = classWritePerms.get(table);
-        if (tableWritePermissions) {
-            classPerm.write = tableWritePermissions;
-        }
-        if (tableReadPermissions || tableWritePermissions) {
-            classPerms.push(classPerm);
-        }
-    }
-
-    return {
-        classPerms
-    }
-}
 
 function exportConfigAttributes({ csConfigAttrs }, {}) {
     const userConfigAttrs = new Map();

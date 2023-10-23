@@ -7,13 +7,11 @@ import { topologicalSort } from "./tools/tools";
 import { 
     defaultAdditionalInfos, 
     defaultAttribute, 
-    defaultAttrPerm, 
     defaultConfig, 
     defaultConfigConnection, 
     defaultConfigSync, 
     defaultConfigurationAttributes, 
     defaultClass, 
-    defaultClassPerm, 
     defaultDomain, 
     defaultDynchildhelper, 
     defaultNode, 
@@ -44,9 +42,7 @@ export function normalizeConfigs(configs) {
     return Object.assign({}, configs, {
         config: normalizeConfig(configs.config),
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
-        attrPerms: normalizeAttrPerms(configs.attrPerms), 
         classes: normalizeClasses(configs.classes), 
-        classPerms: normalizeClassPerms(configs.classPerms), 
         domains: normalizeDomains(configs.domains, configs.config.domainName), 
         dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
         policyRules: normalizePolicyRules(configs.policyRules), 
@@ -69,24 +65,6 @@ export function normalizeAdditionalInfos(additionalInfos) {
     
     if (additionalInfos) {
         Object.assign(normalized, defaultAdditionalInfos, additionalInfos);
-    }
-    
-    return normalized;
-}
-
-export function normalizeAttrPerms(attrPerms) {
-    let normalized = [];
-    
-    if (attrPerms != null) {
-        for (let attrPerm of attrPerms) {
-            if (attrPerm.key == null) throw "normalizeAttrPerms: missing key";
-
-            normalized.push(Object.assign({}, defaultAttrPerm, attrPerm, {
-                key: attrPerm.key.toLowerCase(),
-                read: normalizePerms(attrPerm.read),
-                write: normalizePerms(attrPerm.write),
-            }));
-        }
     }
     
     return normalized;
@@ -129,6 +107,9 @@ export function normalizeClass(clazz) {
         icon: null,
         classIcon: clazz.classIcon || clazz.icon || null,
         objectIcon: clazz.objectIcon || clazz.icon || null,
+        readPerms: normalizePerms(clazz.readPerms),
+        writePerms: normalizePerms(clazz.writePerms),
+
     });
 }
 
@@ -186,6 +167,8 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 
                 normalized.push(Object.assign({}, defaultAttribute, attribute, {
                     name: attribute.name || attribute.field,
+                    readPerms: normalizePerms(attribute.readPerms),
+                    writePerms: normalizePerms(attribute.writePerms),    
                 }));    
             }
         }
@@ -193,24 +176,6 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
             normalized.unshift(Object.assign({}, pkDummy, {
                 field: pk,
                 name: pk,
-            }));
-        }
-    }
-
-    return normalized;
-}
-
-export function normalizeClassPerms(classPerms) {
-    let normalized = [];
-    
-    if (classPerms != null) {
-        for (let classPerm of classPerms) {
-            if (classPerm.table == null) throw "normalizeClassPerms: missing table for classPerm";
-
-            normalized.push(Object.assign({}, defaultClassPerm, classPerm, {
-                table: classPerm.table.toLowerCase(),
-                read: normalizePerms(classPerm.read),
-                write: normalizePerms(classPerm.write),
             }));
         }
     }
