@@ -4,6 +4,7 @@ import stringify from 'json-stringify-pretty-compact';
 import { extname } from 'path';
 import { logOut, logVerbose } from './tools';
 import { normalizeConfig } from '../normalize';
+import { version } from '../../../package.json';
 
 const structureDynamicChildrenFolderConst = "structure-dyn-children-stmnts";
 const structureHelperStatementsFolderConst = "structure-helper-stmnts";
@@ -14,8 +15,13 @@ export function readConfigJsonFile(file) {
         throw util.format("config file '%s' doesn't exist", file);
     }
     logVerbose(util.format("Reading config file '%s' ...", file));
-    let config = readConfigFile(file, true) ;
-    return normalizeConfig(config);
+    let config = readConfigFile(file, true);
+    let normalized = normalizeConfig(config);
+    let majorVersion =  version.split('.')[0];
+    if (normalized.formatVersion != majorVersion) {
+        throw util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion);
+    }
+    return normalized;
 }
 
 export function readConfigFile(file, sub = false) {    

@@ -11,6 +11,7 @@ export const defaultConfigSync = {
 };
 
 export const defaultConfig = {
+    formatVersion: 1,
     configsDir: '.',
     connection: defaultConfigConnection,
     domainName: null,
