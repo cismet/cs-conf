@@ -203,13 +203,13 @@ export function prepareImport(configs) {
 
     let csEntries = {};
 
-    logVerbose(util.format(" ↳ preparing domains (%d)", normalizedConfigs.domains.length));
+    logVerbose(util.format(" ↳ preparing domains (%d)", Object.keys(normalizedConfigs.domains).length));
     Object.assign(csEntries, prepareDomains(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing usergroups (%d)", normalizedConfigs.usergroups.length));
+    logVerbose(util.format(" ↳ preparing usergroups (%d)", Object.keys(normalizedConfigs.usergroups).length));
     Object.assign(csEntries, prepareUsergroups(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing usermanagement (%d)", normalizedConfigs.usermanagement.length));
+    logVerbose(util.format(" ↳ preparing usermanagement (%d)", Object.keys(normalizedConfigs.usermanagement).length));
     Object.assign(csEntries, prepareUsermanagement(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing configuration attributes (%d)", normalizedConfigs.configurationAttributes.length));
@@ -607,8 +607,8 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
 
 function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
     let csDomainEntries = [];
-    for (let domain of domains) {
-        let domainKey = domain.domainname;
+    for (let domainKey of Object.keys(domains)) {
+        let domain = domains[domainKey];
         csDomainEntries.push([ 
             domainKey,
             csDomainEntries.length + 1,
@@ -772,9 +772,10 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
     for (let group of usergroups) {
         let groupKey = group.key.split('@');        
         let descr = group.descr;
+        let groupKeySplit = groupKey.split('@');        
         let prio = group.prio;        
-        let groupName = groupKey[0];
-        let domainKey = groupKey[1];
+        let groupName = groupKeySplit[0];
+        let domainKey = groupKeySplit[1];
         csUgEntries.push([ 
             groupName, 
             descr, 
@@ -784,7 +785,7 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
         ]);
 
         if (group.configurationAttributes) {
-            let groupAndDomain = extractGroupAndDomain(group.key);
+            let groupAndDomain = extractGroupAndDomain(groupKey);
             for (let configurationAttribute of group.configurationAttributes) {
                 configurationAttribute.group = groupAndDomain.group;
                 configurationAttribute.domain = groupAndDomain.domain;
@@ -803,8 +804,8 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
-    for (let user of usermanagement) {
-        let userKey = user.login_name;
+    for (let userKey of Object.keys(usermanagement)) {
+        let user = usermanagement[userKey];
         csUserEntries.push([ 
             userKey, 
             user.pw_hash, 

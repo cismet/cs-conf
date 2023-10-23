@@ -69,8 +69,8 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
 
         if (sortedAdditionalInfos.domain && domains) {
             let additionalInfosDomain = sortedAdditionalInfos.domain;
-            for (let domain of domains) {
-                let domainKey = domain.domainname;
+            for (let domainKey of Object.keys(domains)) {
+                let domain = domains[domainKey];
                 let additionalInfo = additionalInfosDomain[domainKey];
                 if (additionalInfo) {
                     domain.additional_info = additionalInfo;
@@ -81,8 +81,8 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
         
         if (sortedAdditionalInfos.group && usergroups) {
             let additionalInfosGroup = sortedAdditionalInfos.group;
-            for (let usergroup of usergroups) {
-                let groupKey = usergroup.key;
+            for (let groupKey of Object.keys(usergroups)) {
+                let usergroup = usergroups[groupKey];
                 let additionalInfo = additionalInfosGroup[groupKey];
                 if (additionalInfo) {
                     usergroup.additional_info = additionalInfo;
@@ -93,8 +93,8 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
 
         if (sortedAdditionalInfos.user && usermanagement) {
             let additionalInfosUser = sortedAdditionalInfos.user;    
-            for (let user of usermanagement) {
-                let userKey = user.login_name;        
+            for (let userKey of Object.keys(usermanagement)) {
+                let user = usermanagement[userKey]
                 let additionalInfo = additionalInfosUser[userKey];
                 if (additionalInfo) {
                     user.additional_info = additionalInfo;
@@ -170,20 +170,27 @@ export function reorganizeClasses(classes) {
 }
 
 export function reorganizeDomains(domains) {
-    if (domains != null) {
-        for (let domain of domains) {
-            if (domain.configurationAttributes) {
-                domain.configurationAttributes = reorganizeConfigurationAttributes(domain.configurationAttributes);
-            }
-        }
+    if (domains == null) {
+        return null;
+    }
 
-        domains = domains.sort((a, b) => {
-            let aDomainname = a.domainname.toUpperCase();
-            let bDomainname = b.domainname.toUpperCase();        
-            return aDomainname != 'LOCAL' || aDomainname.localeCompare(bDomainname);
+    let reorganized = {};
+    reorganized['LOCAL'] = null;
+
+    let sortedDomainKeys = Object.keys(domains).sort((a, b) => {
+        let aDomainname = a.toUpperCase();
+        let bDomainname = b.toUpperCase();        
+        return aDomainname != 'LOCAL' || aDomainname.localeCompare(bDomainname);
+    });
+
+    for (let domainKey of sortedDomainKeys) {
+        let domain = domains[domainKey];
+        reorganized[domainKey] = Object.assign({}, domain, {
+            configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : undefined,
         });
-    }        
-    return domains;
+    }
+
+    return reorganized;
 }
 
 export function reorganizeDynchildhelpers(dynchildhelpers) {
@@ -214,43 +221,41 @@ export function reorganizeStructure(structure) {
     return reorganizeNode(structure);
 }
 
-export function reorganizeUsergroups(usergroups, additionalInfos = {}) {
+export function reorganizeUsergroups(usergroups) {
+    let reorganized = {};
     if (usergroups != null) {
-        for (let usergroup of usergroups) {    
-            if (usergroup.configurationAttributes) {
-                usergroup.configurationAttributes = reorganizeConfigurationAttributes(usergroup.configurationAttributes);
-            }
-        }
-
-        usergroups = usergroups.sort((a, b) => {
-            let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a.key));
-            let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b.key));
+        let sortedGroupKeys = Object.keys(usergroups).sort((a, b) => {
+            let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a));
+            let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b));
             let aDomain = aGroupAndDomain.domain != 'LOCAL' ? aGroupAndDomain.domain : ''
             let bDomain = bGroupAndDomain.domain != 'LOCAL' ? bGroupAndDomain.domain : ''
             return aDomain.localeCompare(bDomain) || aGroupAndDomain.group.localeCompare(bGroupAndDomain.group);
         });
+        for (let groupKey of sortedGroupKeys) {
+            let usergroup = usergroups[groupKey];
+            reorganized[groupKey] = Object.assign({}, usergroup, {
+                configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : undefined,
+            });
+        }
     }
-    return usergroups;
+    return reorganized;
 }
 
 export function reorganizeUsermanagement(usermanagement) {
-    if (usermanagement != null) {
-        for (let user of usermanagement) {    
-            if (user.configurationAttributes) {
-                user.configurationAttributes = reorganizeConfigurationAttributes(user.configurationAttributes);
-            }
-            if (user.groups) {
-                user.groups = user.groups.sort();
-            }
-        }
+    let reorganized = {};
 
-        usermanagement = usermanagement.sort((a, b) => {
-            let aLoginName = a.login_name;
-            let bLobinName = b.login_name;
-            return aLoginName.localeCompare(bLobinName);
-        });
+    if (usermanagement != null) {
+        let sortedUserKeys = Object.keys(usermanagement).sort();
+        for (let userKey of sortedUserKeys) {    
+            let user = usermanagement[userKey];
+            reorganized[userKey] = Object.assign({}, user, {
+                configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : undefined,
+                groups : user.groups ? user.groups.sort() : undefined,
+            });
+        }
     }    
-    return usermanagement;
+
+    return reorganized;
 }
 
 // ---

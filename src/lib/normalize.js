@@ -184,39 +184,18 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 }
 
 export function normalizeDomains(domains, mainDomain) {
-    let normalized = [];
+    let normalized = {};
 
     if (domains != null) {
-        let localDomain = null;
-        let domainnames = [];
-        for (let domain of domains) {
-            if (domain.domainname == null) throw "normalizeDomains: missing domainname";
-            if (domainnames.includes(domain.domainname)) throw util.format("normalizeDomains: domain '%s' already exists", domain.domainname);
+        for (let domainKey of Object.keys(domains)) {
+            if (domainKey == mainDomain) continue;
 
-            if (domain.domainname == mainDomain || domains.length == 1) {
-                if (localDomain != null) {
-                    throw util.format("normalizeDomains: can't set %s as main, %s is already main", domain.domainname, localDomain.domainname);
-                }
-                localDomain = domain;
-            } else {
-                domainnames.push(domain.domainname);
-                normalized.push(Object.assign({}, defaultDomain, domain, {
-                    configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes)
-                }));
-    
-            }
-        }
+            let domain = domains[domainKey];
+            if (normalized.hasOwnProperty(domainKey)) throw util.format("normalizeDomains: domain '%s' already exists", domainKey);
 
-        if (localDomain != null) {
-            if (!domainnames.includes("LOCAL")) {
-                normalized.push(Object.assign({}, defaultDomain, localDomain, { domainname: "LOCAL" }, {
-                    configurationAttributes: normalizeConfigurationAttributes(localDomain.configurationAttributes)
-                }));    
-            }
-
-            if (!domainnames.includes(localDomain.domainname)) {
-                normalized.push(Object.assign({}, defaultDomain, { domainname: localDomain.domainname }));            
-            }
+            normalized[domainKey] = Object.assign({}, defaultDomain, domain, {
+                configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes)
+            });
         }
     }
 
@@ -260,16 +239,15 @@ export function normalizeStructure(structure) {
 }
 
 export function normalizeUsergroups(usergroups) {
-    let normalized = [];
+    let normalized = {};
 
     if (usergroups != null) {
-        for (let usergroup of usergroups) {
-            if (usergroup.key == null) throw "normalizeUsergroups: missing key";
+        for (let groupKey of Object.keys(usergroups)) {
+            let usergroup = usergroups[groupKey];
 
-            normalized.push(Object.assign({}, defaultUserGroup, usergroup, {
-                key: extendLocalDomain(usergroup.key),
+            normalized[extendLocalDomain(groupKey)] = Object.assign({}, defaultUserGroup, usergroup, {
                 configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
-            }));
+            });
         }
     }
 
@@ -277,35 +255,29 @@ export function normalizeUsergroups(usergroups) {
 }
 
 export function normalizeUsermanagement(usermanagement, additionalInfos = {}) {
-    let normalized = [];
-
-    let usersMap = new Map();
+    let normalized = {};
     
-    for (let user of usermanagement) {
+    for (let userKey of Object.keys(usermanagement)) {
+        let user = usermanagement[userKey];
         if (user != null) {
-            let userKey = user.login_name;
-            if (userKey == null) throw "normalizeUsermanagement: missing login_name";
-
-            let normalizedUser = normalizeUser(user);
-            usersMap.set(userKey, normalizedUser);
-            normalized.push(normalizedUser);
+            normalized[userKey] = normalizeUser(user, userKey);
         }
     }
 
-    let shadowDependencyGraph = normalized.reduce((graphed, user) => (graphed[user.login_name] = user.shadows, graphed), {});           
+    let shadowDependencyGraph = Object.keys(normalized).reduce((graphed, userKey) => (graphed[userKey] = normalized[userKey].shadows, graphed), {});           
     let dependencySortedUsers = topologicalSort(shadowDependencyGraph);
 
     for (let userKey of dependencySortedUsers) {
-        unshadow(userKey, usersMap, additionalInfos);        
+        unshadow(userKey, normalized, additionalInfos);        
     }
 
     return normalized;
 }
 
-export function normalizeUser(user) {
-    if (user.pw_hash == null) throw util.format("normalizeUsermanagement: [%s] missing pw_hash", user.login_name);
-    if (user.salt == null) throw util.format("normalizeUsermanagement: [%s] missing salt", user.login_name);
-    if (user.password != null) throw util.format("normalizeUsermanagement: [%s] password not allowed", user.login_name);
+export function normalizeUser(user, userKey) {
+    if (user.pw_hash == null) throw util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey);
+    if (user.salt == null) throw util.format("normalizeUsermanagement: [%s] missing salt", userKey);
+    if (user.password != null) throw util.format("normalizeUsermanagement: [%s] password not allowed", userKey);
 
     let normalized = Object.assign({}, defaultUser, user, {
         groups: normalizeGroups(user.groups),
@@ -414,8 +386,8 @@ function normalizeSpecial(special, table) {
     return null;
 }
 
-function unshadow(userKey, usersMap) {      
-    let user = usersMap.get(userKey);
+function unshadow(userKey, usermanagement) {      
+    let user = usermanagement[userKey];
     if (user != null && user.shadows != null) {
         let shadows = user.shadows;
         if (shadows.length > 0) {
@@ -423,7 +395,7 @@ function unshadow(userKey, usersMap) {
             if (!additionalInfo._unshadowed_groups) {
                 additionalInfo._unshadowed_groups = user.groups;
                 for (let shadowKey of [...shadows].reverse()) {
-                    let shadow = usersMap.get(shadowKey);
+                    let shadow = usermanagement[shadowKey];
                     if (shadow != null) {
                         if (shadow.groups != null) {
                             user.groups = [...new Set([...shadow.groups, ...user.groups])];
@@ -434,7 +406,7 @@ function unshadow(userKey, usersMap) {
             if (!additionalInfo._unshadowed_configurationAttributes) {
                 for (let shadowKey of shadows) {
                     additionalInfo._unshadowed_configurationAttributes = user.configurationAttributes;
-                    let shadow = usersMap.get(shadowKey);
+                    let shadow = usermanagement[shadowKey];
                     if (shadow != null) {
                         if (shadow.configurationAttributes != null) {
                             user.configurationAttributes = [...new Set([...shadow.configurationAttributes, ...user.configurationAttributes])];

@@ -1,6 +1,5 @@
-[
-    {
-      "domainname": "TEST",
+{
+  "LOCAL": {
       "configurationAttributes": [{ "key": "test" }]
     }
-]
+}

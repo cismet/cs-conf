@@ -403,26 +403,20 @@ function exportConfigAttributes({ csConfigAttrs }, {}) {
     }
 }
 
-function exportDomains({ csDomains }, { config, domainConfigAttrs }) {
-    let mainDomain = config.domainName;
-    
-    let domains = [];
-    let mainDomainFound = false
+function exportDomains({ csDomains }, { domainConfigAttrs }) {
+    let domains = {};
     for (let csDomain of csDomains) {
         let domain = Object.assign({}, csDomain);
+
+        let domainKey = domain.domainname;
+        delete domain.domainname;
         
         //add the configuration attributes
-        let attributes = domainConfigAttrs.get(domain.domainname);
+        let attributes = domainConfigAttrs.get(domainKey);
         if (attributes) {
             domain.configurationAttributes = attributes;        
         }
-        if (domain.domainname == mainDomain) {
-            mainDomainFound = true;
-        }
-        domains.push(domain);
-    }
-    if (!mainDomainFound) {
-        domains.push(Object.assign({}, defaultDomain, { "domainname" : mainDomain }));
+        domains[domainKey] = domain;
     }
     return { domains };
 }
@@ -606,7 +600,7 @@ function visitingNodesByChildren(nodes, allNodes, links, duplicates) {
 }
 
 function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
-    let usergroups = [];
+    let usergroups = {};
 
     for (let csUg of csUgs) {
         let groupKey = csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain);
@@ -619,7 +613,7 @@ function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
             configurationAttributes: configurationAttributes ?? undefined,
         };
         
-        usergroups.push(group);
+        usergroups[groupKey] = group;
     }
 
     return {
@@ -639,11 +633,13 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) 
         }
     }
 
-    let usermanagement = [];
+    let usermanagement = {};
 
     for (let csUsr of csUsrs) {
         let user = Object.assign({}, csUsr);
+
         let userKey = user.login_name;        
+        delete user.login_name;
 
         //add the usergroups
         let groups = userGroupMap.get(userKey);
@@ -657,7 +653,7 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) 
             user.configurationAttributes = attributes;
         }
 
-        usermanagement.push(user);
+        usermanagement[userKey] = user;
     }
 
     return {

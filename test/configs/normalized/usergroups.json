@@ -1,15 +1,14 @@
-[
-    {
-        "key": "Group1@LOCAL",
+{
+    "Group1@LOCAL": {
         "descr": "Descr1",
         "configurationAttributes": [{ "key": "test", "groups": [], "value": null, "xmlfile": null }],
         "prio": null,
         "additional_info": {}
-    }, { 
-        "key": "Group2@LOCAL",
+    }, 
+    "Group2@LOCAL": { 
         "descr": null,
         "configurationAttributes": [],
         "prio": null,
         "additional_info": {}
     }
-]
+}

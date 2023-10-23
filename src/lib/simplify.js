@@ -143,41 +143,40 @@ export function simplifyClasses(classes, mainDomain) {
 export function simplifyDomains(domains, mainDomain = null) {
     if (domains == null) return null;
 
-    let simplifiedBeforeLocal = [];
+    let simplifiedBeforeLocal = {};
     let simpleMain = null;
     let domainnames = [];
-    for (let domain of normalizeDomains(domains, mainDomain)) {
+    let normalized = normalizeDomains(domains, mainDomain);
+    for (let domainKey of Object.keys(normalized)) {
+        let domain = normalized[domainKey];
         if (domain != null) {
-            domainnames.push(domain.domainname);
-            if (domain.domainname == mainDomain && domain.configurationAttributes.length == 0 && domain.comment == null) {
+            domainnames.push(domainKey);
+            if (domainKey == mainDomain && domain.configurationAttributes.length == 0 && domain.comment == null) {
                 simpleMain = domain;
             }
             let simplifiedDomain = copyFromTemplate(domain, defaultDomain);
             if (domain.configurationAttributes !== undefined && domain.configurationAttributes.length > 0) {
                 simplifiedDomain.configurationAttributes = simplifyConfigurationAttributes(domain.configurationAttributes, mainDomain);
             }
-            simplifiedBeforeLocal.push(simplifiedDomain);
+            simplifiedBeforeLocal[domainKey] = simplifiedDomain;
         }
     }
     
-    let simplified = [];
-    for (let domain of simplifiedBeforeLocal) {  
+    let simplified = {};
+    for (let domainKey of Object.keys(simplifiedBeforeLocal)) {  
+        let domain = simplifiedBeforeLocal[domainKey];
         if (simpleMain != null) {
-            if (domain.domainname === simpleMain.domainname) {
+            if (domainKey === simpleMain.domainname) {
                 continue;
-            } else if (domain.domainname === "LOCAL") {               
-                simplified.unshift(copyFromTemplate(Object.assign({}, domain, { 
-                    domainname: simpleMain.domainname,
-                }), defaultDomain));                
-            } else {
-                simplified.push(domain);
+            } else if (domainKey !== "LOCAL") {   
+                simplified[domainKey] = domain;
             }
         } else {
-            simplified.push(domain);
+            simplified[domainKey] = domain;
         }
     }
 
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 export function simplifyDynchildhelpers(dynchildhelpers) {
@@ -214,35 +213,37 @@ export function simplifyStructure(structure, mainDomain = null) {
 export function simplifyUsergroups(usergroups, mainDomain = null) {
     if (usergroups == null) return null;
 
-    let simplified = [];
-    for (let group of normalizeUsergroups(usergroups)) {
-        if (group != null && group.key != null) {
-            simplified.push(copyFromTemplate(Object.assign({}, group, { 
-                key: removeLocalDomain(group.key, mainDomain),
+    let simplified = {};
+    let normalized = normalizeUsergroups(usergroups);
+    for (let groupKey of Object.keys(normalized)) {
+        let group = normalized[groupKey];
+        if (group != null) {
+            simplified[removeLocalDomain(groupKey, mainDomain)] = copyFromTemplate(Object.assign({}, group, { 
                 configurationAttributes: simplifyConfigurationAttributes(group.configurationAttributes, mainDomain),
-            }), defaultUserGroup));
+            }), defaultUserGroup);
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 export function simplifyUsermanagement(usermanagement, additionalInfos, mainDomain = null) {
     if (usermanagement == null) return null;
 
-    let simplified = [];
-    for (let user of normalizeUsermanagement(usermanagement)) {
-        let simplifiedUser = simplifyUser(user, additionalInfos, mainDomain);
+    let simplified = {};
+    let normalized = normalizeUsermanagement(usermanagement);
+    for (let userKey of Object.keys(normalized)) {
+        let user = normalized[userKey];
+        let simplifiedUser = simplifyUser(user, userKey, additionalInfos, mainDomain);
         if (simplifiedUser != null) {
-            simplified.push(simplifiedUser);
+            simplified[userKey] = simplifiedUser;
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyUser(user, additionalInfos = {}, mainDomain = null) {
+export function simplifyUser(user, userKey, additionalInfos = {}, mainDomain = null) {
     let simplified = null;
     if (user != null) {
-        let userKey = user.login_name;
         let additionalInfosUser = additionalInfos.user ?? {};
         let additionalInfo = user.additional_info ?? {};
         let groups = additionalInfo._unshadowed_groups ?? user.groups;

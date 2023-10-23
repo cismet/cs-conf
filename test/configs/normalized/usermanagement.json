@@ -1,6 +1,5 @@
-[
-    {
-        "login_name": "User1",
+{
+    "User1": {
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "last_pwd_change": null,
@@ -8,8 +7,8 @@
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
         "configurationAttributes": [ { "key": "test", "groups": [], "value": null, "xmlfile": null } ],
         "additional_info": {}
-    }, {
-        "login_name": "User2",
+    }, 
+    "User2": {
         "pw_hash": "HashyHash2",
         "salt": "saltySalt2",
         "last_pwd_change": null,
@@ -17,8 +16,8 @@
         "groups": ["Group3@LOCAL"],
         "configurationAttributes": [],
         "additional_info": {}
-    }, {
-        "login_name": "User3",
+    }, 
+    "User3": {
         "pw_hash": "HashyHash3",
         "salt": "saltySalt3",
         "last_pwd_change": null,
@@ -26,8 +25,8 @@
         "groups": [],
         "configurationAttributes": [],
         "additional_info": {}
-    }, {
-        "login_name": "User4",
+    }, 
+    "User4": {
         "pw_hash": "HashyHash4",
         "salt": "saltySalt4",
         "last_pwd_change": null,
@@ -36,4 +35,4 @@
         "configurationAttributes": [],
         "additional_info": {}
     }
-]
+}

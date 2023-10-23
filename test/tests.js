@@ -50,7 +50,6 @@ const allFunctions = {
 
 describe('Normalize:', () => {
     global.config = { mainDomain: "TEST "};
-    describe('empty: normalize([]) == []', testEmpty);
     describe('smoke1: normalize(expected) == normalized', testSmoke1);
     describe('smoke2: normalize(data) == normalized', testSmoke2);
     describe('smoke3: normalize(simplify(normalized)) == normalized', testSmoke3);
@@ -65,25 +64,9 @@ function clone(input) {
     return JSON.parse(JSON.stringify(input))
 }
 
-function expectEmptyArray(input, done) {
-    expect(input).to.be.an('array');
-    expect(input).to.be.empty;
-    done();
-}
-
 function expectEqualJson(normalized, expected, done) {
     expect(stringify(normalized)).equals(stringify(expected));
     done();    
-}
-
-// ========== EMPTY ==========
-
-function testEmpty() {
-    for (let [ name, functions ] of Object.entries(allFunctions)) {
-        it(name, (done) => {
-            expectEmptyArray(functions.normalize([]), done)
-        });
-    }
 }
 
 // ========== SMOKE ==========

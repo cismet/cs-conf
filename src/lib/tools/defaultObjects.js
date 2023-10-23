@@ -101,7 +101,6 @@ export const defaultConfigurationAttributes = {
 
 // domains
 export const defaultDomain = {
-    domainname: null,
     configurationAttributes: [],
     additional_info: {},
 };
@@ -140,7 +139,6 @@ export const defaultNode = {
 
 // usergroups
 export const defaultUserGroup = {
-    key: null,
     descr: null,
     configurationAttributes: [],
     prio: null,
@@ -149,7 +147,6 @@ export const defaultUserGroup = {
 
 // usermanagement
 export const defaultUser = {
-    login_name: null,
     pw_hash: null,
     salt: null,
     last_pwd_change: null,

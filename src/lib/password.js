@@ -50,17 +50,16 @@ async function csPassword(options) {
 
     let newSalt = salt ?? createSalt();
     let newUser = {
-        login_name: loginName,
         salt: newSalt,
         pw_hash: createHash(password, newSalt),
         last_pwd_change: newLastPwdChange,
         groups: groups != null ? groups.split(',') : undefined,
     };
 
-    newUser = normalized ? normalizeUser(newUser) : simplifyUser(newUser);
+    newUser = normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser, loginName);
 
     if (printOnly) {
-        logOut(stringify(newUser), { noSilent: true });
+        logOut(util.format("\"%s\": %s", loginName, stringify(newUser)), { noSilent: true });
         if (!add) {
             return;
         }
@@ -77,20 +76,19 @@ async function csPassword(options) {
     let { usermanagement } = configs;
 
     if (add) {
-        for (let user of usermanagement) {
-            let origLoginName = user.login_name;
-            if (origLoginName == loginName) {
+        for (let userKey of Object.keys(usermanagement)) {
+            if (userKey == loginName) {
                 throw util.format('user %s already exists', loginName);
             }
         }
         usermanagement.push(newUser);
         logInfo(util.format("user '%s' added", loginName));
-        logOut(stringify(normalized ? normalizeUser(newUser) : simplifyUser(newUser)), { noSilent: true });
+        logOut(stringify(normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser, loginName)), { noSilent: true });
     } else {
         let found = false;
-        for (let user of usermanagement) {
-            let origLoginName = user.login_name;
-            if (origLoginName == loginName) {
+        for (let userKey of Object.keys(usermanagement)) {
+            let user = usermanagement[userKey]
+            if (userKey == loginName) {
                 if (found) {
                     throw util.format("duplicate entry for user '%'", loginName);
                 }
@@ -112,7 +110,7 @@ async function csPassword(options) {
                     pw_hash: newHash,
                     last_pwd_change: newLastPwdChange,
                 };
-                let modifiedUser = normalizeUser(Object.assign({}, user));
+                let modifiedUser = normalizeUser(Object.assign({}, user), loginName);
                 for (let key in modifiedUser) {
                     if (user[key] === undefined && newInfo === undefined) {
                         delete modifiedUser[key];
@@ -128,7 +126,7 @@ async function csPassword(options) {
                 // ---
 
                 logInfo(util.format("password changed for '%s'", loginName));
-                logOut(stringify(normalized ? normalizeUser(user) : simplifyUser(user)), { noSilent: true });
+                logOut(stringify(normalized ? normalizeUser(user, loginName) : simplifyUser(user, loginName)), { noSilent: true });
             }
         }
         if (!found) {
