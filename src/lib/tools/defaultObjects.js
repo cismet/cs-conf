@@ -107,7 +107,6 @@ export const defaultDomain = {
 
 // dynchildhelpers
 export const defaultDynchildhelper = {
-    name: null,
     code: null,
     code_file: null,
 };

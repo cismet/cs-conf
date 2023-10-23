@@ -194,14 +194,14 @@ export function reorganizeDomains(domains) {
 }
 
 export function reorganizeDynchildhelpers(dynchildhelpers) {
+    let reorganized = {};
     if (dynchildhelpers != null) {
-        dynchildhelpers = dynchildhelpers.sort((a, b) => {
-            let aName = a.name.toUpperCase();
-            let bName = b.name.toUpperCase();        
-            return aName.localeCompare(bName);
-        });
+        for (let dynchildhelperKey of Object.keys(dynchildhelpers).sort((a, b) => {
+            return a.toLowerCase().localeCompare(b.toLowerCase());
+        }))
+        reorganized[dynchildhelperKey] = dynchildhelpers[dynchildhelperKey];
     }           
-    return dynchildhelpers;
+    return reorganized;
 }
 
 export function reorganizePolicyRules(policyRules) {

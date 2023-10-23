@@ -203,15 +203,16 @@ export function normalizeDomains(domains, mainDomain) {
 }
 
 export function normalizeDynchildhelpers(dynchildhelpers) {
-    let normalized = [];
+    let normalized = {};
 
     if (dynchildhelpers != null) {
-        for (let dynchildhelper of dynchildhelpers) {
-            if (dynchildhelper.name == null) throw "normalizeDynchildhelpers: name missing";
+        for (let dynchildhelperKey of Object.keys(dynchildhelpers)) {
+            let dynchildhelper = dynchildhelpers[dynchildhelperKey];
+
             if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name);
             if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name);
 
-            normalized.push(Object.assign({}, defaultDynchildhelper, dynchildhelper));
+            normalized[dynchildhelperKey] = Object.assign({}, defaultDynchildhelper, dynchildhelper);
         }
     }
 

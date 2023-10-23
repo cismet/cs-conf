@@ -1,11 +1,10 @@
-[
-  {
-      "name": "helper1",
+{
+  "helper1": {
       "code" : "SELECT stuff FROM somewhere",
       "code_file" : null 
-    }, { 
-        "name": "helper2",
+    }, 
+    "helper2": { 
         "code": null,
         "code_file" : "helper2.sql"
     }
-]
+  }

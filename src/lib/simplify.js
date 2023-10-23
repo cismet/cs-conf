@@ -182,13 +182,15 @@ export function simplifyDomains(domains, mainDomain = null) {
 export function simplifyDynchildhelpers(dynchildhelpers) {
     if (dynchildhelpers == null) return null;
 
-    let simplified = [];
-    for (let dynchildhelper of normalizeDynchildhelpers(dynchildhelpers)) {
+    let simplified = {};
+    let normalized = normalizeDynchildhelpers(dynchildhelpers);
+    for (let dynchildhelperKey of Object.keys(normalized)) {
+        let dynchildhelper = normalized[dynchildhelperKey];
         if (dynchildhelper != null) {
-            simplified.push(copyFromTemplate(dynchildhelper, defaultDynchildhelper));
+            simplified[dynchildhelperKey] = copyFromTemplate(dynchildhelper, defaultDynchildhelper);
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 export function simplifyPolicyRules(policyRules) {

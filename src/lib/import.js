@@ -659,9 +659,10 @@ function flattenStructure(children, linkToNode, level = 0) {
 
 function prepareDataDynchilds(dynchildhelpers, helperSqlFiles) {
     let csDynamicChildrenHelperEntries = [];
-    for (let dynchildhelper of dynchildhelpers) {
+    for (let dynchildhelperKey of Object.keys(dynchildhelpers)) {
+        let dynchildhelper = dynchildhelpers[dynchildhelperKey];
         csDynamicChildrenHelperEntries.push([
-            dynchildhelper.name, 
+            dynchildhelperKey, 
             helperSqlFiles.get(dynchildhelper.code_file),
             dynchildhelper.code_file,
             csDynamicChildrenHelperEntries.length + 1,

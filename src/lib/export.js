@@ -35,7 +35,7 @@ async function fetch() {
 
     logOut(util.format("Fetching cs Data from '%s' ...", getClientInfo()));
     return {
-        csAdditionalInfos: await fetchStatement(client, 'cs_info', additionalInfosStatement),
+        csAdditionalInfos: await fetchStatement(client, 'cs_info', additionalInfosExportStatement),
         csPolicyRules: await fetchStatement(client, 'cs_policy_rules', policyRulesExportStatement),
         csConfigAttrs: await fetchStatement(client, 'cs_config_attr_*', configAttrExportStatement),
         csDomains: await fetchStatement(client, 'cs_domains', domainsExportStatement),
@@ -422,23 +422,28 @@ function exportDomains({ csDomains }, { domainConfigAttrs }) {
 }
 
 function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
-    let dynchildhelpers = [];
+    let dynchildhelpers = {};
     let helperSqlFiles = new Map();
 
     for (let csDynamicChildreHelper of csDynamicChildreHelpers) {
         let dynchildhelper = Object.assign({}, csDynamicChildreHelper);
+        let dynchildhelperKey = dynchildhelper.name;
+
         let fileName;
         if (dynchildhelper.filename != null) {
             fileName = dynchildhelper.filename;
         } else {
             fileName = util.format("%s.%s.sql", zeroFill(3, ++helperSqlCounter), slug(striptags(dynchildhelper.name)).toLowerCase());
         }
-        delete dynchildhelper.filename;
         helperSqlFiles.set(fileName, dynchildhelper.code);
         dynchildhelper.code_file = fileName;    
+
+        delete dynchildhelper.filename;
         delete dynchildhelper.id;
         delete dynchildhelper.code;
-        dynchildhelpers.push(dynchildhelper);
+        delete dynchildhelper.name;
+
+        dynchildhelpers[dynchildhelperKey] = dynchildhelper;
     }
 
     return {
@@ -663,7 +668,7 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) 
 
 // ---
 
-const additionalInfosStatement = `
+const additionalInfosExportStatement = `
 SELECT 
 	type,
 	key,
@@ -850,7 +855,7 @@ ORDER BY node.id
 ;`;
 
 const dynchildhelpersExportStatement = `
-SELECT id, name, code, filename
+SELECT id, trim(name) AS name, code, filename
 FROM cs_dynamic_children_helper
 ORDER BY id    
 ;`;
