@@ -632,7 +632,6 @@ function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
         let configurationAttributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
 
         let group = {
-            key: groupKey,
             descr: csUg.descr ?? undefined,
             prio: csUg.prio ?? undefined,
             configurationAttributes: configurationAttributes ?? undefined,
