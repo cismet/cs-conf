@@ -275,11 +275,11 @@ function prepareClasses({ classes, additionalInfos }) {
     let csClassPermEntries = [];
     let csAttrPermEntries = [];
 
-    for (let clazz of classes) {
+    for (let classKey of Object.keys(classes)) {
+        let clazz = classes[classKey];
         let enforcedId = clazz.enforcedId;
         let enforcedIdReason = clazz.enforcedIdReason;
         let name = clazz.name;
-        let classKey = clazz.table;
         let descr = clazz.descr;
         let pk = clazz.pk;
         let array_link = clazz.array_link;

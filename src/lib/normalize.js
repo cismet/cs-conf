@@ -71,52 +71,47 @@ export function normalizeAdditionalInfos(additionalInfos) {
 }
 
 export function normalizeClasses(classes) {
-    let normalized = [];
+    let normalized = {};
     
-    if (classes != null) {
-        for (let clazz of classes) {
-            let normalizedClass = normalizeClass(clazz);
-            normalized.push(normalizedClass);                
+    if (classes) {
+        for (let classKey of Object.keys(classes)) {
+            let clazz = classes[classKey];
+            let normalizedClass = normalizeClass(classKey, clazz);
+            normalized[classKey.toLowerCase()] = normalizedClass;
         }
     }
     return normalized;
 }
 
-export function normalizeClass(clazz) {
-    if (clazz.table == null) throw "normalizeClasses: missing table for class";
-    //if (clazz.table !== clazz.table.toUpperCase()) throw util.format("normalizeClasses: table '%s' has to be uppercase", clazz.table);
-    if (clazz.pk === null) throw util.format("normalizeClasses: [%s] pk of can't be null", clazz.table);
+export function normalizeClass(classKey, clazz) {
+    if (clazz.pk === null) throw util.format("normalizeClasses: [%s] pk of can't be null", classKey);
     //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk);
     //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType);
     //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany);
     //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw util.format("normalizeClasses: manyToMany '%s' has to be uppercase", clazz.manyToMany);
 
-    if (clazz.table != null) {
-        clazz.table = clazz.table.toLowerCase();
-    }            
     if (clazz.pk != null) {
         clazz.pk = clazz.pk.toLowerCase();
     }            
 
     return Object.assign({}, defaultClass, clazz, {
-        name: clazz.name != null ? clazz.name : clazz.table,
-        toString: normalizeSpecial(clazz.toString, clazz.table),
-        editor: normalizeSpecial(clazz.editor, clazz.table),
-        renderer: normalizeSpecial(clazz.renderer, clazz.table),
-        attributes: normalizeAttributes(clazz.attributes, clazz.pk, clazz.table),
+        name: clazz.name != null ? clazz.name : classKey,
+        toString: normalizeSpecial(clazz.toString, classKey),
+        editor: normalizeSpecial(clazz.editor, classKey),
+        renderer: normalizeSpecial(clazz.renderer, classKey),
+        attributes: normalizeAttributes(clazz.attributes, clazz.pk, classKey),
         icon: null,
         classIcon: clazz.classIcon || clazz.icon || null,
         objectIcon: clazz.objectIcon || clazz.icon || null,
         readPerms: normalizePerms(clazz.readPerms),
         writePerms: normalizePerms(clazz.writePerms),
-
     });
 }
 
 export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
     let normalized = {};
 
-    if (attributes != null) {
+    if (attributes) {
         let pkMissing = true;
         let pkDummy = Object.assign({}, defaultAttribute, {
             descr: "Primary Key",
@@ -140,7 +135,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 
             if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attributeKey);
 
-            if (pk !== undefined && attributeKey == pk) {
+            if (pk !== undefined && attributeKey.toLowerCase() == pk.toLowerCase()) {
                 pkMissing = false;
                 if (
                     attribute.cidsType != null ||
@@ -148,9 +143,9 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                     attribute.manyToMany != null                
                 ) throw "normalizeAttributes: primary key can only have dbType, no cidsType allowed";
                 
-                normalized[attributeKey] = Object.assign({}, pkDummy, attribute, {
+                normalized[attributeKey.toLowerCase()] = Object.assign({}, pkDummy, attribute, {
                     defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
-                    name: attribute.name || attributeKey,
+                    name: attribute.name || attributeKey.toLowerCase(),
                 });    
             } else {
                 let types = [];
@@ -162,16 +157,16 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 if (types.length == 0) throw util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attributeKey);    
                 if (types.length > 1) throw util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attributeKey);    
 
-                normalized[attributeKey] = Object.assign({}, defaultAttribute, attribute, {
-                    name: attribute.name || attributeKey,
+                normalized[attributeKey.toLowerCase()] = Object.assign({}, defaultAttribute, attribute, {
+                    name: attribute.name || attributeKey.toLowerCase(),
                     readPerms: normalizePerms(attribute.readPerms),
                     writePerms: normalizePerms(attribute.writePerms),    
                 });    
             }
         }
         if (pkMissing) {
-            normalized[pk] = Object.assign({}, pkDummy, {
-                name: pk,
+            normalized[pk.toLowerCase()] = Object.assign({}, pkDummy, {
+                name: pk.toLowerCase(),
             });
         }
     }
@@ -182,7 +177,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 export function normalizeDomains(domains, mainDomain) {
     let normalized = {};
 
-    if (domains != null) {
+    if (domains) {
         for (let domainKey of Object.keys(domains)) {
             if (domainKey == mainDomain) continue;
 
@@ -201,7 +196,7 @@ export function normalizeDomains(domains, mainDomain) {
 export function normalizeDynchildhelpers(dynchildhelpers) {
     let normalized = {};
 
-    if (dynchildhelpers != null) {
+    if (dynchildhelpers) {
         for (let dynchildhelperKey of Object.keys(dynchildhelpers)) {
             let dynchildhelper = dynchildhelpers[dynchildhelperKey];
 
@@ -218,7 +213,7 @@ export function normalizeDynchildhelpers(dynchildhelpers) {
 export function normalizePolicyRules(policyRules) {
     let normalized = [];
     
-    if (policyRules != null) {
+    if (policyRules) {
         for (let policyRule of policyRules) {
             if (policyRule.policy == null) throw "normalizePolicyRules: missing policy";
             if (policyRule.permission == null) throw "normalizePolicyRules: missing permission";
@@ -238,7 +233,7 @@ export function normalizeStructure(structure) {
 export function normalizeUsergroups(usergroups) {
     let normalized = {};
 
-    if (usergroups != null) {
+    if (usergroups) {
         for (let groupKey of Object.keys(usergroups)) {
             let usergroup = usergroups[groupKey];
 
@@ -254,10 +249,12 @@ export function normalizeUsergroups(usergroups) {
 export function normalizeUsermanagement(usermanagement, additionalInfos = {}) {
     let normalized = {};
     
-    for (let userKey of Object.keys(usermanagement)) {
-        let user = usermanagement[userKey];
-        if (user != null) {
-            normalized[userKey] = normalizeUser(user, userKey);
+    if (usermanagement) {
+        for (let userKey of Object.keys(usermanagement)) {
+            let user = usermanagement[userKey];
+            if (user != null) {
+                normalized[userKey] = normalizeUser(user, userKey);
+            }
         }
     }
 
@@ -287,7 +284,7 @@ export function normalizeUser(user, userKey) {
 export function normalizeGroups(groups) {
     let normalized = [];
 
-    if (groups != null) {
+    if (groups) {
         for (let group of groups) {
             normalized.push(normalizeGroup(group));
         }
@@ -303,7 +300,7 @@ export function normalizeGroup(group) {
 export function normalizePerms(perms) {
     let normalized = [];
     
-    if (perms != null) {
+    if (perms) {
         for (let permission of perms) {  
             normalized.push(extendLocalDomain(permission));
         }

@@ -53,7 +53,6 @@ export function reorganizeConfig(config) {
 }
 
 export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes }) {
-
     if (additionalInfos != null) {
         let sortedAdditionalInfos = {};    
         for (let type of Object.keys(additionalInfos).sort()) {
@@ -133,44 +132,42 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
     return additionalInfos;
 }
 
+export function reorganizeAttributes(attributes, order = 'auto') {
+    if (attributes == null) return null;
+
+    let reorganized = {};
+    let sortedAttributeKeys = order == 'auto' ? Object.keys(attributes).sort((a, b) => { 
+        return a.localeCompare(b);
+    }) : Object.keys(attributes);
+
+    for (let attributeKey of sortedAttributeKeys) {                    
+        let attribute = attributes[attributeKey];
+        reorganized[attributeKey] = Object.assign({
+            readPerms: (attribute.readPerms) ? reorganizePerms(attribute.readPerms) : undefined, 
+            writePerms: (attribute.writePerms) ? reorganizePerms(attribute.writePerms) : undefined,
+        }, attribute)
+    }
+    return reorganized;         
+}
+
 export function reorganizeClasses(classes) {
-    let reorganizedClasses = undefined;
+    if (classes == null) return null;
 
-    if (classes != null) {
-        reorganizedClasses = [];
-        for (let clazz of classes) {    
-            let reorganizedAttributes = undefined;
-            
-            let attributes = clazz.attributes;                
-            if (attributes != null) {      
-                let reorganizedAttributes = {};
-                let sortedAttributeKeys = normalizeClass(clazz).attributesOrder == 'auto' ? Object.keys(attributes).sort((a, b) => { 
-                    return a.localeCompare(b);
-                }) : Object.keys(attributes);
-
-                for (let attributeKey of sortedAttributeKeys) {                    
-                    let attribute = attributes[attributeKey];
-                    reorganizedAttributes[attributeKey] = Object.assign({
-                        readPerms: (attribute.readPerms) ? reorganizePerms(attribute.readPerms) : undefined, 
-                        writePerms: (attribute.writePerms) ? reorganizePerms(attribute.writePerms) : undefined,
-                    }, attribute)
-                }
-                clazz.attributes = attributes;         
-            }
-
-            reorganizedClasses.push(Object.assign({
-                readPerms: clazz.readPerms ? reorganizePerms(clazz.readPerms) : undefined,
-                writePerms: clazz.writePerms ? reorganizePerms(clazz.writePerms) : undefined,
-                attributes: reorganizedAttributes,
-            }, clazz));
-        }
-
-        reorganizedClasses = classes.sort((a, b) => {
-            return a.table.localeCompare(b.table)
-        });
+    let sortedClassKeys =  Object.keys(classes).sort((a, b) => {
+        return a.localeCompare(b)
+    })
+    
+    let reorganized = {};
+    for (let classKey of sortedClassKeys) {
+        let clazz = classes[classKey];
+        reorganized[classKey] = Object.assign({
+            readPerms: clazz.readPerms ? reorganizePerms(clazz.readPerms) : undefined,
+            writePerms: clazz.writePerms ? reorganizePerms(clazz.writePerms) : undefined,
+            attributes: reorganizeAttributes(clazz.attributes, clazz.attributesOrder),
+        }, clazz);
     }
     
-    return reorganizedClasses;
+    return reorganized;
 }
 
 export function reorganizeDomains(domains) {

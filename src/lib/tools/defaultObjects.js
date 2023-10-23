@@ -65,7 +65,6 @@ export const defaultAttributePrimary = (table_name, pk) => {
 export const defaultClass = {
     enforcedId: null,
     enforcedIdReason: null,
-    table: null,
     name: null,
     descr: '',
     pk: 'id',

@@ -8,7 +8,7 @@ import { readConfigFiles } from './tools/configFiles';
 import { normalizeConfigs } from './normalize';
 import stringify from 'json-stringify-pretty-compact';
 
-async function createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, clazz, noDropColumns, dropColumns) {
+async function createSyncStatements(client, existingData, allCidsClasses, tablesDone, clazz, noDropColumns, dropColumns) {
     let statements = [];
     let cidsTableName = clazz.table.toLowerCase();
 
@@ -23,10 +23,11 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
             let sequenceName = util.format("%s_seq", cidsTableName);
             let columns = [];
-
-            if (clazz.attributes) {
-                for (let cidsAttribute of clazz.attributes) {
-                    let fieldName = cidsAttribute.field;
+        
+            let cidsAttributes = clazz.attributes;
+            if (cidsAttributes) {                
+                for (let cidsAttributeKey of Object.keys(cidsAttributes)) {
+                    let cidsAttribute = cidsAttributes[cidsAttributeKey];
                     if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
 
                         // skipping extension- and 1-n- attributes
@@ -35,23 +36,23 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                             // foreign key => recursion 
 
                             let subCidsTableName = cidsAttribute.cidsType;
-                            let subCidsClass = allCidsClassesByTableName[subCidsTableName];
+                            let subCidsClass = allCidsClasses[subCidsTableName];
                             // directly adding recursive results to statements-array for assuring
                             // that the most bottom table is created first
-                            statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass, noDropColumns, dropColumns));
+                            statements.push(... await createSyncStatements(client, existingData, allCidsClasses, tablesDone, subCidsClass, noDropColumns, dropColumns));
                             
-                            columns.push({ name: fieldName, type: "integer", null: !cidsAttribute.mandatory });
+                            columns.push({ name: cidsAttributeKey, type: "integer", null: !cidsAttribute.mandatory });
                         } else {
 
                             if (cidsAttribute.manyToMany) {
                                     // array attribute => adding mandatory integer column
-                                columns.push({ name: fieldName, type: "integer", primary: false, null: false });
+                                columns.push({ name: cidsAttributeKey, type: "integer", primary: false, null: false });
                             } else {
                                 // primitive attribute => adding column with attributes
-                                columns.push({ name: fieldName, type: fullTypeFromAttribute(cidsAttribute), primary: fieldName == pk, null: !cidsAttribute.mandatory, default: cidsAttribute.defaultValue});
+                                columns.push({ name: cidsAttributeKey, type: fullTypeFromAttribute(cidsAttribute), primary: cidsAttributeKey == pk, null: !cidsAttribute.mandatory, default: cidsAttribute.defaultValue});
                             }
 
-                            /*if (fieldName == pk) {
+                            /*if (cidsAttributeKey == pk) {
                                 // no need to create a pk anymore, it was explicitly defined
                                 pk = null;
                             }*/
@@ -78,11 +79,12 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
 
                 let pkFound = false;
                 let columnsDone = [];
-                if (clazz.attributes) {
-                    for (let cidsAttribute of clazz.attributes) {
+                let cidsAttributes = clazz.attributes;
+                if (cidsAttributes) {                
+                    for (let cidsAttributeKey of Object.keys(cidsAttributes)) {
+                        let cidsAttribute = cidsAttributes[cidsAttributeKey];
                         if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
-                            let fieldName = cidsAttribute.field.toLowerCase();
-                            columnsDone.push(fieldName);
+                            columnsDone.push(cidsAttributeKey);
 
                             // skipping extension- and 1-n- attributes
                             if (cidsAttribute.cidsType) {
@@ -90,32 +92,32 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                 // foreign key => recursion 
 
                                 let subCidsTableName = cidsAttribute.cidsType;
-                                let subCidsClass = allCidsClassesByTableName[subCidsTableName];
+                                let subCidsClass = allCidsClasses[subCidsTableName];
                                 // directly adding recursive results to statements-array for assuring
                                 // that the most bottom table is created first
-                                statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, subCidsClass, noDropColumns, dropColumns));
+                                statements.push(... await createSyncStatements(client, existingData, allCidsClasses, tablesDone, subCidsClass, noDropColumns, dropColumns));
 
-                                if (!existingTable.columns.hasOwnProperty(fieldName)) {
-                                    statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: "integer", null: !cidsAttribute.mandatory });
+                                if (!existingTable.columns.hasOwnProperty(cidsAttributeKey)) {
+                                    statements.push({ action: "ADD COLUMN", table: cidsTableName, column: cidsAttributeKey, type: "integer", null: !cidsAttribute.mandatory });
                                 }
 
                             } else {
 
-                                if (!existingTable.columns.hasOwnProperty(fieldName)) {
+                                if (!existingTable.columns.hasOwnProperty(cidsAttributeKey)) {
                                                                                    
                                     // column missing => adding                                
                                     if (cidsAttribute.manyToMany) {
                                         // array attribute => adding mandatory integer column
-                                        statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: "integer", null: false });
+                                        statements.push({ action: "ADD COLUMN", table: cidsTableName, column: cidsAttributeKey, type: "integer", null: false });
                                     } else {
                                         let type = fullTypeFromAttribute(cidsAttribute);
                                         
                                         let defaultValue = (type && cidsAttribute.defaultValue && isTextType(type)) ? util.format("'%s'", cidsAttribute.defaultValue) : cidsAttribute.defaultValue;
-                                        statements.push({ action: "ADD COLUMN", table: cidsTableName, column: fieldName, type: fullTypeFromAttribute(cidsAttribute), null: !cidsAttribute.mandatory, default: defaultValue});
+                                        statements.push({ action: "ADD COLUMN", table: cidsTableName, column: cidsAttributeKey, type: fullTypeFromAttribute(cidsAttribute), null: !cidsAttribute.mandatory, default: defaultValue});
                                     }
 
                                 } else {
-                                    let existingColumn = existingTable.columns[fieldName];                                                                
+                                    let existingColumn = existingTable.columns[cidsAttributeKey];                                                                
 
                                     let oldType = { 
                                         dbType: existingColumn.dataType, 
@@ -126,14 +128,14 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                     let statement = { 
                                         action: "CHANGE COLUMN", 
                                         table: cidsTableName, 
-                                        column: fieldName, 
-                                        primary : fieldName == pk, 
+                                        column: cidsAttributeKey, 
+                                        primary : cidsAttributeKey == pk, 
                                         oldType: fullTypeFromAttribute(oldType), 
                                         oldNull: existingColumn.isNullable, 
                                         oldDefault: existingColumn.default 
                                     };
                                                     
-                                    if (fieldName == pk) {                
+                                    if (cidsAttributeKey == pk) {                
                                         pkFound = true;
                                     }
 
@@ -163,7 +165,7 @@ async function createSyncStatements(client, existingData, allCidsClassesByTableN
                                         statement.null = !mandatory;
                                     }
 
-                                    let normalizedDefaultValue = fieldName == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
+                                    let normalizedDefaultValue = cidsAttributeKey == pk && (existingColumn.default == util.format("nextval('%s_seq'::text)", cidsTableName) || existingColumn.default == util.format("nextval('%s_seq'::regclass)", cidsTableName)) ? util.format("nextval('%s_seq')", cidsTableName) : existingColumn.default;
                                     let isText = isTextType(existingColumn.dataType);
                                     let escapedExisting = cidsAttribute.defaultValue && isText ? normalizedDefaultValue : util.format("'%s'", normalizedDefaultValue);
                                     if (cidsAttribute.defaultValue !== undefined && escapedExisting != util.format("'%s'", cidsAttribute.defaultValue)) {
@@ -446,18 +448,10 @@ async function csSync(options) {
 
     let client = await initClient(global.config.connection);
 
-    let allCidsClasses = [...normalized.classes];
-    let allCidsClassesByTableName = {};
+    let allCidsClasses = Object.assign({}, normalized.classes);
 
-    let attributesCount = 0;
-    for (let singleCidsClass of allCidsClasses) {
-        if (singleCidsClass.table) {
-            allCidsClassesByTableName[singleCidsClass.table] = singleCidsClass;
-        }
-        if (singleCidsClass.attributes) {
-            attributesCount += singleCidsClass.attributes.length;
-        }
-    }
+    let attributesCount = Object.keys(allCidsClasses).reduce((count, cidsClassKey) => allCidsClasses[cidsClassKey].attributes ? count + Object.keys(allCidsClasses[cidsClassKey].attributes).length : count, 0);
+
     logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.classes.length));
 
     let existingData = {
@@ -549,7 +543,7 @@ async function csSync(options) {
 
     while(allCidsClasses.length > 0) {
         let cidsClass = allCidsClasses.pop();
-        statements.push(... await createSyncStatements(client, existingData, allCidsClassesByTableName, tablesDone, cidsClass, normalized.config.sync.noDropColumns, dropColumns));
+        statements.push(... await createSyncStatements(client, existingData, allCidsClasses, tablesDone, cidsClass, normalized.config.sync.noDropColumns, dropColumns));
     }    
     if (statements.length > 0) {
         logVerbose(statements, { table: true });

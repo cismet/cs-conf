@@ -243,7 +243,7 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgA
         }
     }
 
-    let classes = [];
+    let classes = {};
     for (let csClass of csClasses) {        
         let clazz = Object.assign({}, csClass);
         let classKey = clazz.table;
@@ -319,7 +319,7 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgA
         clazz.readPerms = classReadPerms.get(classKey);
         clazz.writePerms = classWritePerms.get(classKey);
 
-        classes.push(clazz);
+        classes[classKey] = clazz;
     }
 
     return { classes, attributes };
@@ -748,7 +748,7 @@ ORDER BY id
 
 const classesExportStatement = `
 SELECT 
-    lower(c.table_name) AS "table", 
+    c.table_name AS "table", 
     c.name AS "name",
     c.descr AS "descr",
     c.primary_key_field AS "pk",
@@ -783,7 +783,7 @@ ORDER BY c.id
 
 const attributesExportStatement = `
 SELECT 
-    lower(a.field_name) field, a.name, lower(c.table_name) "table", a.descr,
+    a.field_name field, a.name, c.table_name "table", a.descr,
     t.name "dbType",tc.table_name "cidsType",tc.table_name "oneToMany", tc.table_name "manyToMany", a.precision, a.scale, a.extension_attr, NOT a.optional mandatory, a.default_value "defaultValue",
     a.foreign_key, a.foreign_key_references_to "foreignKeyTableId", fkc.table_name foreignkeytable, a.substitute,
     NOT a.visible hidden, a.indexed,

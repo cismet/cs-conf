@@ -116,28 +116,27 @@ export function simplifyAdditionalInfos(additionalInfos) {
 export function simplifyClasses(classes, mainDomain) {
     if (classes == null) return null;
 
-    let simplified = [];
-    for (let clazz of normalizeClasses(classes)) {
+    let normalized = normalizeClasses(classes);
+
+    let simplified = {};
+    for (let classKey of Object.keys(normalized)) {
+        let clazz = normalized[classKey];
         if (clazz != null) {
-            let classWithSimplifiedIcon = Object.assign(clazz, {
+            let simplifiedClazz = copyFromTemplate(Object.assign(clazz, {
                 icon: clazz.icon == null && clazz.classIcon == clazz.objectIcon ? clazz.classIcon : clazz.icon,
                 classIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.classIcon,
                 objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
                 readPerms: simplifyPerms(clazz.readPerms, mainDomain), 
                 writePerms: simplifyPerms(clazz.writePerms, mainDomain),
-
-            });
-            let simplifiedClazz = copyFromTemplate(classWithSimplifiedIcon, defaultClass);
-            if (clazz.attributes !== undefined) {
-                simplifiedClazz.attributes = simplifyAttributes(clazz.attributes, clazz.pk, clazz.table, mainDomain);
-            }
+                attributes: simplifyAttributes(clazz.attributes, clazz.pk, clazz.table, mainDomain),
+            }), defaultClass);
             if (simplifiedClazz.name == simplifiedClazz.table) {
                 delete simplifiedClazz.name;
             }
-            simplified.push(simplifiedClazz);
+            simplified[classKey] = simplifiedClazz;
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 export function simplifyDomains(domains, mainDomain = null) {
