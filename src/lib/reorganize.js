@@ -103,17 +103,18 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
         }
 
         if (sortedAdditionalInfos.class && classes) {
-            for (let clazz of classes) {
-                let classKey = clazz.table;
+            for (let classKey of Object.keys(classes)) {
+                let clazz = classes[classKey];
                 let attributes = clazz.attributes;
                 if (sortedAdditionalInfos.attribute && attributes) {
                     let additionalInfosAttribute = sortedAdditionalInfos.attribute;    
-                    for (let attribute of attributes) {
-                        let attrributeKey = classKey + "." + attribute.field;
-                        let additionalInfo = additionalInfosAttribute[attrributeKey];
+                    for (let attributeKey of Object.keys(attributes)) {
+                        let attribute = attributes[attributeKey];
+                        let attrributeInfoKey = classKey + "." + attributeKey;
+                        let additionalInfo = additionalInfosAttribute[attrributeInfoKey];
                         if (additionalInfo) {
                             attribute.additional_info = additionalInfo;
-                            delete additionalInfosAttribute[attrributeKey];        
+                            delete additionalInfosAttribute[attrributeInfoKey];        
                         }
                     }
                 }
@@ -153,7 +154,7 @@ export function reorganizeAttributes(attributes, order = 'auto') {
 export function reorganizeClasses(classes) {
     if (classes == null) return null;
 
-    let sortedClassKeys =  Object.keys(classes).sort((a, b) => {
+    let sortedClassKeys = Object.keys(classes).sort((a, b) => {
         return a.localeCompare(b)
     })
     
