@@ -724,7 +724,7 @@ SELECT
     cs_domain.name AS domain,
     cs_ug.name AS name, 
     cs_ug.descr AS descr,
-    cs_ug.prio AS prio,
+    cs_ug.prio AS prio
 FROM cs_ug, cs_domain 
 WHERE cs_ug.domain = cs_domain.id
 ORDER BY cs_ug.id
