@@ -144,6 +144,7 @@ export const defaultUserGroup = {
     key: null,
     descr: null,
     configurationAttributes: [],
+    prio: null,
     additional_info: {},
 };
 

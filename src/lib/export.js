@@ -611,16 +611,14 @@ function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
 
     for (let csUg of csUgs) {
         let groupKey = csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain);
+        let configurationAttributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
+
         let group = {
-            key: groupKey
+            key: groupKey,
+            descr: csUg.descr ?? undefined,
+            prio: csUg.prio ?? undefined,
+            configurationAttributes: configurationAttributes ?? undefined,
         };
-        if (csUg.descr) {
-            group.descr = csUg.descr;
-        }
-        let attributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
-        if (attributes) {
-            group.configurationAttributes = attributes;
-        }
         
         usergroups.push(group);
     }
@@ -725,7 +723,8 @@ const usergroupsExportStatement = `
 SELECT 
     cs_domain.name AS domain,
     cs_ug.name AS name, 
-    cs_ug.descr AS descr
+    cs_ug.descr AS descr,
+    cs_ug.prio AS prio,
 FROM cs_ug, cs_domain 
 WHERE cs_ug.domain = cs_domain.id
 ORDER BY cs_ug.id

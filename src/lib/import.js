@@ -773,20 +773,19 @@ function prepareStructure({ structure, structureSqlFiles, dynchildhelpers, helpe
 
 function prepareUsergroups({ usergroups, configurationAttributes, additionalInfos }) {
     let csUgEntries = [];
-    let prioCounter = 0;
     for (let group of usergroups) {
         let groupKey = group.key.split('@');        
         let descr = group.descr;
+        let prio = group.prio;        
         let groupName = groupKey[0];
         let domainKey = groupKey[1];
         csUgEntries.push([ 
             groupName, 
             descr, 
             domainKey, 
-            prioCounter,
+            prio,
             csUgEntries.length + 1,
         ]);
-        prioCounter += 10;
 
         if (group.configurationAttributes) {
             let groupAndDomain = extractGroupAndDomain(group.key);
