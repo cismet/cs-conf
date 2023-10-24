@@ -196,7 +196,7 @@ export function prepareImport(configs) {
     logVerbose(" ↳ normalizing configuration");
     let normalizedConfigs = Object.assign(
         {
-            configurationAttributes: [],
+            configurationAttributes: {},
         },
         normalizeConfigs(configs)
     );
@@ -212,7 +212,7 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing usermanagement (%d)", Object.keys(normalizedConfigs.usermanagement).length));
     Object.assign(csEntries, prepareUsermanagement(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing configuration attributes (%d)", normalizedConfigs.configurationAttributes.length));
+    logVerbose(util.format(" ↳ preparing configuration attributes (%d)", Object.keys(normalizedConfigs.configurationAttributes).length));
     Object.assign(csEntries, prepareConfigAttrs(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing policyRules (%d)", normalizedConfigs.policyRules.length));
@@ -558,46 +558,49 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
     if (configurationAttributes) {
         let id = 1;
         let duplicateKeyFinder = new Set();
-        for (let configurationAttribute of configurationAttributes) {
-            let type;
-            if (configurationAttribute.value != null) {
-                type = 'C';
-            } else if (configurationAttribute.xmlfile != null) {
-                type = 'X';
-            } else {
-                type = 'A';
-            }
+        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+            let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+            for (let configurationAttribute of configurationAttributeArray) {
+                let type;
+                if (configurationAttribute.value != null) {
+                    type = 'C';
+                } else if (configurationAttribute.xmlfile != null) {
+                    type = 'X';
+                } else {
+                    type = 'A';
+                }
 
-            if (!duplicateKeyFinder.has(configurationAttribute.key)) {
-                csConfigAttrKeyEntries.push([configurationAttribute.key]);
-                duplicateKeyFinder.add(fullKey);
-            }
+                if (!duplicateKeyFinder.has(configurationAttributeKey)) {
+                    csConfigAttrKeyEntries.push([configurationAttributeKey]);
+                    duplicateKeyFinder.add(fullKey);
+                }
 
-            if (type === 'X' || type === 'C') {
-                let value = (type === 'X') ? xmlFiles.get(configurationAttribute.xmlfile) : configurationAttribute.value;
-                let filename = (type === 'X') ? configurationAttribute.xmlfile : null;
-                csConfigAttrValueEntries.set(value, [ 
-                    value, 
-                    filename 
-                ]);
-                csConfigAttrValues4CandX.push([
-                    configurationAttribute.domain, 
-                    configurationAttribute.group, 
-                    configurationAttribute.user, 
-                    configurationAttribute.key, 
-                    type, 
-                    value,
-                    id++, 
-                ]);
-            } else {
-                csConfigAttrValues4A.push([
-                    configurationAttribute.domain, 
-                    configurationAttribute.group, 
-                    configurationAttribute.user, 
-                    configurationAttribute.key,
-                    id++, 
-                ]);
-            }   
+                if (type === 'X' || type === 'C') {
+                    let value = (type === 'X') ? xmlFiles.get(configurationAttribute.xmlfile) : configurationAttribute.value;
+                    let filename = (type === 'X') ? configurationAttribute.xmlfile : null;
+                    csConfigAttrValueEntries.set(value, [ 
+                        value, 
+                        filename 
+                    ]);
+                    csConfigAttrValues4CandX.push([
+                        configurationAttribute.domain, 
+                        configurationAttribute.group, 
+                        configurationAttribute.user, 
+                        configurationAttributeKey, 
+                        type, 
+                        value,
+                        id++, 
+                    ]);
+                } else {
+                    csConfigAttrValues4A.push([
+                        configurationAttribute.domain, 
+                        configurationAttribute.group, 
+                        configurationAttribute.user, 
+                        configurationAttributeKey,
+                        id++, 
+                    ]);
+                }   
+            }
         }
     }
     let csConfigAttrValueEntriesArray = Array.from(csConfigAttrValueEntries.values());
@@ -614,10 +617,18 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
             csDomainEntries.length + 1,
         ]);
 
-        if (domain.configurationAttributes) {
-            for (let configurationAttribute of domain.configurationAttributes) {
-                configurationAttribute.domain = domainKey;
-                configurationAttributes.push(configurationAttribute);
+        let domainConfigurationAttribute = domain.configurationAttributes;
+        if (domainConfigurationAttribute) {
+            for (let configurationAttributeKey of Object.keys(domainConfigurationAttribute)) {
+                let configurationAttributeArray = domainConfigurationAttribute[configurationAttributeKey];
+                for (let configurationAttribute of configurationAttributeArray) {
+                    configurationAttribute.domain = domainKey;
+                    if (configurationAttributes[configurationAttributeKey]) {
+                        configurationAttributes[configurationAttributeKey].push(configurationAttribute);
+                    } else {
+                        configurationAttributes[configurationAttributeKey] = [ configurationAttribute ];
+                    }                    
+                }
             } 
         }
 
@@ -770,13 +781,13 @@ function prepareStructure({ structure, structureSqlFiles, dynchildhelpers, helpe
 
 function prepareUsergroups({ usergroups, configurationAttributes, additionalInfos }) {
     let csUgEntries = [];
-    for (let group of usergroups) {
-        let groupKey = group.key.split('@');        
-        let descr = group.descr;
+    for (let groupKey of Object.keys(usergroups)) {
+        let group = usergroups[groupKey];
         let groupKeySplit = groupKey.split('@');        
-        let prio = group.prio;        
         let groupName = groupKeySplit[0];
         let domainKey = groupKeySplit[1];
+        let descr = group.descr;
+        let prio = group.prio;        
         csUgEntries.push([ 
             groupName, 
             descr, 
@@ -785,12 +796,20 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
             csUgEntries.length + 1,
         ]);
 
-        if (group.configurationAttributes) {
+        let groupConfigurationAttributes = group.configurationAttributes;
+        if (groupConfigurationAttributes) {
             let groupAndDomain = extractGroupAndDomain(groupKey);
-            for (let configurationAttribute of group.configurationAttributes) {
-                configurationAttribute.group = groupAndDomain.group;
-                configurationAttribute.domain = groupAndDomain.domain;
-                configurationAttributes.push(configurationAttribute);
+            for (let configurationAttributeKey of Object.keys(groupConfigurationAttributes)) {
+                let configurationAttributeArray = groupConfigurationAttributes[configurationAttributeKey];
+                for (let configurationAttribute of configurationAttributeArray) {
+                    configurationAttribute.group = groupAndDomain.group;
+                    configurationAttribute.domain = groupAndDomain.domain;
+                    if (configurationAttributes[configurationAttributeKey]) {
+                        configurationAttributes[configurationAttributeKey].push(configurationAttribute);
+                    } else {
+                        configurationAttributes[configurationAttributeKey] = [ configurationAttribute ];
+                    }
+                }
             }
         }
 
@@ -828,25 +847,39 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
             }
         }
 
-        if (user.configurationAttributes) {
-            for (let configurationAttribute of user.configurationAttributes) {
-                if (configurationAttribute.groups != null && configurationAttribute.groups.length > 0) {
-                    for (let group of configurationAttribute.groups) {
-                        let groupAndDomain = extractGroupAndDomain(group);   
-                        let groupKey = groupAndDomain != null ? groupAndDomain.group : null;
-                        let domainKey = groupAndDomain != null ? groupAndDomain.domain : 'LOCAL';
-                        configurationAttributes.push(Object.assign({}, configurationAttribute, {
+        let userConfigurationAttributes = user.configurationAttributes;
+        if (userConfigurationAttributes) {            
+            for (let configurationAttributeKey of Object.keys(userConfigurationAttributes)) {
+                let configurationAttributeArray = userConfigurationAttributes[configurationAttributeKey];
+                for (let configurationAttribute of configurationAttributeArray) {
+                    if (configurationAttribute.groups != null && configurationAttribute.groups.length > 0) {
+                        for (let group of configurationAttribute.groups) {
+                            let groupAndDomain = extractGroupAndDomain(group);   
+                            let groupKey = groupAndDomain != null ? groupAndDomain.group : null;
+                            let domainKey = groupAndDomain != null ? groupAndDomain.domain : 'LOCAL';
+                            let pushConfigurationAttribute = Object.assign({}, configurationAttribute, {
+                                user: userKey,
+                                group: groupKey,
+                                domain: domainKey,
+                            });
+                            if (configurationAttributes[configurationAttributeKey]) {
+                                configurationAttributes[configurationAttributeKey].push(pushConfigurationAttribute);
+                            } else {
+                                configurationAttributes[configurationAttributeKey] = [ pushConfigurationAttribute ];
+                            }
+        
+                        }
+                    } else {
+                        let pushConfigurationAttribute = Object.assign({}, configurationAttribute, {
                             user: userKey,
-                            group: groupKey,
-                            domain: domainKey,
-                        }));
+                            domain: 'LOCAL',
+                        });
+                        if (configurationAttributes[configurationAttributeKey]) {
+                            configurationAttributes[configurationAttributeKey].push(pushConfigurationAttribute);
+                        } else {
+                            configurationAttributes[configurationAttributeKey] = [ pushConfigurationAttribute ];
+                        }
                     }
-                } else {
-                    configurationAttribute.user = userKey;
-                    configurationAttributes.push(Object.assign({}, configurationAttribute, {
-                        user: userKey,
-                        domain: 'LOCAL',
-                    }));
                 }
             }
         }

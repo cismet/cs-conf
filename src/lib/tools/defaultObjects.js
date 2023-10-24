@@ -90,7 +90,6 @@ export const defaultClass = {
 
 // domains, usergroups, usermanagement
 export const defaultConfigurationAttributes = {
-    key: null,
     groups: [],
     value: null,
     xmlfile: null

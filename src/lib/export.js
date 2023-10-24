@@ -335,12 +335,11 @@ function exportConfigAttributes({ csConfigAttrs }, {}) {
     let valuesToFilename = new Map();
     let xmlDocCounter = new Map();
     for (let csConfigAttr of csConfigAttrs) {
-        let attrInfo = {
-            key: csConfigAttr.key,
-        }
+        let configurationAttributeKey = csConfigAttr.key;
+        let configurationAttribute = {}
         switch (csConfigAttr.type) {
             case 'C': {
-                attrInfo.value = csConfigAttr.value                
+                configurationAttribute.value = csConfigAttr.value                
             } break;
             case 'X': {
                 let xmlToSave;
@@ -362,39 +361,57 @@ function exportConfigAttributes({ csConfigAttrs }, {}) {
                 }
                 valuesToFilename.set(csConfigAttr.value, fileName);
                 xmlFiles.set(fileName, xmlToSave);
-                attrInfo.xmlfile = fileName;
+                configurationAttribute.xmlfile = fileName;
             } break;
         }
         if (csConfigAttr.login_name) {
-            attrInfo = Object.assign(attrInfo, { groups: [ csConfigAttr.groupkey ] });
+            configurationAttribute = Object.assign(configurationAttribute, { groups: [ csConfigAttr.groupkey ] });
             if (userConfigAttrs.has(csConfigAttr.login_name)) {
-                let found = false;
-                for (let userConfigAttr of userConfigAttrs.get(csConfigAttr.login_name)) {
-                    if (userConfigAttr != null && userConfigAttr.key == attrInfo.key) {
-                        found = true;
-                        if (csConfigAttr.groupkey != null && userConfigAttr.groups != null && !userConfigAttr.groups.contains(csConfigAttr.groupkey)) {
-                            userConfigAttr.groups.push(csConfigAttr.groupkey);
+                let configurationAttributes = userConfigAttrs.get(csConfigAttr.login_name);
+                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                if (configurationAttributeArray) {
+                    let found = false;
+                    for (let configurationAttribute of configurationAttributeArray) {
+                        if (configurationAttribute != null) {
+                            found = true;
+                            if (csConfigAttr.groupkey != null && configurationAttribute.groups != null && !configurationAttribute.groups.contains(csConfigAttr.groupkey)) {
+                                configurationAttribute.groups.push(csConfigAttr.groupkey);
+                            }
+                            break;
                         }
-                        break;
                     }
-                }
-                if (!found) {
-                    userConfigAttrs.get(csConfigAttr.login_name).push(attrInfo);
+                    if (!found) {
+                        configurationAttributeArray.push(configurationAttribute);
+                    }
+                } else {
+                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
                 }
             } else {
-                userConfigAttrs.set(csConfigAttr.login_name, [attrInfo]);
+                userConfigAttrs.set(csConfigAttr.login_name, { [configurationAttributeKey]: [configurationAttribute] });
             }
         } else if (csConfigAttr.groupkey) {
             if (groupConfigAttrs.has(csConfigAttr.groupkey)) {
-                groupConfigAttrs.get(csConfigAttr.groupkey).push(attrInfo);
+                let configurationAttributes = groupConfigAttrs.get(csConfigAttr.groupkey);
+                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                if (configurationAttributeArray) {
+                    configurationAttributeArray.push(configurationAttribute);
+                } else {
+                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
+                }
             } else {
-                groupConfigAttrs.set(csConfigAttr.groupkey, [attrInfo]);
+                groupConfigAttrs.set(csConfigAttr.groupkey, { [configurationAttributeKey]: [configurationAttribute] });
             }
         } else if (csConfigAttr.domainname) {
             if (domainConfigAttrs.has(csConfigAttr.domainname)) {
-                domainConfigAttrs.get(csConfigAttr.domainname).push(attrInfo);
+                let configurationAttributes = domainConfigAttrs.get(csConfigAttr.domainname);
+                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                if (configurationAttributeArray) {
+                    configurationAttributeArray.push(configurationAttribute);
+                } else {
+                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
+                }                
             } else {
-                domainConfigAttrs.set(csConfigAttr.domainname, [attrInfo]);
+                domainConfigAttrs.set(csConfigAttr.domainname, { [configurationAttributeKey]: [configurationAttribute] });
             }
         }
     }

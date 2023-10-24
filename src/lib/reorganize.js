@@ -297,14 +297,34 @@ function reorganizeNode(node) {
 function reorganizeConfigurationAttributes(configurationAttributes) {
     if (configurationAttributes == null) return null;
     
-    if (configurationAttributes.groups) {
-        configurationAttributes.groups = configurationAttributes.groups.sort();
+    let reorganized = {};
+    let sortedConfigurationAttributeKeys = Object.keys(configurationAttributes).sort((a, b) => { 
+        return a.localeCompare(b);
+    })
+    for (let configurationAttributeKey of sortedConfigurationAttributeKeys) {
+        let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+        if (Array.isArray(configurationAttributeValue)) {
+            let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [ configurationAttributeValue ];
+            let reorganizedArray = [];
+            let sortedConfigurationAttributeArray = configurationAttributeArray.sort((a, b) => {
+                if (!a.prio && !b.prio) return 0; // No change in order
+                if (!a.prio) return 1;
+                if (!b.prio) return -1;
+                return a.prio - b.prio;
+              })
+            for (let configurationAttribute of sortedConfigurationAttributeArray) {
+                reorganizedArray.push(Object.assign({}, configurationAttribute, {
+                    groups: (configurationAttribute.groups) ? configurationAttribute.groups.sort() : undefined,
+                }));
+            }    
+            reorganized[configurationAttributeKey] = reorganizedArray;
+        } else {
+            let configurationAttribute = configurationAttributeValue;
+            reorganized[configurationAttributeKey] = Object.assign({}, configurationAttribute, {
+                groups: (configurationAttribute.groups) ? configurationAttribute.groups.sort() : undefined,
+            });
+        }
     }
-
-    return configurationAttributes.sort((a, b) => { 
-        let aKey = a.key;
-        let bKey = b.key;
-        return aKey.localeCompare(bKey);
-    });
+    return reorganized;
 }
 

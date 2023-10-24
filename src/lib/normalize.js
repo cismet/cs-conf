@@ -43,6 +43,7 @@ export function normalizeConfigs(configs) {
         config: normalizeConfig(configs.config),
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
         classes: normalizeClasses(configs.classes), 
+        configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
         domains: normalizeDomains(configs.domains, configs.config.domainName), 
         dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
         policyRules: normalizePolicyRules(configs.policyRules), 
@@ -310,16 +311,21 @@ export function normalizePerms(perms) {
 }
 
 export function normalizeConfigurationAttributes(configurationAttributes) {
-    let normalized = [];
+    let normalized = {};
 
-    if (configurationAttributes) {
-        for (let configurationAttribute of configurationAttributes) {
-            if (configurationAttribute.key === undefined) throw "normalizeConfigurationAttributes: missing key";
-            if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw "normalizeConfigurationAttributes: value and xmlfile can't both be set";
+    if (configurationAttributes) {        
+        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+            let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+            let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
 
-            normalized.push(Object.assign({}, defaultConfigurationAttributes, configurationAttribute, {
-                groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
-            }));
+            normalized[configurationAttributeKey] = [];
+            for (let configurationAttribute of configurationAttributeArray) {
+                if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw "normalizeConfigurationAttributes: value and xmlfile can't both be set";
+
+                normalized[configurationAttributeKey].push(Object.assign({}, defaultConfigurationAttributes, configurationAttribute, {
+                    groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
+                }));
+            }
         }    
     }
 

@@ -356,15 +356,27 @@ function simplifyPerms(perms, mainDomain = null) {
 function simplifyConfigurationAttributes(configurationAttributes, mainDomain = null) {
     if (configurationAttributes == null) return null;
 
-    let simplified = [];
-    for (let configurationAttribute of normalizeConfigurationAttributes(configurationAttributes)) {
-        if (configurationAttribute != null) {
-            simplified.push(copyFromTemplate(Object.assign({}, configurationAttribute, { 
-                groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain) 
-            }), defaultConfigurationAttributes));
+    let simplified = {};
+    let normalized = normalizeConfigurationAttributes(configurationAttributes);
+    for (let configurationAttributeKey of Object.keys(normalized)) {
+        let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+        let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
+
+        let simplifiedArray = [];
+        for (let configurationAttribute of configurationAttributeArray) {
+            if (configurationAttribute != null) {
+                simplifiedArray.push(copyFromTemplate(Object.assign({}, configurationAttribute, { 
+                    groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain) 
+                }), defaultConfigurationAttributes));
+            }
+        }
+        if (simplifiedArray.length > 1) {
+            simplified[configurationAttributeKey] = simplifiedArray;
+        } else if  (simplifiedArray.length == 1) {
+            simplified[configurationAttributeKey] = simplifiedArray[0];
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
 function simplifyConfigurationAttributeGroups(groups, mainDomain = null) {
