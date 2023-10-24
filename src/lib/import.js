@@ -218,7 +218,7 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing policyRules (%d)", normalizedConfigs.policyRules.length));
     Object.assign(csEntries, preparePolicyRules(normalizedConfigs));
     
-    logVerbose(util.format(" ↳ preparing classes (%d)", normalizedConfigs.classes.length));
+    logVerbose(util.format(" ↳ preparing classes (%d)", Object.keys(normalizedConfigs.classes).length));
     Object.assign(csEntries, prepareClasses(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing structure (%d)", normalizedConfigs.structure.length));
