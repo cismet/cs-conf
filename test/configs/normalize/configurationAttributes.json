@@ -1,5 +1,5 @@
 [
-    { "key": "inTestGroup", "keygroup": "testGroup" },
+    { "key": "inTestGroup" },
     { "key": "withoutGroupNorValue" },
-    { "key": "InNoGroupWithValue", "keygroup": "__no_group__", "value": "test", "xmlfile": null }
+    { "key": "InNoGroupWithValue", "value": "test", "xmlfile": null }
 ]

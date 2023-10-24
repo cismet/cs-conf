@@ -568,11 +568,9 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
                 type = 'A';
             }
 
-            let fullKey = util.format("%s.%s", configurationAttribute.key, configurationAttribute.keygroup);
-            if (!duplicateKeyFinder.has(fullKey)) {
+            if (!duplicateKeyFinder.has(configurationAttribute.key)) {
                 csConfigAttrKeyEntries.push([
-                    configurationAttribute.key, 
-                    configurationAttribute.keygroup
+                    configurationAttribute.key
                 ]);
                 duplicateKeyFinder.add(fullKey);
             }

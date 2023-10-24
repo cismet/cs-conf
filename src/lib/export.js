@@ -334,7 +334,6 @@ function exportConfigAttributes({ csConfigAttrs }, {}) {
     for (let csConfigAttr of csConfigAttrs) {
         let attrInfo = {
             key: csConfigAttr.key,
-            keygroup: csConfigAttr.keygroup
         }
         switch (csConfigAttr.type) {
             case 'C': {
@@ -682,7 +681,6 @@ SELECT
     domain.name AS domainname,
     ug.name || '@' || ug_domain.name AS groupkey,
     key.key,
-    key.group_name AS keygroup,
     type.type,
     value.value,
     value.filename

@@ -6,7 +6,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
-        "configurationAttributes": [ { "key": "test", "groups": [], "keygroup": "__no_group__", "value": null, "xmlfile": null } ],
+        "configurationAttributes": [ { "key": "test", "groups": [], "value": null, "xmlfile": null } ],
         "additional_info": {}
     }, {
         "login_name": "User2",

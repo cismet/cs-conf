@@ -95,7 +95,6 @@ export const defaultClass = {
 export const defaultConfigurationAttributes = {
     key: null,
     groups: [],
-    keygroup: '__no_group__',
     value: null,
     xmlfile: null
 };
