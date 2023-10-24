@@ -185,12 +185,14 @@ commands.set('inspect', program.command('inspect')
 	.description('inspects object(s)')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-u, --user <userKey>', 'inspects user(s)')
+	.option('-A, --aggregate', 'aggregate configurationAttribute values')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		cs('inspect', csInspect, { 
 			userKey: cmd.user,
+			aggregateConfAttrValues: cmd.aggregate !== undefined,
 		}, cmd);
 	})
 );	 	 

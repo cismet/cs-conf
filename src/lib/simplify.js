@@ -252,9 +252,6 @@ export function simplifyUser(user, userKey, additionalInfos = {}, mainDomain = n
         simplified = copyFromTemplate(Object.assign({}, user, { 
             groups: simplifyGroups(groups, mainDomain),
             configurationAttributes: simplifyConfigurationAttributes(configurationAttributes, mainDomain),
-            "configurationAttributes.aggregated": simplifyConfigurationAttributes(user["configurationAttributes.aggregated"], mainDomain),
-            "configurationAttributes.domains": user["configurationAttributes.domains"] ? Object.fromEntries(Object.keys(user["configurationAttributes.domains"]).map(key => [key, simplifyConfigurationAttributes(user["configurationAttributes.domains"][key], mainDomain)])) : undefined,
-            "configurationAttributes.groups": user["configurationAttributes.groups"] ? Object.fromEntries(Object.keys(user["configurationAttributes.groups"]).map(key => [key, simplifyConfigurationAttributes(user["configurationAttributes.groups"][key], mainDomain)])) : undefined,
             }), defaultUser)
         if (additionalInfo) {
             delete additionalInfo._unshadowed_groups

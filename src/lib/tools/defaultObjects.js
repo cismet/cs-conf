@@ -147,9 +147,6 @@ export const defaultUser = {
     last_pwd_change: null,
     shadows: [],
     groups: [],
-    "configurationAttributes.aggregated": [],
-    "configurationAttributes.domains": {},
-    "configurationAttributes.groups": {},
     configurationAttributes: [],
     additional_info: {},
 };

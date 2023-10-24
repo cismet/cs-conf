@@ -279,9 +279,6 @@ export function normalizeUser(user, userKey) {
     let normalized = Object.assign({}, defaultUser, user, {
         groups: normalizeGroups(user.groups),
         configurationAttributes: normalizeConfigurationAttributes(user.configurationAttributes),
-        "configurationAttributes.aggregated": normalizeConfigurationAttributes(user["configurationAttributes.aggregated"]),
-        "configurationAttributes.domains": user["configurationAttributes.domains"] ? Object.fromEntries(Object.keys(user["configurationAttributes.domains"]).map(key => [key, normalizeConfigurationAttributes(user["configurationAttributes.domains"][key])])) : undefined,
-        "configurationAttributes.groups": user["configurationAttributes.groups"] ? Object.fromEntries(Object.keys(user["configurationAttributes.groups"]).map(key => [key, normalizeConfigurationAttributes(user["configurationAttributes.groups"][key])])) : undefined,
 });
 
     return normalized;
