@@ -1,5 +1,5 @@
-[
-    { "key": "inTestGroup", "groups": [], "value": null, "xmlfile": null },
-    { "key": "withoutGroupNorValue", "groups": [], "value": null, "xmlfile": null },
-    { "key": "InNoGroupWithValue", "groups": [], "value": "test", "xmlfile": null }
-]
+{
+    "inTestGroup": [{ "groups": [], "value": null, "xmlfile": null }],
+    "withoutGroupNorValue": [{ "groups": [], "value": null, "xmlfile": null }],
+    "InNoGroupWithValue": [{ "groups": [], "value": "test", "xmlfile": null }]
+}

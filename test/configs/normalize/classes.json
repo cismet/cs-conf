@@ -1,13 +1,11 @@
-[
-    {
-        "table": "table1",
+{
+    "table1": {
         "name": "Table 1",
-        "attributes": [
-            {
-                "field": "field1",
+        "attributes": {
+            "field1": {
                 "name": "Field 1",
                 "dbType" : "TEXT"
             }
-        ]
+        }
     }     
-]
+}

@@ -147,6 +147,8 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 normalized[attributeKey.toLowerCase()] = Object.assign({}, pkDummy, attribute, {
                     defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
                     name: attribute.name || attributeKey.toLowerCase(),
+                    readPerms: normalizePerms(attribute.readPerms),
+                    writePerms: normalizePerms(attribute.writePerms),    
                 });    
             } else {
                 let types = [];

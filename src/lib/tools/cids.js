@@ -28,12 +28,3 @@ export function extractGroupAndDomain(key) {
         return null;
     }
 }
-
-export function extractTableAndField(key) {
-    if (key != null) {
-        let keyComponents = key.split('.');
-        return { table: keyComponents[0], field: keyComponents[1] } ;
-    } else {
-        return null;
-    }
-}

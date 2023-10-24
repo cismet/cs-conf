@@ -3,7 +3,7 @@
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "groups": ["Group1", "Group2"],
-        "configurationAttributes": [{ "key": "test" }]
+        "configurationAttributes": { "test": {} }
     }, 
     "User2": {
         "pw_hash": "HashyHash2",
@@ -13,7 +13,7 @@
     "User3": {
         "pw_hash": "HashyHash3",
         "salt": "saltySalt3",
-        "configurationAttributes": []
+        "configurationAttributes": {}
     }, 
     "User4": {
         "pw_hash": "HashyHash4",

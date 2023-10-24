@@ -1,7 +1,7 @@
 {
     "Group1": {
         "descr": "Descr1",
-        "configurationAttributes": [{ "key": "test" }]
+        "configurationAttributes": { "test": {}}
     }, 
     "Group2": {}
 }

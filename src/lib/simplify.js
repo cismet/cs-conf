@@ -324,9 +324,8 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, table, mainDomain)
                     delete simplifiedAttribute.name;
                 }
                 if (Object.entries(simplifiedPkAttribute).length > 0) {
-                    simplified[attributeKey] = Object.assign(
+                    simplified[pk] = Object.assign(
                         {
-                            field: pk,
                             readPerms: simplifyPerms(attribute.readPerms, mainDomain), 
                             writePerms: simplifyPerms(attribute.writePerms, mainDomain),
                         }, simplifiedPkAttribute

@@ -1,8 +1,7 @@
-[
-    {
+{
+    "table1": {
         "enforcedId": null,
         "enforcedIdReason": null,
-        "table": "table1",
         "name": "Table 1",
         "descr": "",
         "pk": "id",
@@ -20,30 +19,8 @@
         "toString": null,
         "editor": null,
         "renderer": null,                
-        "attributes": [
-            {
-                "field": "id",
-                "name": "id",
-                "descr": "Primary Key",
-                "dbType": "INTEGER",
-                "extension_attr": false,
-                "precision": null,
-                "scale": null,
-                "cidsType": null,
-                "oneToMany": null,
-                "manyToMany": null,
-                "mandatory": true,
-                "substitute": false,
-                "defaultValue": "nextval('table1_seq')",
-                "hidden": true,
-                "indexed": false,
-                "arrayKey": null, 
-                "readPerms": [], 
-                "writePerms": [], 
-                "additional_info": {}
-            },
-            {
-                "field": "field1",
+        "attributes": {
+            "field1": {
                 "name": "Field 1",
                 "descr": "",
                 "dbType": "TEXT",
@@ -62,10 +39,30 @@
                 "readPerms": [], 
                 "writePerms": [], 
                 "additional_info": {}
+            },
+            "id": {
+                "name": "id",
+                "descr": "Primary Key",
+                "dbType": "INTEGER",
+                "extension_attr": false,
+                "precision": null,
+                "scale": null,
+                "cidsType": null,
+                "oneToMany": null,
+                "manyToMany": null,
+                "mandatory": true,
+                "substitute": false,
+                "defaultValue": "nextval('table1_seq')",
+                "hidden": true,
+                "indexed": false,
+                "arrayKey": null, 
+                "readPerms": [], 
+                "writePerms": [], 
+                "additional_info": {}
             }
-        ],
+        },
         "attributesOrder": "auto",
         "additionalAttributes": null, 
         "additional_info": {}
     }          
-]
+}

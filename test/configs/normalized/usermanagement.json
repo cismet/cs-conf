@@ -5,7 +5,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
-        "configurationAttributes": [ { "key": "test", "groups": [], "value": null, "xmlfile": null } ],
+        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null }] },
         "additional_info": {}
     }, 
     "User2": {
@@ -14,7 +14,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": ["Group3@LOCAL"],
-        "configurationAttributes": [],
+        "configurationAttributes": {},
         "additional_info": {}
     }, 
     "User3": {
@@ -23,7 +23,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": [],
-        "configurationAttributes": [],
+        "configurationAttributes": {},
         "additional_info": {}
     }, 
     "User4": {
@@ -32,7 +32,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": [],
-        "configurationAttributes": [],
+        "configurationAttributes": {},
         "additional_info": {}
     }
 }
