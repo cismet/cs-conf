@@ -569,9 +569,7 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
             }
 
             if (!duplicateKeyFinder.has(configurationAttribute.key)) {
-                csConfigAttrKeyEntries.push([
-                    configurationAttribute.key
-                ]);
+                csConfigAttrKeyEntries.push([configurationAttribute.key]);
                 duplicateKeyFinder.add(fullKey);
             }
 
@@ -913,9 +911,8 @@ INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain, id)
 `;     
 
 // $1 = cs_config_attr_key.key
-// $2 = cs_config_attr_key.group_name
 const configAttrsImportStatement = `
-INSERT INTO cs_config_attr_key (id, "key", group_name) VALUES (DEFAULT, $1, $2);
+INSERT INTO cs_config_attr_key (id, "key") VALUES (DEFAULT, $1, $2);
 `;
 
 // $1 = domain[[]
