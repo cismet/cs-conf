@@ -21,6 +21,7 @@ import { clean, logDebug, logErr } from './lib/tools/tools';
 import csCheck from './lib/check';
 import csConfig from './lib/config';
 import path from 'path';
+import csInspect from './lib/inspect';
 
 global.rootSrcDir = __dirname;
 global.silent = false;
@@ -177,6 +178,19 @@ commands.set('simplify', program.command('simplify')
 		cs('simplify', csSimplify, { 
 			targetDir: cmd.target,
 			reorganize: cmd.reorganize !== undefined,
+		}, cmd);
+	})
+);	 	 
+commands.set('inspect', program.command('inspect')
+	.description('inspects object(s)')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-u, --user <userKey>', 'inspects user(s)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('inspect', csInspect, { 
+			userKey: cmd.user,
 		}, cmd);
 	})
 );	 	 

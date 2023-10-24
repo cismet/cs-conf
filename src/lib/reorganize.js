@@ -1,6 +1,5 @@
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 import { extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
-import { normalizeClass } from "./normalize";
 
 // ---
 
@@ -252,7 +251,9 @@ export function reorganizeUsermanagement(usermanagement) {
             let user = usermanagement[userKey];
             reorganized[userKey] = Object.assign({}, user, {
                 configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : undefined,
-                groups : user.groups ? user.groups.sort() : undefined,
+                "configurationAttributes.domains": user["configurationAttributes.domains"] ? Object.fromEntries(Object.keys(user["configurationAttributes.domains"]).map(key => [key, reorganizeConfigurationAttributes(user["configurationAttributes.domains"][key])])) : undefined,
+                "configurationAttributes.groups": user["configurationAttributes.groups"] ? Object.fromEntries(Object.keys(user["configurationAttributes.groups"]).map(key => [key, reorganizeConfigurationAttributes(user["configurationAttributes.groups"][key])])) : undefined,
+                    groups : user.groups ? user.groups.sort() : undefined,
             });
         }
     }    
