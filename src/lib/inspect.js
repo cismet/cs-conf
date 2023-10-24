@@ -24,28 +24,46 @@ export default async function csInspect({ userKey }) {
             groupKeys.add(groupKey);
         }
 
-        let mainDomain = configs.config.domainName;
-        let aggrConfigAttrs = [];
+        let aggrConfigAttrs = {};
         let domainsConfigAttrs = {};
-        for (let domainKey of domainKeys) {
+        let groupsConfigAttrs = {};
+        for (let domainKey of domainKeys) {            
             let domain = normalized.domains[domainKey];
             let configurationAttributes = domain.configurationAttributes;
             domainsConfigAttrs[domainKey] = configurationAttributes;
             if (configurationAttributes) {
-                aggrConfigAttrs.push(... configurationAttributes);
+                for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+                    let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                    if (!aggrConfigAttrs[configurationAttributeKey]) {
+                        aggrConfigAttrs[configurationAttributeKey] = [];
+                    }
+                    aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                }
             }
         }
-        let groupsConfigAttrs = {};
         for (let groupKey of groupKeys) {
-            let group = configs.usergroups[groupKey];
+            let group = normalized.usergroups[groupKey];
             let configurationAttributes = group.configurationAttributes;
             groupsConfigAttrs[groupKey] = configurationAttributes;
             if (configurationAttributes) {
-                aggrConfigAttrs.push(... configurationAttributes);
+                for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+                    let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                    if (!aggrConfigAttrs[configurationAttributeKey]) {
+                        aggrConfigAttrs[configurationAttributeKey] = [];
+                    }
+                    aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                }
             }
         }
-        if (user.configurationAttributes) {
-            aggrConfigAttrs.push(...user.configurationAttributes);
+        let configurationAttributes = user.configurationAttributes;
+        if (configurationAttributes) {
+            for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                if (!aggrConfigAttrs[configurationAttributeKey]) {
+                    aggrConfigAttrs[configurationAttributeKey] = [];
+                }
+                aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+            }
         }
 
         let inspectedUser = Object.assign({}, user, {
