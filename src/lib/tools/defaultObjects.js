@@ -136,7 +136,7 @@ export const defaultNode = {
 export const defaultUserGroup = {
     descr: null,
     configurationAttributes: [],
-    prio: null,
+    prio: 0,
     additional_info: {},
 };
 
