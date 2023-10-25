@@ -1,38 +1,125 @@
+import util from "util";
 import stringify from "json-stringify-pretty-compact";
-import { readConfigFiles } from "./tools/configFiles";
-import { logOut } from "./tools/tools";
-import { normalizeConfigs, normalizeUser } from "./normalize";
-import { extractGroupAndDomain } from "./tools/cids";
-import { simplifyUser } from "./simplify";
-import { reorganizeUser } from "./reorganize";
 
-export default async function csInspect({ userKey, aggregateConfAttrValues = false }) {
+import { readConfigFiles } from "./tools/configFiles";
+import { logDebug, logOut } from "./tools/tools";
+import { extractGroupAndDomain } from "./tools/cids";
+import { normalizeConfigs } from "./normalize";
+
+import { simplifyUser, simplifyUsergroup, simplifyDomain, simplifyUsermanagement, simplifyUsergroups, simplifyDomains } from "./simplify";
+import { reorganizeUser, reorganizeUsergroup, reorganizeDomain, reorganizeDomains, reorganizeUsergroups, reorganizeUsermanagement } from "./reorganize";
+
+export default async function csInspect({ userKey, groupKey, domainKey, aggregateConfAttrValues = false }) {
     let configs = readConfigFiles(global.configsDir);
-    let normalized = normalizeConfigs(configs);
+    let normalizedConfigs = normalizeConfigs(configs);
+    let mainDomain = normalizedConfigs.domainName;
 
     if (configs == null) throw "config not set";
 
-    if (userKey !== undefined) {
-        let user = normalized.usermanagement[userKey];
+    let keys = [];
+    if (userKey) keys.push(userKey)
+    if (groupKey) keys.push(groupKey)
+    if (domainKey) keys.push(domainKey)
 
+    if (keys.length == 0) {
+        throw "at least one key is necessary"
+    } else if (keys.length > 1) {
+        throw "unambiguous parameters: only one key is allowed."
+    }
 
-        let domainKeys = new Set();
-        let groupKeys = new Set();
-        for (let groupKey of user.groups.sort((a, b) => {
-            if (a.prio === null && b.prio === null) return 0;
-            if (a.prio === null) return 1;
-            if (b.prio === null) return -1;
-            return a.prio - b.prio;
-          })) {
-            let groupAndDomain = extractGroupAndDomain(groupKey);
-            let domainKey = groupAndDomain.domain;
-            domainKeys.add(domainKey);
-            groupKeys.add(groupKey);
+    if (userKey) {
+        if (userKey == '*') {
+            let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, aggregateConfAttrValues);
+            let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
+            let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, mainDomain);
+            logOut(stringify(simplifiedUsermanamgement), { noSilent: true })            
+        } else {
+            let inspectedUser = inspectUser(userKey, normalizedConfigs, aggregateConfAttrValues);
+            let reorganizedUser = reorganizeUser(inspectedUser);
+            let simplifiedUser = simplifyUser(reorganizedUser, mainDomain)
+            logOut(stringify(simplifiedUser), { noSilent: true })            
         }
+    } else if (groupKey) {
+        if (groupKey == '*') {
+            let inspectedUsergroups = inspectUsergroups(normalizedConfigs);
+            let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
+            let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups, mainDomain);
+            logOut(stringify(simplifiedUsergroups), { noSilent: true })            
+        } else {
+            let inspectedGroup = inspectUsergroup(groupKey, normalizedConfigs);
+            let reorganizedGroup = reorganizeUsergroup(inspectedGroup);
+            let simplifiedGroup = simplifyUsergroup(reorganizedGroup, mainDomain);
+            logOut(stringify(simplifiedGroup), { noSilent: true })
+        }
+    } else if (domainKey) {
+        if (domainKey == '*') {
+            let inspectedDomains = inspectDomains(normalizedConfigs, aggregateConfAttrValues);
+            let reorganizedDomains = reorganizeDomains(inspectedDomains);
+            let simplifiedDomains = simplifyDomains(reorganizedDomains);
+            logOut(stringify(simplifiedDomains), { noSilent: true })            
+        } else {
+            let inspectedDomain = inspectDomain(domainKey, normalizedConfigs);
+            let reorganizedDomain = reorganizeDomain(inspectedDomain);
+            let simplifiedDomain = simplifyDomain(reorganizedDomain, mainDomain);            
+            logOut(stringify(simplifiedDomain), { noSilent: true })
+        }
+    }
+}
 
-        let aggrConfigAttrs = {};
+// ---
 
-        let configurationAttributes = user.configurationAttributes;
+export function inspectUsermanagement({usermanagement, usergroups, domains}, aggregateConfAttrValues = false) {
+    let inspected = {};
+    
+    for (let userKey of Object.keys(usermanagement)) {
+        inspected[userKey] = inspectUser(userKey, {usermanagement, usergroups, domains}, aggregateConfAttrValues);
+    }
+
+    return inspected;
+}
+
+export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggregateConfAttrValues = false) {
+    if (!userKey) throw util.format("userKey is missing");
+
+    let user = usermanagement[userKey];
+    if (!user) throw util.format("user '%s' not found", userKey);
+
+    let domainKeys = new Set();
+    let groupKeys = new Set();
+    for (let groupKey of user.groups.sort((a, b) => {
+        if (a.prio === null && b.prio === null) return 0;
+        if (a.prio === null) return 1;
+        if (b.prio === null) return -1;
+        return a.prio - b.prio;
+      })) {
+        let groupAndDomain = extractGroupAndDomain(groupKey);
+        let domainKey = groupAndDomain.domain;
+        domainKeys.add(domainKey);
+        groupKeys.add(groupKey);
+
+        if (!usergroups[groupKey]) throw util.format("usergroup '%s' not found", groupKey);
+    }
+
+    let aggrConfigAttrs = {};
+
+    let configurationAttributes = user.configurationAttributes;
+    if (configurationAttributes) {
+        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+            let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+            if (!aggrConfigAttrs[configurationAttributeKey]) {
+                aggrConfigAttrs[configurationAttributeKey] = [];
+            }
+            if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
+                aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+            } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
+                logDebug(util.format("configurationAttribute '%s' of user '%s' skipped sinced it already exists in Array", configurationAttributeKey, userKey));
+            }
+        }
+    }
+
+    for (let groupKey of groupKeys) {
+        let group = usergroups[groupKey];
+        let configurationAttributes = group.configurationAttributes;
         if (configurationAttributes) {
             for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
                 let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
@@ -41,47 +128,79 @@ export default async function csInspect({ userKey, aggregateConfAttrValues = fal
                 }
                 if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
                     aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
+                    logDebug(util.format("configurationAttribute '%s' of group '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, groupKey, userKey));
                 }
             }
         }
-
-        for (let groupKey of groupKeys) {
-            let group = normalized.usergroups[groupKey];
-            let configurationAttributes = group.configurationAttributes;
-            if (configurationAttributes) {
-                for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
-                    let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
-                    if (!aggrConfigAttrs[configurationAttributeKey]) {
-                        aggrConfigAttrs[configurationAttributeKey] = [];
-                    }
-                    if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
-                        aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
-                    }
-                    }
-            }
-        }
-
-        for (let domainKey of domainKeys) {            
-            let domain = normalized.domains[domainKey];
-            let configurationAttributes = domain.configurationAttributes;
-            if (configurationAttributes) {
-                for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
-                    let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
-                    if (!aggrConfigAttrs[configurationAttributeKey]) {
-                        aggrConfigAttrs[configurationAttributeKey] = [];
-                    }
-                    if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
-                        aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
-                    }
-                    }
-            }
-        }
-
-        let inspectedUser = Object.assign({}, user, {
-            configurationAttributes: aggrConfigAttrs,
-        });
-        let simplifiedInspectedUser = simplifyUser(reorganizeUser(inspectedUser));
-
-        logOut(stringify(simplifiedInspectedUser), { noSilent: true })
     }
+
+    for (let domainKey of domainKeys) {            
+        let domain = domains[domainKey];
+        let configurationAttributes = domain.configurationAttributes;
+        if (configurationAttributes) {
+            for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+                if (!aggrConfigAttrs[configurationAttributeKey]) {
+                    aggrConfigAttrs[configurationAttributeKey] = [];
+                }
+                if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
+                    aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
+                    logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, domainKey, userKey));
+                }
+            }
+        }
+    }
+
+    let inspected = Object.assign({}, user, {
+        configurationAttributes: aggrConfigAttrs,
+    });
+    return inspected;
+}
+
+// ---
+
+export function inspectUsergroups({ usergroups }) {
+    let inspected = {};
+    
+    for (let groupKey of Object.keys(usergroups)) {
+        inspected[groupKey] = inspectUsergroup(groupKey, { usergroups });
+    }
+
+    return inspected;
+}
+
+export function inspectUsergroup(groupKey, { usergroups }) {
+    if (!groupKey) throw util.format("groupKey is missing");
+
+    let normalizedGroupKey = groupKey.includes('@') ? groupKey : util.format('%s@LOCAL', groupKey);
+
+    let group = usergroups[normalizedGroupKey];
+    if (!group) throw util.format("group '%s' not found", normalizedGroupKey);
+
+    let inspected = Object.assign({}, group);
+    return inspected;
+}
+
+// ---
+
+export function inspectDomains({ domains }) {
+    let inspected = {};
+    
+    for (let domainKey of Object.keys(domains)) {
+        inspected[domainKey] = inspectDomain(domainKey, { domains });
+    }
+
+    return inspected;
+}
+
+export function inspectDomain(domainKey, { domains }) {
+    if (!domainKey) throw util.format("domainKey is missing");
+
+    let domain = domains[domainKey];
+    if (!domain) throw util.format("domain '%s' not found", domainKey);
+
+    let inspected = Object.assign({}, domain);
+    return inspected;
 }

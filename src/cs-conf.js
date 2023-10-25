@@ -185,6 +185,8 @@ commands.set('inspect', program.command('inspect')
 	.description('inspects object(s)')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-u, --user <userKey>', 'inspects user(s)')
+	.option('-g, --group <groupKey>', 'inspects group(s)')
+	.option('-d, --domain <domainKey>', 'inspects domain(s)')
 	.option('-A, --aggregate', 'aggregate configurationAttribute values')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
@@ -192,6 +194,8 @@ commands.set('inspect', program.command('inspect')
 	.action(async (cmd) => {
 		cs('inspect', csInspect, { 
 			userKey: cmd.user,
+			groupKey: cmd.group,
+			domainKey: cmd.domain,
 			aggregateConfAttrValues: cmd.aggregate !== undefined,
 		}, cmd);
 	})

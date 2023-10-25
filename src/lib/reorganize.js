@@ -171,9 +171,7 @@ export function reorganizeClasses(classes) {
 }
 
 export function reorganizeDomains(domains) {
-    if (domains == null) {
-        return null;
-    }
+    if (domains == null) return null;
 
     let reorganized = {};
     reorganized['LOCAL'] = null;
@@ -186,12 +184,18 @@ export function reorganizeDomains(domains) {
 
     for (let domainKey of sortedDomainKeys) {
         let domain = domains[domainKey];
-        reorganized[domainKey] = Object.assign({}, domain, {
-            configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : undefined,
-        });
+        reorganized[domainKey] = reorganizeDomain(domain);
     }
 
     return reorganized;
+}
+
+export function reorganizeDomain(domain) {
+    if (domain == null) return null;
+
+    return Object.assign({}, domain, {
+        configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : undefined,
+    });
 }
 
 export function reorganizeDynchildhelpers(dynchildhelpers) {
@@ -234,10 +238,18 @@ export function reorganizeUsergroups(usergroups) {
         });
         for (let groupKey of sortedGroupKeys) {
             let usergroup = usergroups[groupKey];
-            reorganized[groupKey] = Object.assign({}, usergroup, {
-                configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : undefined,
-            });
+            reorganized[groupKey] = reorganizeUsergroup(usergroup);
         }
+    }
+    return reorganized;
+}
+
+export function reorganizeUsergroup(usergroup) {
+    let reorganized = {};
+    if (usergroup) {
+        Object.assign(reorganized, usergroup, {
+            configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : undefined,
+        });
     }
     return reorganized;
 }

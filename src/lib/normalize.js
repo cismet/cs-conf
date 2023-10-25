@@ -44,7 +44,7 @@ export function normalizeConfigs(configs) {
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
         classes: normalizeClasses(configs.classes), 
         configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
-        domains: normalizeDomains(configs.domains, configs.config.domainName), 
+        domains: normalizeDomains(configs.domains), 
         dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
         policyRules: normalizePolicyRules(configs.policyRules), 
         structure: normalizeStructure(configs.structure), 
@@ -177,20 +177,28 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
     return normalized;
 }
 
-export function normalizeDomains(domains, mainDomain) {
+export function normalizeDomains(domains) {
     let normalized = {};
 
     if (domains) {
         for (let domainKey of Object.keys(domains)) {
-            if (domainKey == mainDomain) continue;
-
-            let domain = domains[domainKey];
             if (normalized.hasOwnProperty(domainKey)) throw util.format("normalizeDomains: domain '%s' already exists", domainKey);
 
-            normalized[domainKey] = Object.assign({}, defaultDomain, domain, {
-                configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes)
-            });
+            let domain = domains[domainKey];
+            normalized[domainKey] = normalizeDomain(domain);
         }
+    }
+
+    return normalized;
+}
+
+export function normalizeDomain(domain) {
+    let normalized = {};
+
+    if (domain) {
+        Object.assign(normalized, defaultDomain, domain, {
+            configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes)
+        });
     }
 
     return normalized;
@@ -239,13 +247,20 @@ export function normalizeUsergroups(usergroups) {
     if (usergroups) {
         for (let groupKey of Object.keys(usergroups)) {
             let usergroup = usergroups[groupKey];
-
-            normalized[extendLocalDomain(groupKey)] = Object.assign({}, defaultUserGroup, usergroup, {
-                configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
-            });
+            normalized[extendLocalDomain(groupKey)] = normalizeUsergroup(usergroup);
         }
     }
 
+    return normalized;
+}
+
+export function normalizeUsergroup(usergroup) {
+    let normalized = {};
+    if (usergroup != null) {
+        Object.assign(normalized, defaultUserGroup, usergroup, {
+            configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
+        });
+    }
     return normalized;
 }
 
