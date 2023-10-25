@@ -572,7 +572,7 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
 
                 if (!duplicateKeyFinder.has(configurationAttributeKey)) {
                     csConfigAttrKeyEntries.push([configurationAttributeKey]);
-                    duplicateKeyFinder.add(fullKey);
+                    duplicateKeyFinder.add(configurationAttributeKey);
                 }
 
                 if (type === 'X' || type === 'C') {
@@ -947,7 +947,7 @@ INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain, id)
 
 // $1 = cs_config_attr_key.key
 const configAttrsImportStatement = `
-INSERT INTO cs_config_attr_key (id, "key") VALUES (DEFAULT, $1, $2);
+INSERT INTO cs_config_attr_key (id, "key") VALUES (DEFAULT, $1);
 `;
 
 // $1 = domain[[]
