@@ -128,9 +128,9 @@ export function simplifyClasses(classes, mainDomain) {
                 objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
                 readPerms: simplifyPerms(clazz.readPerms, mainDomain), 
                 writePerms: simplifyPerms(clazz.writePerms, mainDomain),
-                attributes: simplifyAttributes(clazz.attributes, clazz.pk, clazz.table, mainDomain),
+                attributes: simplifyAttributes(clazz.attributes, clazz.pk, classKey, mainDomain),
             }), defaultClass);
-            if (simplifiedClazz.name == simplifiedClazz.table) {
+            if (simplifiedClazz.name == classKey) {
                 delete simplifiedClazz.name;
             }
             simplified[classKey] = simplifiedClazz;
@@ -319,19 +319,19 @@ function simplifyNodes(nodes, mainDomain = null) {
     return simplified.length > 0 ? simplified : undefined;
 }
 
-function simplifyAttributes(attributes, pk = defaultClass.pk, table, mainDomain) {
+function simplifyAttributes(attributes, pk = defaultClass.pk, classKey, mainDomain) {
     if (attributes == null) return null;
 
     let simplified = {};
 
-    let normalized = normalizeAttributes(attributes, pk, table);
+    let normalized = normalizeAttributes(attributes, pk, classKey);
     for (let attributeKey of Object.keys(normalized)) {
         let attribute = normalized[attributeKey];
         if (attribute != null) {
             let simplifiedAttribute = copyFromTemplate(attribute, defaultAttribute);
             if (pk !== undefined && attributeKey == pk) {
-                let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttributePrimary(table, pk)));
-                if (simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", table)) {
+                let simplifiedPkAttribute = copyFromTemplate(attribute, Object.assign({}, defaultAttributePrimary(classKey, pk)));
+                if (simplifiedPkAttribute.defaultValue == util.format("nextval('%s_seq')", classKey)) {
                     delete simplifiedPkAttribute.defaultValue;
                 }
                 if (simplifiedAttribute.name == attributeKey) {
