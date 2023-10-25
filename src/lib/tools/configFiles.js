@@ -30,17 +30,30 @@ export function readConfigFile(file, sub = false) {
 }
 
 export function writeConfigFile(config, file, sub = false) {    
-    writeFile(config != null ? stringify(config, { maxLength: global.config.maxFileLength }): null, file, sub);
+    writeOrDeleteFile(config != null ? stringify(config, { maxLength: global.config.maxFileLength }): null, file, { sub });
 }
 
-function writeFile(content, file, sub = false) {    
+function writeOrDeleteFile(content, file, { sub = false, verboseOnly = true }) {    
     if (content != null) {
-        logVerbose(util.format("%s file '%s'", sub ? " ↳ writing" : "Writing", file));
-        fs.writeFileSync(file, content, "utf8");
+        writeFile(content, file, { sub, verboseOnly });
     } else if (fs.existsSync(file)) {
-        logVerbose(util.format("%s file '%s'", sub ? " ↳ deleting" : "Deleting", file));
-        fs.rmSync(file);
+        deleteFile(file, { sub })
     }
+}
+
+export function writeFile(content, file, { sub = false, verboseOnly = true } ) {    
+    let message = util.format("%s file '%s'", sub ? " ↳ writing" : "Writing", file);
+    if (verboseOnly) {
+        logVerbose(message);
+    } else {
+        logOut(message);
+    }    
+    fs.writeFileSync(file, content, "utf8");
+}
+
+export function deleteFile(file, { sub = false }) {    
+    logVerbose(util.format("%s file '%s'", sub ? " ↳ deleting" : "Deleting", file));
+    fs.rmSync(file);
 }
 
 export function readConfigFiles(configsDir, topics) {
@@ -194,17 +207,17 @@ export function writeConfigFiles(configs, configsDir) {
 
     if (helperSqlFiles != null && helperSqlFiles.size > 0) {
         helperSqlFiles.forEach(async (value, key) => {
-            writeFile(value, util.format("%s/%s", structureHelperStatementsFolder, key), true)
+            writeOrDeleteFile(value, util.format("%s/%s", structureHelperStatementsFolder, key), { sub: true })
         });
     }
     if (structureSqlFiles != null && structureSqlFiles.size > 0) {
         structureSqlFiles.forEach(async (value, key) => {
-            writeFile(value, util.format("%s/%s", structureDynamicChildrenFolder, key), true)
+            writeOrDeleteFile(value, util.format("%s/%s", structureDynamicChildrenFolder, key), { sub: true })
         });
     }
     if (xmlFiles != null && xmlFiles.size > 0) {
         xmlFiles.forEach(async (xmlToSave, fileName) => {
-            writeFile(xmlToSave, util.format("%s/%s", confAttrXmlSnippetsFolder, fileName), true)
+            writeOrDeleteFile(xmlToSave, util.format("%s/%s", confAttrXmlSnippetsFolder, fileName), { sub: true })
         });
     }
 }

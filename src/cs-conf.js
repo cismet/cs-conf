@@ -188,6 +188,7 @@ commands.set('inspect', program.command('inspect')
 	.option('-g, --group <groupKey>', 'inspects group(s)')
 	.option('-d, --domain <domainKey>', 'inspects domain(s)')
 	.option('-A, --aggregate', 'aggregate configurationAttribute values')
+	.option('-O, --output <filepath>', 'output into file')	
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
@@ -196,6 +197,7 @@ commands.set('inspect', program.command('inspect')
 			userKey: cmd.user,
 			groupKey: cmd.group,
 			domainKey: cmd.domain,
+			fileTarget: cmd.output,
 			aggregateConfAttrValues: cmd.aggregate !== undefined,
 		}, cmd);
 	})
