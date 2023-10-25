@@ -92,7 +92,9 @@ export const defaultClass = {
 export const defaultConfigurationAttributes = {
     groups: [],
     value: null,
-    xmlfile: null
+    xmlfile: null,
+    _domain: null,
+    _group: null,
 };
 
 // domains

@@ -133,7 +133,9 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggr
                     aggrConfigAttrs[configurationAttributeKey] = [];
                 }
                 if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
-                    aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                    for (let configurationAttribute of configurationAttributeArray) {
+                        aggrConfigAttrs[configurationAttributeKey].push(Object.assign({}, configurationAttribute, {_group: groupKey}));
+                    }
                 } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
                     logDebug(util.format("configurationAttribute '%s' of group '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, groupKey, userKey));
                 }
@@ -151,7 +153,9 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggr
                     aggrConfigAttrs[configurationAttributeKey] = [];
                 }
                 if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
-                    aggrConfigAttrs[configurationAttributeKey].push(...configurationAttributeArray);                        
+                    for (let configurationAttribute of configurationAttributeArray) {
+                        aggrConfigAttrs[configurationAttributeKey].push(Object.assign({}, configurationAttribute, {_domain: domainKey}));
+                    }
                 } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
                     logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, domainKey, userKey));
                 }
