@@ -19,7 +19,7 @@ export function readConfigJsonFile(file) {
     let normalized = normalizeConfig(config);
     let majorVersion =  version.split('.')[0];
     if (normalized.formatVersion != majorVersion) {
-        throw util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion);
+        throw util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion, majorVersion);
     }
     return normalized;
 }

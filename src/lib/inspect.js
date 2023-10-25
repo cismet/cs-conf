@@ -103,7 +103,7 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggr
         domainKeys.add(domainKey);
         groupKeys.add(groupKey);
 
-        if (!usergroups[groupKey]) throw util.format("usergroup '%s' not found", groupKey);
+        if (!usergroups[groupKey]) throw util.format("usergroup '%s' of user '%s' not found", groupKey, userKey);
     }
 
     let aggrConfigAttrs = {};
