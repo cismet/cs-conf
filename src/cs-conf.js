@@ -76,67 +76,19 @@ commands.set('config', program.command('config').description('creates a new conf
 		}, cmd);
 	})
 );
-program.command('\t');	
-commands.set('import', program.command('import')
-	.description('imports the (cs_*)meta-information from a configuration directory into a database')
-	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
-	.option('--skip-backup', 'does not create backup before import')	
-	.option('--backup-prefix', 'backup file prefix', null)	
-	.option('--recreate', 'purge and recreate cs_* structure before import')	
-	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
-	.option(silentOption.flags, silentOption.description, silentOption.default)
-	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
-	.option(debugOption.flags, debugOption.description, debugOption.default)
- 	.action(async (cmd) => {
-		cs('import', csImport, {
-			execute: cmd.import !== undefined,
-			recreate: cmd.recreate !== undefined, 
-			skipBackup: cmd.skipBackup !== undefined,
-			backupPrefix: cmd.backupPrefix,
-			backupDir: cmd.backupDir,
-		}, cmd);
-	})
-);
-commands.set('backup', program.command('backup')
-	.description('backups the (cs_*)meta-information to a file')
-	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-d, --dir <dirpath>', 'the directory where the backups should be written')
-	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
-	.option(silentOption.flags, silentOption.description, silentOption.default)
-	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
-	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {
-		cs('backup', csBackup, {
-			dir: cmd.dir, 
-			prefix: cmd.prefix, 
-		}, cmd);
-	})
-);
-commands.set('restore', program.command('restore')
-	.description('restores the (cs_*)meta-information from a backup file')
-	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-f, --file <file>', 'the backup file to restore from', null)
-	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
-	.option(silentOption.flags, silentOption.description, silentOption.default)
-	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
-	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {
-		cs('restore', csRestore, {
-			file: cmd.file,
-			execute: cmd.restore !== undefined,
-		}, cmd);
-	})
-); 
 program.command('\t');
-commands.set('check', program.command('check')
-	.description('checks configuration for errors')
+commands.set('export', program.command('export')
+	.description('exports the (cs_*)meta-information of a database into a configuration directory')
 	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
+	.option('-N, --normalized', 'normalized config')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {
-		cs('check', csCheck, {
+	.action(async (cmd) => {		
+		cs('export', csExport, {
+			targetDir: cmd.target,
+			normalize: cmd.normalized !== undefined,
 		}, cmd);
 	})
 );
@@ -181,98 +133,40 @@ commands.set('simplify', program.command('simplify')
 		}, cmd);
 	})
 );	 	 
-commands.set('inspect', program.command('inspect')
-	.description('inspects object(s)')
+commands.set('backup', program.command('backup')
+	.description('backups the (cs_*)meta-information to a file')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-u, --user <userKey>', 'inspects user(s)')
-	.option('-g, --group <groupKey>', 'inspects group(s)')
-	.option('-d, --domain <domainKey>', 'inspects domain(s)')
-	.option('-A, --aggregate', 'aggregate configurationAttribute values')
-	.option('-O, --output <filepath>', 'output into file')	
+	.option('-d, --dir <dirpath>', 'the directory where the backups should be written')
+	.option('-p, --prefix <prefix>', 'the prefix of the backup file', null)
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
-		cs('inspect', csInspect, { 
-			userKey: cmd.user,
-			groupKey: cmd.group,
-			domainKey: cmd.domain,
-			fileTarget: cmd.output,
-			aggregateConfAttrValues: cmd.aggregate !== undefined,
-		}, cmd);
-	})
-);	 	 
-program.command('\t');
-commands.set('password', program.command('password')
-	.description('changes or sets the password for an user.')
-	.option(configOption.flags, configOption.description, configOption.default)
-	.option(targetOption.flags, targetOption.description, ".")
-	.option('-u, --user <user>', 'the login_name of the user')
-	.option('-p, --password <password>', 'the password to set')
-	.option('-t, --time <timestamp>', 'the timestamp to use as last_pwd_change')
-	.option('-g, --groups <groups>', 'comma separated list of groups')
-	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
-	.option('-R, --reorganize', 'reorganize config')
-	.option('-N, --normalized', 'normalize the user informations')
-	.option('-A, --add', 'add a new user with the given password and groups')	
-	.option('-P, --print', 'only print the new user information')	
-	.option(silentOption.flags, silentOption.description, silentOption.default)
-	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
-	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {
-		cs('password', csPassword, {
-			targetDir: cmd.target,
-			loginName: cmd.user,
-			groups: cmd.groups,
-			password: cmd.password,
-			salt: cmd.salt,
-			time: cmd.time,
-			reorganize: cmd.reorganize !== undefined,
-			normalized: cmd.normalized !== undefined,
-			add: cmd.add !== undefined,
-			print: cmd.print !== undefined,
-		}, cmd, 
-		cmd.print !== undefined);
-	})
-);
-commands.set('sync', program.command('sync')
-	.description('synchronizes classes with the database')
-	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
-	.option('-C, --from-config', 'use local config directory instead of exporting the configuration from the database')
-	.option('-P, --purge', 'activate all drop statements')
-	.option('-S, --output-sql', 'outputs SQL statements')
-	.option('-D, --output-drop', 'outputs drop statements')
-	.option('-I, --output-ignore', 'outputs ignore snippets')
-	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
-	.option(silentOption.flags, silentOption.description, silentOption.default)
-	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
-	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {
-		cs('sync', csSync, { 
-			targetDir: cmd.target,
-			noExport: cmd.fromConfig !== undefined,
-			purge: cmd.purge !== undefined,
-			outputSql: cmd.outputSql !== undefined,
-			outputDrop: cmd.outputDrop !== undefined,
-			outputIgnore: cmd.outputIgnore !== undefined,
-			execute: cmd.sync !== undefined,
+		cs('backup', csBackup, {
+			dir: cmd.dir, 
+			prefix: cmd.prefix, 
 		}, cmd);
 	})
 );
-program.command('\t');
-commands.set('export', program.command('export')
-	.description('exports the (cs_*)meta-information of a database into a configuration directory')
+program.command('\t');	
+commands.set('import', program.command('import')
+	.description('imports the (cs_*)meta-information from a configuration directory into a database')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
-	.option('-N, --normalized', 'normalized config')
+	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
+	.option('--skip-backup', 'does not create backup before import')	
+	.option('--backup-prefix', 'backup file prefix', null)	
+	.option('--recreate', 'purge and recreate cs_* structure before import')	
+	.option('-X, --import', 'activates the real import (expected for avoiding unintended importing)')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
-	.action(async (cmd) => {		
-		cs('export', csExport, {
-			targetDir: cmd.target,
-			normalize: cmd.normalized !== undefined,
+ 	.action(async (cmd) => {
+		cs('import', csImport, {
+			execute: cmd.import !== undefined,
+			recreate: cmd.recreate !== undefined, 
+			skipBackup: cmd.skipBackup !== undefined,
+			backupPrefix: cmd.backupPrefix,
+			backupDir: cmd.backupDir,
 		}, cmd);
 	})
 );
@@ -319,6 +213,112 @@ commands.set('purge', program.command('purge')
 		cs('purge', csPurge, {
 			execute: cmd.purge !== undefined,
 		}, cmd);	
+	})
+);
+commands.set('restore', program.command('restore')
+	.description('restores the (cs_*)meta-information from a backup file')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-f, --file <file>', 'the backup file to restore from', null)
+	.option('-X, --restore', 'activates the real restore (expected for avoiding unintended restoring)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('restore', csRestore, {
+			file: cmd.file,
+			execute: cmd.restore !== undefined,
+		}, cmd);
+	})
+); 
+program.command('\t');
+commands.set('password', program.command('password')
+	.description('changes or sets the password for an user.')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option(targetOption.flags, targetOption.description, ".")
+	.option('-u, --user <user>', 'the login_name of the user')
+	.option('-p, --password <password>', 'the password to set')
+	.option('-t, --time <timestamp>', 'the timestamp to use as last_pwd_change')
+	.option('-g, --groups <groups>', 'comma separated list of groups')
+	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
+	.option('-R, --reorganize', 'reorganize config')
+	.option('-N, --normalized', 'normalize the user informations')
+	.option('-A, --add', 'add a new user with the given password and groups')	
+	.option('-P, --print', 'only print the new user information')	
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('password', csPassword, {
+			targetDir: cmd.target,
+			loginName: cmd.user,
+			groups: cmd.groups,
+			password: cmd.password,
+			salt: cmd.salt,
+			time: cmd.time,
+			reorganize: cmd.reorganize !== undefined,
+			normalized: cmd.normalized !== undefined,
+			add: cmd.add !== undefined,
+			print: cmd.print !== undefined,
+		}, cmd, 
+		cmd.print !== undefined);
+	})
+);
+commands.set('inspect', program.command('inspect')
+	.description('inspects object(s)')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-u, --user <userKey>', 'inspects user(s)')
+	.option('-g, --group <groupKey>', 'inspects group(s)')
+	.option('-d, --domain <domainKey>', 'inspects domain(s)')
+	.option('-A, --aggregate', 'aggregate configurationAttribute values')
+	.option('-O, --output <filepath>', 'output into file')	
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('inspect', csInspect, { 
+			userKey: cmd.user,
+			groupKey: cmd.group,
+			domainKey: cmd.domain,
+			fileTarget: cmd.output,
+			aggregateConfAttrValues: cmd.aggregate !== undefined,
+		}, cmd);
+	})
+);	 	 
+commands.set('check', program.command('check')
+	.description('checks configuration for errors')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('check', csCheck, {
+		}, cmd);
+	})
+);
+
+commands.set('sync', program.command('sync')
+	.description('synchronizes classes with the database')
+	.option(configOption.flags, configOption.description, configOption.default)
+	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
+	.option('-C, --from-config', 'use local config directory instead of exporting the configuration from the database')
+	.option('-P, --purge', 'activate all drop statements')
+	.option('-S, --output-sql', 'outputs SQL statements')
+	.option('-D, --output-drop', 'outputs drop statements')
+	.option('-I, --output-ignore', 'outputs ignore snippets')
+	.option('-X, --sync', 'execute the queries on the db instead of juste printing them to the console (expected for avoiding unintended syncing)')
+	.option(silentOption.flags, silentOption.description, silentOption.default)
+	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+	.option(debugOption.flags, debugOption.description, debugOption.default)
+	.action(async (cmd) => {
+		cs('sync', csSync, { 
+			targetDir: cmd.target,
+			noExport: cmd.fromConfig !== undefined,
+			purge: cmd.purge !== undefined,
+			outputSql: cmd.outputSql !== undefined,
+			outputDrop: cmd.outputDrop !== undefined,
+			outputIgnore: cmd.outputIgnore !== undefined,
+			execute: cmd.sync !== undefined,
+		}, cmd);
 	})
 );
 program.command('\t');
