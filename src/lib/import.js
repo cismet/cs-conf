@@ -947,7 +947,7 @@ INSERT INTO cs_ug_membership (ug_id, usr_id, ug_domain, id)
 
 // $1 = cs_config_attr_key.key
 const configAttrsImportStatement = `
-INSERT INTO cs_config_attr_key (id, "key") VALUES (DEFAULT, $1);
+INSERT INTO cs_config_attr_key (id, "key", group_name) VALUES (DEFAULT, $1, 'none');
 `;
 
 // $1 = domain[[]
