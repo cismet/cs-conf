@@ -14,7 +14,7 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
     let normalizedConfigs = normalizeConfigs(configs);
     let mainDomain = normalizedConfigs.domainName;
 
-    if (configs == null) throw "config not set";
+    if (configs == null) throw Error("config not set");
 
     let keys = [];
     if (userKey) keys.push(userKey)
@@ -22,9 +22,9 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
     if (domainKey) keys.push(domainKey)
 
     if (keys.length == 0) {
-        throw "at least one key is necessary"
+        throw Error("at least one key is necessary")
     } else if (keys.length > 1) {
-        throw "unambiguous parameters: only one key is allowed."
+        throw Error("unambiguous parameters: only one key is allowed.")
     }
 
     let result = null;
@@ -85,10 +85,10 @@ export function inspectUsermanagement({usermanagement, usergroups, domains}, agg
 }
 
 export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggregateConfAttrValues = false) {
-    if (!userKey) throw util.format("userKey is missing");
+    if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
-    if (!user) throw util.format("user '%s' not found", userKey);
+    if (!user) throw Error(util.format("user '%s' not found", userKey));
 
     let domainKeys = new Set();
     let groupKeys = new Set();
@@ -103,7 +103,7 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggr
         domainKeys.add(domainKey);
         groupKeys.add(groupKey);
 
-        if (!usergroups[groupKey]) throw util.format("usergroup '%s' of user '%s' not found", groupKey, userKey);
+        if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
     let aggrConfigAttrs = {};
@@ -182,12 +182,12 @@ export function inspectUsergroups({ usergroups }) {
 }
 
 export function inspectUsergroup(groupKey, { usergroups }) {
-    if (!groupKey) throw util.format("groupKey is missing");
+    if (!groupKey) throw Error(util.format("groupKey is missing"));
 
     let normalizedGroupKey = groupKey.includes('@') ? groupKey : util.format('%s@LOCAL', groupKey);
 
     let group = usergroups[normalizedGroupKey];
-    if (!group) throw util.format("group '%s' not found", normalizedGroupKey);
+    if (!group) throw Error(util.format("group '%s' not found", normalizedGroupKey));
 
     let inspected = Object.assign({}, group);
     return inspected;
@@ -206,10 +206,10 @@ export function inspectDomains({ domains }) {
 }
 
 export function inspectDomain(domainKey, { domains }) {
-    if (!domainKey) throw util.format("domainKey is missing");
+    if (!domainKey) throw Error(util.format("domainKey is missing"));
 
     let domain = domains[domainKey];
-    if (!domain) throw util.format("domain '%s' not found", domainKey);
+    if (!domain) throw Error(util.format("domain '%s' not found", domainKey));
 
     let inspected = Object.assign({}, domain);
     return inspected;

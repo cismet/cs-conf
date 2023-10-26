@@ -23,30 +23,17 @@ function createHash(password, salt = createSalt()) {
 async function csPassword(options) {
     let { targetDir, loginName, password, groups, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
 
-    if (loginName == null && password == null) {
-        throw "user and password are mandatory";
-    }
-    if (loginName == null) {
-        throw "user is mandatory";
-    }
-    if (password == null) {
-        throw "password is mandatory";
-    }
+    if (loginName == null && password == null) throw Error("user and password are mandatory");
+    if (loginName == null) throw Error("user is mandatory");    
+    if (password == null) throw Error("password is mandatory");
+    if (!(add || printOnly) && normalized) throw Error("normalized can only be combined with -A|--add or -P|--print");
 
-    if (!(add || printOnly) && normalized) {
-        throw "normalized can only be combined with -A|--add or -P|--print";
-    }
-
-    if (printOnly && reorganize) {
-        throw "print and reorganize can't be combined";
-    }
+    if (printOnly && reorganize) throw Error("print and reorganize can't be combined");
 
     let timeFormat = "DD.MM.YYYY, HH:mm:ss";
     
     let newLastPwdChange = time ?? dayjs().format(timeFormat);
-    if (!dayjs(newLastPwdChange, timeFormat, true).isValid()) {
-        throw util.format("the time '%s' doesn't match the required format '%s'", newLastPwdChange, timeFormat);
-    }
+    if (!dayjs(newLastPwdChange, timeFormat, true).isValid()) throw Error(util.format("the time '%s' doesn't match the required format '%s'", newLastPwdChange, timeFormat));
 
     let newSalt = salt ?? createSalt();
     let newUser = {
@@ -71,15 +58,13 @@ async function csPassword(options) {
 
     let configs = readConfigFiles(global.configsDir);
     
-    if (configs == null) throw "config not set";
+    if (configs == null) throw Error("config not set");
 
     let { usermanagement } = configs;
 
     if (add) {
         for (let userKey of Object.keys(usermanagement)) {
-            if (userKey == loginName) {
-                throw util.format('user %s already exists', loginName);
-            }
+            if (userKey == loginName) throw Error(util.format('user %s already exists', loginName));
         }
         usermanagement[loginName] = newUser;
         logInfo(util.format("user '%s' added", loginName));
@@ -89,16 +74,12 @@ async function csPassword(options) {
         for (let userKey of Object.keys(usermanagement)) {
             let user = usermanagement[userKey]
             if (userKey == loginName) {
-                if (found) {
-                    throw util.format("duplicate entry for user '%'", loginName);
-                }
+                if (found) throw Error(util.format("duplicate entry for user '%'", loginName));
                 found = true;
                 let newSalt = salt ?? user.salt ?? createSalt();
                 let oldHash = user.pw_hash;
                 let newHash = createHash(password, user.salt);
-                if (groups == null && newHash == oldHash) {
-                    throw util.format("the new password for user %s is identical with the old password", loginName);
-                }                
+                if (groups == null && newHash == oldHash) throw Error(util.format("the new password for user %s is identical with the old password", loginName));
                 let newGroups = groups != null ? groups.split(',') : user.groups;
                 // this is for assuring the right order of the properties.
                 // if we would directly assign the properties to the user object,
@@ -129,9 +110,7 @@ async function csPassword(options) {
                 logOut(stringify(normalized ? normalizeUser(user, loginName) : simplifyUser(user, loginName)), { noSilent: true });
             }
         }
-        if (!found) {
-            throw util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName);
-        }
+        if (!found) throw Error(util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName));
     }
 
     targetDir = targetDir ? targetDir : global.configsDir;

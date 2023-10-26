@@ -25,7 +25,7 @@ import {
 export default async function csNormalize(options) {
     let { targetDir } = options;
     let configs = readConfigFiles(global.configsDir);
-    if (configs == null) throw "config not set";
+    if (configs == null) throw Error("config not set");
 
     let normalized = normalizeConfigs(configs);
     
@@ -85,11 +85,11 @@ export function normalizeClasses(classes) {
 }
 
 export function normalizeClass(classKey, clazz) {
-    if (clazz.pk === null) throw util.format("normalizeClasses: [%s] pk of can't be null", classKey);
-    //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk);
-    //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType);
-    //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany);
-    //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw util.format("normalizeClasses: manyToMany '%s' has to be uppercase", clazz.manyToMany);
+    if (clazz.pk === null) throw Error(util.format("normalizeClasses: [%s] pk of can't be null", classKey));
+    //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw Error(util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk));
+    //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw Error(util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType));
+    //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw Error(util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany));
+    //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw Error(util.format("normalizeClasses: manyToMany '%s' has to be uppercase", clazz.manyToMany));
 
     if (clazz.pk != null) {
         clazz.pk = clazz.pk.toLowerCase();
@@ -134,7 +134,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 attribute.manyToMany = attribute.manyToMany.toLowerCase();
             }
 
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attributeKey);
+            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw Error(util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attributeKey));
 
             if (pk !== undefined && attributeKey.toLowerCase() == pk.toLowerCase()) {
                 pkMissing = false;
@@ -142,7 +142,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                     attribute.cidsType != null ||
                     attribute.oneToMany != null ||
                     attribute.manyToMany != null                
-                ) throw "normalizeAttributes: primary key can only have dbType, no cidsType allowed";
+                ) throw Error("normalizeAttributes: primary key can only have dbType, no cidsType allowed");
                 
                 normalized[attributeKey.toLowerCase()] = Object.assign({}, pkDummy, attribute, {
                     defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
@@ -157,8 +157,8 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 if (attribute.oneToMany != null) types.push(attribute.oneToMany);
                 if (attribute.manyToMany != null) types.push(attribute.manyToMany);
 
-                if (types.length == 0) throw util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attributeKey);    
-                if (types.length > 1) throw util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attributeKey);    
+                if (types.length == 0) throw Error(util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attributeKey)); 
+                if (types.length > 1) throw Error(util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attributeKey));
 
                 normalized[attributeKey.toLowerCase()] = Object.assign({}, defaultAttribute, attribute, {
                     name: attribute.name || attributeKey.toLowerCase(),
@@ -182,7 +182,7 @@ export function normalizeDomains(domains) {
 
     if (domains) {
         for (let domainKey of Object.keys(domains)) {
-            if (normalized.hasOwnProperty(domainKey)) throw util.format("normalizeDomains: domain '%s' already exists", domainKey);
+            if (normalized.hasOwnProperty(domainKey)) throw Error(util.format("normalizeDomains: domain '%s' already exists", domainKey));
 
             let domain = domains[domainKey];
             normalized[domainKey] = normalizeDomain(domain);
@@ -211,8 +211,8 @@ export function normalizeDynchildhelpers(dynchildhelpers) {
         for (let dynchildhelperKey of Object.keys(dynchildhelpers)) {
             let dynchildhelper = dynchildhelpers[dynchildhelperKey];
 
-            if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name);
-            if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name);
+            if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
+            if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
 
             normalized[dynchildhelperKey] = Object.assign({}, defaultDynchildhelper, dynchildhelper);
         }
@@ -226,9 +226,9 @@ export function normalizePolicyRules(policyRules) {
     
     if (policyRules) {
         for (let policyRule of policyRules) {
-            if (policyRule.policy == null) throw "normalizePolicyRules: missing policy";
-            if (policyRule.permission == null) throw "normalizePolicyRules: missing permission";
-            if (policyRule.default_value == null) throw "normalizePolicyRules: missing default_value";
+            if (policyRule.policy == null) throw Error("normalizePolicyRules: missing policy");
+            if (policyRule.permission == null) throw Error("normalizePolicyRules: missing permission");
+            if (policyRule.default_value == null) throw Error("normalizePolicyRules: missing default_value");
             
             normalized.push(Object.assign({}, defaultPolicyRule, policyRule));
         }
@@ -287,9 +287,9 @@ export function normalizeUsermanagement(usermanagement, additionalInfos = {}) {
 }
 
 export function normalizeUser(user, userKey) {
-    if (user.pw_hash == null) throw util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey);
-    if (user.salt == null) throw util.format("normalizeUsermanagement: [%s] missing salt", userKey);
-    if (user.password != null) throw util.format("normalizeUsermanagement: [%s] password not allowed", userKey);
+    if (user.pw_hash == null) throw Error(util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey));
+    if (user.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
+    if (user.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
 
     let normalized = Object.assign({}, defaultUser, user, {
         groups: normalizeGroups(user.groups),
@@ -337,7 +337,7 @@ export function normalizeConfigurationAttributes(configurationAttributes) {
 
             normalized[configurationAttributeKey] = [];
             for (let configurationAttribute of configurationAttributeArray) {
-                if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw "normalizeConfigurationAttributes: value and xmlfile can't both be set";
+                if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
 
                 normalized[configurationAttributeKey].push(Object.assign({}, defaultConfigurationAttributes, configurationAttribute, {
                     groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
@@ -358,9 +358,9 @@ function normalizeNode(nodes) {
         let lastNode = null;
         for (let node of nodes) {
             if (node.link == null) {
-                if (node.name == null) throw util.format("normalizeStructure: missing name for node (the one after %s)", lastNode.name);
-                if (node.dynamic_children_file != null && node.dynamic_children != null) throw util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", node.name);
-                //if (node.children != null && (node.dynamic_children_file != null || node.dynamic_children != null)){ console.table(node);  throw "children and dynamic_children(_file) can't both be set"};
+                if (node.name == null) throw Error(util.format("normalizeStructure: missing name for node (the one after %s)", lastNode.name));
+                if (node.dynamic_children_file != null && node.dynamic_children != null) throw Error(util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", node.name));
+                //if (node.children != null && (node.dynamic_children_file != null || node.dynamic_children != null)){ console.table(node);  throw Error("children and dynamic_children(_file) can't both be set"});
             }
 
             normalized.push(Object.assign({}, defaultNode, node, {
@@ -393,8 +393,8 @@ function normalizeConfigurationAttributeGroups(groups) {
 function normalizeSpecial(special, table) {
     // exclude toString()
     if (typeof special !== 'function' && special != null) {
-        if (special.type == null) throw util.format("normalizeClasses: [%s] type missing", table);
-        if (special.class == null) throw util.format("normalizeClasses: [%s] class missing", table);
+        if (special.type == null) throw Error(util.format("normalizeClasses: [%s] type missing", table));
+        if (special.class == null) throw Error(util.format("normalizeClasses: [%s] class missing", table));
         return {
             type: special.type,
             class: special.class,

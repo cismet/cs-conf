@@ -33,7 +33,7 @@ async function csConfig(options) {
 
     if (runtimeProperties != null) {
         if (!fs.existsSync(runtimeProperties)) {
-            throw util.format("the properties file '%s' does not exists", runtimeProperties);
+            throw Error(util.format("the properties file '%s' does not exists", runtimeProperties));
         }
 
         config = Object.assign(config, getConfigFromRuntimeProperties(runtimeProperties));

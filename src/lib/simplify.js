@@ -46,7 +46,7 @@ export default async function csSimplify(options) {
 
     let configsDir = global.configsDir;
     let configs = readConfigFiles(configsDir);
-    if (configs == null) throw "config not set";
+    if (configs == null) throw Error("config not set");
     
     let simplified = simplifyConfigs(reorganize ? reorganizeConfigs(configs) : configs);
 

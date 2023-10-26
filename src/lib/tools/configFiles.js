@@ -11,22 +11,26 @@ const structureHelperStatementsFolderConst = "structure-helper-stmnts";
 const confAttrXmlSnippetsFolderConst = "xml-config-attrs";
 
 export function readConfigJsonFile(file) {    
-    if (!fs.existsSync(file)) {
-        throw util.format("config file '%s' doesn't exist", file);
-    }
+    if (!fs.existsSync(file)) throw Error(util.format("config file '%s' doesn't exist", file));
     logVerbose(util.format("Reading config file '%s' ...", file));
     let config = readConfigFile(file, true);
     let normalized = normalizeConfig(config);
     let majorVersion =  version.split('.')[0];
-    if (normalized.formatVersion != majorVersion) {
-        throw util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion, majorVersion);
-    }
+    if (normalized.formatVersion != majorVersion) throw Error(util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion, majorVersion));
     return normalized;
 }
 
 export function readConfigFile(file, sub = false) {    
     logVerbose(util.format("%s config file '%s'", sub ? " ↳ reading" : "Reading", file));
-    return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, {encoding: 'utf8'})) : undefined
+
+    if (!fs.existsSync(file)) return undefined;
+
+    let fileContent = fs.readFileSync(file, {encoding: 'utf8'});
+    try {
+        return JSON.parse(fileContent);
+    } catch (e) {
+        throw Error(util.format("Error while parsing '%s'", file), e)
+    }
 }
 
 export function writeConfigFile(config, file, sub = false) {    
@@ -58,17 +62,13 @@ export function deleteFile(file, { sub = false }) {
 
 export function readConfigFiles(configsDir, topics) {
     logOut(util.format("Reading config directory '%s' ...", configsDir));
-    if (!fs.existsSync(configsDir)) {
-        throw util.format("readConfigFiles: %s does not exist", configsDir);
-    }
+    if (!fs.existsSync(configsDir)) throw Error(util.format("readConfigFiles: %s does not exist", configsDir));
 
     if (
         fs.existsSync(configsDir) 
         && fs.statSync(configsDir).isDirectory() 
         && !fs.existsSync(util.format("%s/config.json", configsDir))
-    ) {
-        throw util.format("checkConfigFolders: target directory %s exists but has no config.json", configsDir);
-    }    
+    ) throw Error(util.format("checkConfigFolders: target directory %s exists but has no config.json", configsDir));
     let config = readConfigFile(util.format("%s/config.json", configsDir), true);
     let additionalInfos = readConfigFile(util.format("%s/additionalInfos.json", configsDir), true);
 
@@ -153,9 +153,7 @@ export function writeConfigFiles(configs, configsDir) {
         && fs.statSync(configsDir).isDirectory() 
         && !fs.existsSync(util.format("%s/config.json", configsDir)) 
         && fs.readdirSync(configsDir).length !== 0
-    ) {
-        throw util.format("checkConfigFolders: target directory %s exists but is not empty and has no config.json", configsDir);
-    }
+    ) throw Error(util.format("checkConfigFolders: target directory %s exists but is not empty and has no config.json", configsDir));
 
     logOut(util.format("Writing config directory '%s' ...", configsDir));
 

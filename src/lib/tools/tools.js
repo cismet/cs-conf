@@ -60,9 +60,7 @@ export function topologicalSort(graph) {
     let visiting = new Set();
   
     function visit(node) {
-      if (visiting.has(node)) {
-        throw new Error("Cycle detected in the dependency graph.");
-      }
+      if (visiting.has(node)) throw Error("Cycle detected in the dependency graph.");
   
       if (!visited.has(node)) {
         visiting.add(node);

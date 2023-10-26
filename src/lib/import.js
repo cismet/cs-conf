@@ -14,7 +14,7 @@ import { normalizeConfigs } from './normalize';
 export default async function csImport(options) {
     let { backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
 
-    if (execute && !skipBackup && backupDir == null) throw "backupDir has to be set !";
+    if (execute && !skipBackup && backupDir == null) throw Error("backupDir has to be set !");
 
     let configs = readConfigFiles(global.configsDir);
 

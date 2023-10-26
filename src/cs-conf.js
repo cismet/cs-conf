@@ -363,19 +363,12 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		logErr(util.format(logTemplate, functionName));
 		logErr();
 		logErr(e);
-		if (e.stack) {
+		if (e.stack && global.verbose) {
 			logErr("-------");
 			logErr(e.stack);
 		}
 		logErr("⚠".repeat(logLength));
 
-		if (global.verbose) {
-			if (functionName != null) {
-				commands.get(functionName).outputHelp();
-			} else {
-				program.outputHelp();
-			}
-		}
 		process.exit(1);
 	} finally {
 		if (global.client != null) {

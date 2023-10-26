@@ -5,7 +5,7 @@ import { logOut } from "./tools/tools";
 async function csCheck(options) {
     let configs = readConfigFiles(global.configsDir);
 
-    if (configs == null) throw "config not set";
+    if (configs == null) throw Error("config not set");
 
     normalizeConfigs(configs);
 

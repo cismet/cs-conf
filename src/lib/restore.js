@@ -7,7 +7,7 @@ import csTruncate from './truncate';
 
 async function csRestore(options) {
     let { file, execute, main } = options;
-    if (file == null) throw "file has to be set !";
+    if (file == null) throw Error("file has to be set !");
 
     let client = await initClient(global.config.connection, execute);
 
