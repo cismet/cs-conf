@@ -394,7 +394,8 @@ export function simplifyConfigurationAttributes(configurationAttributes, mainDom
 export function simplifyConfigurationAttribute(configurationAttribute, mainDomain = null) {
     if (configurationAttribute == null) return null;
     let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, { 
-        groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain) 
+        groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain),
+        _group: configurationAttribute._group ? removeLocalDomain(configurationAttribute._group, mainDomain) : undefined,
     }), defaultConfigurationAttributes);
     return simplified;
 }
