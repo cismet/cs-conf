@@ -1,14 +1,14 @@
 {
     "Group1@LOCAL": {
         "descr": "Descr1",
-        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null }]},
-        "prio": null,
+        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }]},
+        "prio": 0,
         "additional_info": {}
     }, 
     "Group2@LOCAL": { 
         "descr": null,
         "configurationAttributes": {},
-        "prio": null,
+        "prio": 0,
         "additional_info": {}
     }
 }
