@@ -143,8 +143,8 @@ export function reorganizeAttributes(attributes, order = 'auto') {
     for (let attributeKey of sortedAttributeKeys) {                    
         let attribute = attributes[attributeKey];
         reorganized[attributeKey] = Object.assign({
-            readPerms: (attribute.readPerms) ? reorganizePerms(attribute.readPerms) : undefined, 
-            writePerms: (attribute.writePerms) ? reorganizePerms(attribute.writePerms) : undefined,
+            readPerms: attribute.readPerms ? [...attribute.readPerms].sort() : attribute.readPerms, 
+            writePerms: attribute.writePerms ? [...attribute.writePerms].sort() : attribute.writePerms,
         }, attribute)
     }
     return reorganized;         
@@ -161,8 +161,8 @@ export function reorganizeClasses(classes) {
     for (let classKey of sortedClassKeys) {
         let clazz = classes[classKey];
         reorganized[classKey] = Object.assign({
-            readPerms: clazz.readPerms ? reorganizePerms(clazz.readPerms) : undefined,
-            writePerms: clazz.writePerms ? reorganizePerms(clazz.writePerms) : undefined,
+            readPerms: clazz.readPerms ? [...clazz.readPerms].sort() : clazz.readPerms,
+            writePerms: clazz.writePerms ? [...clazz.writePerms].sort() : clazz.writePerms,
             attributes: reorganizeAttributes(clazz.attributes, clazz.attributesOrder),
         }, clazz);
     }
@@ -194,7 +194,7 @@ export function reorganizeDomain(domain) {
     if (domain == null) return null;
 
     return Object.assign({}, domain, {
-        configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : undefined,
+        configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : domain.configurationAttributes,
     });
 }
 
@@ -248,7 +248,8 @@ export function reorganizeUsergroup(usergroup) {
     let reorganized = {};
     if (usergroup) {
         Object.assign(reorganized, usergroup, {
-            configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : undefined,
+            members: usergroup.members ? usergroup.members.sort() : usergroup.members,
+            configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : usergroup.configurationAttributes,
         });
     }
     return reorganized;
@@ -273,8 +274,12 @@ export function reorganizeUser(user) {
 
     if (user) {
         Object.assign(reorganized, user, {
-            configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : undefined,
-                groups : user.groups ? user.groups.sort() : undefined,
+            configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : user.configurationAttributes,
+            groups : user.groups ? [...user.groups.sort()] : user.groups,
+            readPermClasses: user.readPermClasses ? [...user.readPermClasses].sort() : user.readPermClasses,
+            writePermClasses: user.writePermClasses ? [...user.writePermClasses].sort() : user.writePermClasses,
+            readPermAttributes: user.readPermAttributes ? [...user.readPermAttributes].sort() : user.readPermAttributes,
+            writePermAttributes: user.writePermAttributes ? [...user.writePermAttributes].sort() : user.writePermAttributes,
         });
     }
 
@@ -284,25 +289,16 @@ export function reorganizeUser(user) {
 // ---
 
 /*
- * used by reorganizeClasses, reorganizeStructure
- */
-function reorganizePerms(perms) {
-    if (perms == null) return null;
-
-    return perms.sort();
-}
-
-/*
  * used by reorganizeStructure
  */
 function reorganizeNode(node) {
     if (node != null) {
         for (let node of node) {
             if (node.readPerms != null) {
-                node.readPerms = reorganizePerms(node.readPerms);
+                node.readPerms = [...node.readPerms].sort();
             }
             if (node.writePerms != null) {
-                node.writePerms = reorganizePerms(node.writePerms);
+                node.writePerms = [...node.writePerms].sort();
             }
             if (node.children != null) {
                 node.children = reorganizeNode(node.children);
@@ -335,14 +331,14 @@ function reorganizeConfigurationAttributes(configurationAttributes) {
               })
             for (let configurationAttribute of sortedConfigurationAttributeArray) {
                 reorganizedArray.push(Object.assign({}, configurationAttribute, {
-                    groups: (configurationAttribute.groups) ? configurationAttribute.groups.sort() : undefined,
+                    groups: configurationAttribute.groups ? configurationAttribute.groups.sort() : configurationAttribute.groups,
                 }));
             }    
             reorganized[configurationAttributeKey] = reorganizedArray;
         } else {
             let configurationAttribute = configurationAttributeValue;
             reorganized[configurationAttributeKey] = Object.assign({}, configurationAttribute, {
-                groups: (configurationAttribute.groups) ? configurationAttribute.groups.sort() : undefined,
+                groups: configurationAttribute.groups ? configurationAttribute.groups.sort() : configurationAttribute.groups,
             });
         }
     }

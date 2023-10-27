@@ -180,7 +180,7 @@ export function simplifyDomain(domain) {
     if (domain == null) return null;
     
     let simplified = copyFromTemplate(Object.assign({}, domain, {
-        configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes)
+        configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes),
     }), defaultDomain);
     return simplified;
 }

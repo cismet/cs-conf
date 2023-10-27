@@ -1,14 +1,24 @@
 {
     "Group1@LOCAL": {
         "descr": "Descr1",
-        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }]},
         "prio": 0,
+        "members": [],
+        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }]},
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
         "additional_info": {}
     }, 
     "Group2@LOCAL": { 
         "descr": null,
-        "configurationAttributes": {},
         "prio": 0,
+        "members": [],
+        "configurationAttributes": {},
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
         "additional_info": {}
     }
 }

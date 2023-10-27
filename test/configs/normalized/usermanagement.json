@@ -6,6 +6,10 @@
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
         "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }] },
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
         "additional_info": {}
     }, 
     "User2": {
@@ -15,6 +19,10 @@
         "shadows": [],        
         "groups": ["Group3@LOCAL"],
         "configurationAttributes": {},
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
         "additional_info": {}
     }, 
     "User3": {
@@ -24,6 +32,10 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
         "additional_info": {}
     }, 
     "User4": {
@@ -33,6 +45,10 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
-        "additional_info": {}
+        "readPermClasses": [],
+        "writePermClasses": [],
+        "readPermAttributes": [],
+        "writePermAttributes": [],        
+       "additional_info": {}
     }
 }

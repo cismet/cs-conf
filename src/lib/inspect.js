@@ -77,24 +77,25 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
 
 // ---
 
-export function inspectUsermanagement({usermanagement, usergroups, domains}, aggregateConfAttrValues = false) {
+export function inspectUsermanagement(configs, aggregateConfAttrValues = false) {
     let inspected = {};
     
+    let { usermanagement } = configs;
     for (let userKey of Object.keys(usermanagement)) {
-        inspected[userKey] = inspectUser(userKey, {usermanagement, usergroups, domains}, aggregateConfAttrValues);
+        inspected[userKey] = inspectUser(userKey, configs, aggregateConfAttrValues);
     }
 
     return inspected;
 }
 
-export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggregateConfAttrValues = false) {
+export function inspectUser(userKey, {usermanagement, usergroups, domains, classes}, aggregateConfAttrValues = false) {
     if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
     if (!user) throw Error(util.format("user '%s' not found", userKey));
 
     let domainKeys = new Set();
-    let groupKeys = new Set();
+    let groupKeysSet = new Set();
     for (let groupKey of user.groups.sort((a, b) => {
         if (a.prio === null && b.prio === null) return 0;
         if (a.prio === null) return 1;
@@ -104,45 +105,45 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains}, aggr
         let groupAndDomain = extractGroupAndDomain(groupKey);
         let domainKey = groupAndDomain.domain;
         domainKeys.add(domainKey);
-        groupKeys.add(groupKey);
+        groupKeysSet.add(groupKey);
 
         if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
-    let inspectedConfigurationAttributes = Object.assign({}, user.configurationAttributes);
+    let configurationAttributes = Object.assign({}, user.configurationAttributes);
 
-    for (let groupKey of groupKeys) {
+    for (let groupKey of groupKeysSet) {
         let group = usergroups[groupKey];
-        let configurationAttributes = group.configurationAttributes;
-        completeConfigAttr(inspectedConfigurationAttributes, configurationAttributes, userKey, {_group: groupKey}, aggregateConfAttrValues);
+        let groupConfigurationAttributes = group.configurationAttributes;
+        let completition = {_group: groupKey};
+        completeConfigAttr(configurationAttributes, groupConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
     }
 
     for (let domainKey of domainKeys) {            
         let domain = domains[domainKey];
-        let configurationAttributes = domain.configurationAttributes;
-        completeConfigAttr(inspectedConfigurationAttributes, configurationAttributes, userKey, {_domain: domainKey}, aggregateConfAttrValues);
+        let domainConfigurationAttributes = domain.configurationAttributes;
+        let completition = {_domain: domainKey};
+        completeConfigAttr(configurationAttributes, domainConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
     }
 
-    let inspected = Object.assign({}, user, {
-        configurationAttributes: inspectedConfigurationAttributes,
-    });
+    let inspected = Object.assign({}, user, { configurationAttributes }, permsForGroups([...groupKeysSet], classes));
     return inspected;
 }
-
 
 // ---
 
-export function inspectUsergroups({ usergroups, domains }, aggregateConfAttrValues = false) {
+export function inspectUsergroups(configs, aggregateConfAttrValues = false) {
     let inspected = {};
     
+    let { usergroups } = configs;
     for (let groupKey of Object.keys(usergroups)) {
-        inspected[groupKey] = inspectUsergroup(groupKey, { usergroups, domains });
+        inspected[groupKey] = inspectUsergroup(groupKey, configs, aggregateConfAttrValues);
     }
 
     return inspected;
 }
 
-export function inspectUsergroup(groupKey, { usergroups, domains }, aggregateConfAttrValues = false) {
+export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains, classes }, aggregateConfAttrValues = false) {
     if (!groupKey) throw Error(util.format("groupKey is missing"));
 
     let group = usergroups[groupKey];
@@ -154,24 +155,33 @@ export function inspectUsergroup(groupKey, { usergroups, domains }, aggregateCon
     let domain = domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' of usergroup '%s' not found", domainKey, groupKey));
 
-    let inspectedConfigurationAttributes = Object.assign({}, group.configurationAttributes);
-    completeConfigAttr(inspectedConfigurationAttributes, domain.configurationAttributes, groupKey, {_domain: domainKey}, aggregateConfAttrValues);
+    let configurationAttributes = Object.assign({}, group.configurationAttributes);
+    completeConfigAttr(configurationAttributes, domain.configurationAttributes, groupKey, {_domain: domainKey}, aggregateConfAttrValues);
 
-    let inspected = Object.assign({}, group, {
-        configurationAttributes: inspectedConfigurationAttributes,
-    });
+    let userKeySet = new Set();
+    for (let userKey of Object.keys(usermanagement)) {
+        let user = usermanagement[userKey];
+        if (user.groups.includes(groupKey)) {
+            userKeySet.add(userKey);
+        }
+    }
+    let members = [...userKeySet];
 
-
+    let inspected = Object.assign({}, group, { 
+        configurationAttributes: configurationAttributes,
+        members,
+    }, permsForGroup(groupKey, classes));
     return inspected;
 }
 
 // ---
 
-export function inspectDomains({ domains }, aggregateConfAttrValues = false) {
+export function inspectDomains(configs, aggregateConfAttrValues = false) {
     let inspected = {};
     
+    let { domains } = configs;
     for (let domainKey of Object.keys(domains)) {
-        inspected[domainKey] = inspectDomain(domainKey, { domains });
+        inspected[domainKey] = inspectDomain(domainKey, configs, aggregateConfAttrValues);
     }
 
     return inspected;
@@ -185,4 +195,73 @@ export function inspectDomain(domainKey, { domains }, aggregateConfAttrValues = 
 
     let inspected = Object.assign({}, domain);
     return inspected;
+}
+
+// ---
+
+function permsForGroup(groupKey, classes) {
+    return permsForGroups([groupKey], classes);
+}
+
+function permsForGroups(groupKeys, classes) {
+    let readPermClassesSet = new Set();
+    let writePermClassesSet = new Set();
+    let readPermAttributesSet = new Set();
+    let writePermAttributesSet = new Set();
+
+    for (let classKey of Object.keys(classes)) {
+        let clazz = classes[classKey];
+        if (clazz) {
+            let classPolicy = clazz.policy;
+            // TODO inspect server policy for automatic interpretation
+            let classFullKey = classPolicy ? util.format("%s [%s]", classKey, classPolicy) : util.format("%s", classKey);
+            if (clazz.readPerms) {
+                for (let perm of clazz.readPerms) {
+                    if (groupKeys.includes(perm)) {
+                        readPermClassesSet.add(classFullKey);
+                    }
+                }
+            }
+            if (clazz.writePerms) {
+                for (let perm of clazz.writePerms) {
+                    if (groupKeys.includes(perm)) {
+                        writePermClassesSet.add(classFullKey);
+                    }
+                }
+            }
+            let attributes = clazz.attributes;
+            // TODO inspect server policy for automatic interpretation
+            if (attributes) {
+                let attributePolicy = clazz.attribute_policy
+                for (let attributeKey of Object.keys(attributes)) {
+                    let attribute = attributes[attributeKey];
+                    if (attribute) {
+                        let fullAttributeKey = attributePolicy ? util.format("%s.%s [%s]", classKey, attributeKey, attributePolicy) : util.format("%s.%s", classKey, attributeKey);
+                        for (let perm of attribute.writePerms) {
+                            if (groupKeys.includes(perm)) {
+                                readPermAttributesSet.add(fullAttributeKey);
+                            }
+                        }
+                        for (let perm of attribute.writePerms) {
+                            if (groupKeys.includes(perm)) {
+                                writePermAttributesSet.add(fullAttributeKey);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let readPermClasses = readPermClassesSet.size > 0 ? [...readPermClassesSet] : [];
+    let writePermClasses = writePermClassesSet.size > 0 ? [...writePermClassesSet] : [];
+    let readPermAttributes = readPermAttributesSet.size > 0 ? [...readPermAttributesSet] : [];
+    let writePermAttributes = writePermAttributesSet.size > 0 ? [...writePermClassesSet] : [];
+
+    return {
+        readPermClasses,
+        writePermClasses,
+        readPermAttributes,
+        writePermAttributes,
+    };
 }

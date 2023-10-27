@@ -15,6 +15,7 @@ export const defaultConfig = {
     configsDir: '.',
     connection: defaultConfigConnection,
     domainName: null,
+    // TODO policies { class, attribute, node } for automatic interpretation of permissions in inspect
     schema: 'public',
     maxFileLength: 80,
     sync: defaultConfigSync,
@@ -99,7 +100,7 @@ export const defaultConfigurationAttributes = {
 
 // domains
 export const defaultDomain = {
-    configurationAttributes: [],
+    configurationAttributes: {},
     additional_info: {},
 };
 
@@ -137,8 +138,13 @@ export const defaultNode = {
 // usergroups
 export const defaultUserGroup = {
     descr: null,
-    configurationAttributes: [],
     prio: 0,
+    members: [],
+    configurationAttributes: {},
+    readPermClasses: [],
+    writePermClasses: [],
+    readPermAttributes: [],
+    writePermAttributes: [],
     additional_info: {},
 };
 
@@ -149,7 +155,11 @@ export const defaultUser = {
     last_pwd_change: null,
     shadows: [],
     groups: [],
-    configurationAttributes: [],
+    configurationAttributes: {},
+    readPermClasses: [],
+    writePermClasses: [],
+    readPermAttributes: [],
+    writePermAttributes: [],
     additional_info: {},
 };
 
