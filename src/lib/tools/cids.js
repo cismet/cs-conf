@@ -1,4 +1,5 @@
 import util from "util";
+import { logDebug } from "./tools";
 
 export function extendLocalDomain(key) {
     let parts = key.split('@');     
@@ -26,5 +27,29 @@ export function extractGroupAndDomain(key) {
         return { group: keyComponents[0], domain: keyComponents[1] };
     } else {
         return null;
+    }
+}
+
+export function completeConfigAttr(aggrConfigAttrs, configurationAttributes, targetKey, completion = {}, aggregateConfAttrValues = false) {
+    if (configurationAttributes) {
+        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+            let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+            if (!aggrConfigAttrs[configurationAttributeKey]) {
+                aggrConfigAttrs[configurationAttributeKey] = [];
+            }
+            if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
+                for (let configurationAttribute of configurationAttributeArray) {
+                    aggrConfigAttrs[configurationAttributeKey].push(Object.assign({}, configurationAttribute, completion));
+                }
+            } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
+                if (completion._domain) {
+                    logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion._domain, targetKey));
+                } else if (completion._group) {
+                    logDebug(util.format("configurationAttribute '%s' of group '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion._group, targetKey));
+                } else {
+                    logDebug(util.format("configurationAttribute '%s' of target '%s' skipped sinced it already exists in Array", configurationAttributeKey, targetKey));
+                }
+            }
+        }
     }
 }

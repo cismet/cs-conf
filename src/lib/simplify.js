@@ -36,7 +36,9 @@ import {
     normalizeUsergroups, 
     normalizeUsermanagement, 
     normalizePerms, 
-    normalizePolicyRules, 
+    normalizePolicyRules,
+    normalizeUser,
+    normalizeUsergroup, 
 } from "./normalize";
 
 // ---
@@ -60,29 +62,29 @@ export default async function csSimplify(options) {
 // ---
 
 export function simplifyConfigs(configs) {
-    let mainDomain = configs.config.domainName;
     return Object.assign({}, configs, {
         config: simplifyConfig(configs.config), 
         additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
-        classes: simplifyClasses(configs.classes, mainDomain), 
-        domains: simplifyDomains(configs.domains, mainDomain), 
+        classes: simplifyClasses(configs.classes), 
+        domains: simplifyDomains(configs.domains, configs.config.domainName), 
         dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
         policyRules: simplifyPolicyRules(configs.policyRules), 
-        structure: simplifyStructure(configs.structure, mainDomain), 
-        usergroups: simplifyUsergroups(configs.usergroups, mainDomain), 
-        usermanagement: simplifyUsermanagement(configs.usermanagement, configs.additionalInfos, mainDomain), 
+        structure: simplifyStructure(configs.structure), 
+        usergroups: simplifyUsergroups(configs.usergroups), 
+        usermanagement: simplifyUsermanagement(configs.usermanagement), 
     });
 }
 
-export function simplifyConfig(config) {
-    if (config == null) return null;
+export function simplifyConfig(config, { normalize = true } = {}) {
+    if (!config) return undefined;
+
+    let preprocessed = normalize ? normalizeConfig(config) : config;
 
     let simplified = {};
-    let normalized = normalizeConfig(config);
-    if (normalized != null) {
-        Object.assign(simplified, copyFromTemplate(normalized, defaultConfig), {
-            connection: copyFromTemplate(normalized.connection, defaultConfigConnection),
-            sync: copyFromTemplate(normalized.sync, defaultConfigSync),
+    if (preprocessed) {
+        Object.assign(simplified, copyFromTemplate(preprocessed, defaultConfig), {
+            connection: copyFromTemplate(preprocessed.connection, defaultConfigConnection),
+            sync: copyFromTemplate(preprocessed.sync, defaultConfigSync),
         });
         if (Object.keys(simplified.connection).length === 0) {
             delete simplified.connection;
@@ -104,6 +106,7 @@ export function simplifyAdditionalInfos(additionalInfos) {
                 for (let key of Object.keys(normalized[type])) {
                     simplifiedType[key] = normalized[type][key];
                 }
+                delete simplifiedType._shadow;
                 if (Object.keys(simplifiedType).length > 0) {
                     simplified[type] = simplifiedType;
                 }
@@ -113,7 +116,7 @@ export function simplifyAdditionalInfos(additionalInfos) {
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyClasses(classes, mainDomain) {
+export function simplifyClasses(classes) {
     if (classes == null) return null;
 
     let normalized = normalizeClasses(classes);
@@ -126,9 +129,9 @@ export function simplifyClasses(classes, mainDomain) {
                 icon: clazz.icon == null && clazz.classIcon == clazz.objectIcon ? clazz.classIcon : clazz.icon,
                 classIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.classIcon,
                 objectIcon: clazz.classIcon == clazz.objectIcon ? undefined : clazz.objectIcon,
-                readPerms: simplifyPerms(clazz.readPerms, mainDomain), 
-                writePerms: simplifyPerms(clazz.writePerms, mainDomain),
-                attributes: simplifyAttributes(clazz.attributes, clazz.pk, classKey, mainDomain),
+                readPerms: simplifyPerms(clazz.readPerms), 
+                writePerms: simplifyPerms(clazz.writePerms),
+                attributes: simplifyAttributes(clazz.attributes, clazz.pk, classKey),
             }), defaultClass);
             if (simplifiedClazz.name == classKey) {
                 delete simplifiedClazz.name;
@@ -153,7 +156,7 @@ export function simplifyDomains(domains, mainDomain = null) {
             if (domainKey == mainDomain && domain.configurationAttributes.length == 0 && domain.comment == null) {
                 simpleMain = domain;
             }            
-            simplifiedBeforeLocal[domainKey] = simplifyDomain(domain, mainDomain);
+            simplifiedBeforeLocal[domainKey] = simplifyDomain(domain);
         }
     }
     
@@ -173,11 +176,11 @@ export function simplifyDomains(domains, mainDomain = null) {
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyDomain(domain, mainDomain = null) {
+export function simplifyDomain(domain) {
     if (domain == null) return null;
     
     let simplified = copyFromTemplate(Object.assign({}, domain, {
-        configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes, mainDomain)
+        configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes)
     }), defaultDomain);
     return simplified;
 }
@@ -208,47 +211,54 @@ export function simplifyPolicyRules(policyRules) {
     return simplified.length > 0 ? simplified : undefined;
 }
 
-export function simplifyStructure(structure, mainDomain = null) {
+export function simplifyStructure(structure) {
     if (structure == null) return null;
 
-    return simplifyNodes(structure, mainDomain);
+    return simplifyNodes(structure);
 }
 
 
-export function simplifyUsergroups(usergroups, mainDomain = null) {
-    if (usergroups == null) return null;
+export function simplifyUsergroups(usergroups, { normalize = true } = {}) {
+    if (!usergroups) return undefined;
 
     let simplified = {};
-    let normalized = normalizeUsergroups(usergroups);
-    for (let groupKey of Object.keys(normalized)) {
-        let group = normalized[groupKey];
+    let preprocessed = normalize ? normalizeUsergroups(usergroups) : usergroups;
+
+    for (let groupKey of Object.keys(preprocessed)) {
+        let group = preprocessed[groupKey];
         if (group != null) {
-            simplified[removeLocalDomain(groupKey, mainDomain)] = simplifyUsergroup(group, mainDomain);
+            simplified[removeLocalDomain(groupKey)] = simplifyUsergroup(group, { normalize: false });
         }
     }
+
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyUsergroup(group, mainDomain = null) {
+export function simplifyUsergroup(group, { normalize = false } = {}) {
+    if (!group) return undefined;
+
     let simplified = {};
+    let preprocessed = normalize ? normalizeUsergroup(group) : group;
 
     if (group) {
-        Object.assign(simplified, copyFromTemplate(Object.assign({}, group, { 
-            configurationAttributes: simplifyConfigurationAttributes(group.configurationAttributes, mainDomain),
+        Object.assign(simplified, copyFromTemplate(Object.assign({}, preprocessed, { 
+            configurationAttributes: simplifyConfigurationAttributes(preprocessed.configurationAttributes),
         }), defaultUserGroup));
     }
 
     return simplified;
 }
 
-export function simplifyUsermanagement(usermanagement, additionalInfos, mainDomain = null) {
-    if (usermanagement == null) return null;
+export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true, normalize = true } = {}) {
+    if (!usermanagement) return undefined;
 
     let simplified = {};
-    let normalized = normalizeUsermanagement(usermanagement);
-    for (let userKey of Object.keys(normalized)) {
-        let user = normalized[userKey];
-        let simplifiedUser = simplifyUser(user, userKey, additionalInfos, mainDomain);
+    let preprocessed = normalize ? normalizeUsermanagement(usermanagement) : usermanagement;
+
+    for (let userKey of Object.keys(preprocessed)) {
+        let user = preprocessed[userKey];
+
+        let simplifiedUser = simplifyUser(user, { removeShadowInfo, normalize: false});
         if (simplifiedUser != null) {
             simplified[userKey] = simplifiedUser;
         }
@@ -256,42 +266,44 @@ export function simplifyUsermanagement(usermanagement, additionalInfos, mainDoma
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyUser(user, userKey, additionalInfos = {}, mainDomain = null) {
-    let simplified = null;
-    if (user != null) {
-        let additionalInfosUser = additionalInfos.user ?? {};
-        let additionalInfo = user.additional_info ?? {};
-        let groups = additionalInfo._unshadowed_groups ?? user.groups;
-        let configurationAttributes = additionalInfo._unshadowed_configurationAttributes ?? user.configurationAttributes;        
-        simplified = copyFromTemplate(Object.assign({}, user, { 
-            groups: simplifyGroups(groups, mainDomain),
-            configurationAttributes: simplifyConfigurationAttributes(configurationAttributes, mainDomain),
-            }), defaultUser)
-        if (additionalInfo) {
-            delete additionalInfo._unshadowed_groups
-            delete additionalInfo._unshadowed_configurationAttributes
-            if (Object.keys(additionalInfo).length == 0) {
-                delete additionalInfosUser[userKey];
-            }
+export function simplifyUser(user, { removeShadowInfo = true, normalize = true } = {}) {
+    if (!user) return undefined;
+
+    let simplified = null;    
+    let preprocessed = normalize ? normalizeUser(user) : user;
+
+    if (preprocessed != null) {    
+        let groups = [...preprocessed.groups];
+        let configurationAttributes = Object.assign({}, preprocessed.configurationAttributes);        
+        let additionalInfo = Object.assign({}, preprocessed.additional_info); 
+        if (removeShadowInfo && additionalInfo._shadow) {
+            delete additionalInfo._shadow;
         }
+
+        simplified = copyFromTemplate(Object.assign({}, preprocessed, { 
+            groups: simplifyGroups(groups),
+            configurationAttributes: simplifyConfigurationAttributes(configurationAttributes),
+            additional_info: additionalInfo,
+        }), defaultUser);
     }
-    return simplified
+    
+    return simplified;
 }
 
-export function simplifyGroup(group, mainDomain = null) {
+export function simplifyGroup(group) {
     let simplified = null;
     if (group != null) {
-        simplified = removeLocalDomain(group, mainDomain);
+        simplified = removeLocalDomain(group);
     }
     return simplified;
 }
 
-export function simplifyGroups(groups, mainDomain = null) {
+export function simplifyGroups(groups) {
     let simplified = [];
 
     if (groups != null) {
         for (let group of groups) {
-            let simplifiedGroup = simplifyGroup(group, mainDomain);
+            let simplifiedGroup = simplifyGroup(group);
             if (simplifiedGroup != null) {
                 simplified.push(simplifiedGroup);
             }
@@ -303,23 +315,23 @@ export function simplifyGroups(groups, mainDomain = null) {
 
 // ---
 
-function simplifyNodes(nodes, mainDomain = null) {
+function simplifyNodes(nodes) {
     if (nodes == null) return null;
 
     let simplified = [];
     for (let node of normalizeStructure(nodes)) {
         if (node != null) {
             simplified.push(copyFromTemplate(Object.assign({}, node, { 
-                readPerms: simplifyPerms(node.readPerms, mainDomain),
-                writePerms: simplifyPerms(node.writePerms, mainDomain),
-                children: simplifyNodes(node.children, mainDomain),
+                readPerms: simplifyPerms(node.readPerms),
+                writePerms: simplifyPerms(node.writePerms),
+                children: simplifyNodes(node.children),
             }), defaultNode));
         }
     }
     return simplified.length > 0 ? simplified : undefined;
 }
 
-function simplifyAttributes(attributes, pk = defaultClass.pk, classKey, mainDomain) {
+function simplifyAttributes(attributes, pk = defaultClass.pk, classKey) {
     if (attributes == null) return null;
 
     let simplified = {};
@@ -340,8 +352,8 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, classKey, mainDoma
                 if (Object.entries(simplifiedPkAttribute).length > 0) {
                     simplified[pk] = Object.assign(
                         {
-                            readPerms: simplifyPerms(attribute.readPerms, mainDomain), 
-                            writePerms: simplifyPerms(attribute.writePerms, mainDomain),
+                            readPerms: simplifyPerms(attribute.readPerms), 
+                            writePerms: simplifyPerms(attribute.writePerms),
                         }, simplifiedPkAttribute
                     );
                 }
@@ -356,17 +368,17 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, classKey, mainDoma
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-function simplifyPerms(perms, mainDomain = null) {
+function simplifyPerms(perms) {
     if (perms == null) return null;
 
     let simplified = [];
     for (let perm of normalizePerms(perms)) {
-        simplified.push(removeLocalDomain(perm, mainDomain));
+        simplified.push(removeLocalDomain(perm));
     }
     return simplified.length > 0 ? simplified : undefined;
 }
 
-export function simplifyConfigurationAttributes(configurationAttributes, mainDomain = null) {
+export function simplifyConfigurationAttributes(configurationAttributes) {
     if (configurationAttributes == null) return null;
 
     let simplified = {};
@@ -391,21 +403,21 @@ export function simplifyConfigurationAttributes(configurationAttributes, mainDom
     return Object.keys(simplified).length > 0 ? simplified : undefined;
 }
 
-export function simplifyConfigurationAttribute(configurationAttribute, mainDomain = null) {
+export function simplifyConfigurationAttribute(configurationAttribute) {
     if (configurationAttribute == null) return null;
     let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, { 
-        groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups, mainDomain),
-        _group: configurationAttribute._group ? removeLocalDomain(configurationAttribute._group, mainDomain) : undefined,
+        groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups),
+        _group: configurationAttribute._group ? removeLocalDomain(configurationAttribute._group) : undefined,
     }), defaultConfigurationAttributes);
     return simplified;
 }
 
-function simplifyConfigurationAttributeGroups(groups, mainDomain = null) {
+function simplifyConfigurationAttributeGroups(groups) {
     let simplified = [];
 
     if (groups != null) {
         for (let group of groups) {
-            simplified.push(removeLocalDomain(group, mainDomain));
+            simplified.push(removeLocalDomain(group));
         }
     }
 

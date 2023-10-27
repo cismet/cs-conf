@@ -49,7 +49,7 @@ const allFunctions = {
 };
 
 describe('Normalize:', () => {
-    global.config = { mainDomain: "TEST "};
+    global.config = { domainName: "TEST "};
     describe('smoke1: normalize(expected) == normalized', testSmoke1);
     describe('smoke2: normalize(data) == normalized', testSmoke2);
     describe('smoke3: normalize(simplify(normalized)) == normalized', testSmoke3);

@@ -43,7 +43,7 @@ async function csPassword(options) {
         groups: groups != null ? groups.split(',') : undefined,
     };
 
-    newUser = normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser, loginName);
+    newUser = normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser);
 
     if (printOnly) {
         logOut(util.format("\"%s\": %s", loginName, stringify(newUser)), { noSilent: true });
@@ -53,7 +53,7 @@ async function csPassword(options) {
     }
 
     if (global.config == null) {
-        global.config = normalizeConfig({});
+        global.config = normalizeConfig();
     }
 
     let configs = readConfigFiles(global.configsDir);
@@ -68,7 +68,7 @@ async function csPassword(options) {
         }
         usermanagement[loginName] = newUser;
         logInfo(util.format("user '%s' added", loginName));
-        logOut(stringify(normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser, loginName)), { noSilent: true });
+        logOut(stringify(normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser)), { noSilent: true });
     } else {
         let found = false;
         for (let userKey of Object.keys(usermanagement)) {
@@ -107,7 +107,7 @@ async function csPassword(options) {
                 // ---
 
                 logInfo(util.format("password changed for '%s'", loginName));
-                logOut(stringify(normalized ? normalizeUser(user, loginName) : simplifyUser(user, loginName)), { noSilent: true });
+                logOut(stringify(normalized ? normalizeUser(user, loginName) : simplifyUser(user)), { noSilent: true });
             }
         }
         if (!found) throw Error(util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName));

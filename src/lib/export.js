@@ -12,8 +12,6 @@ import { simplifyConfigs } from './simplify';
 import { reorganizeConfigs } from './reorganize';
 import { normalizeConfig } from './normalize';
 
-import { defaultDomain } from './tools/defaultObjects';
-
 export default async function csExport(options) {
     let  { targetDir, normalized = false } = options;
 
@@ -89,6 +87,19 @@ function exportConfigs(fetchedData, config) {
 
     logVerbose(" ↳ creating structure.json and structure-dyn-children-stmnts files");
     Object.assign(configs, exportStructure(fetchedData, configs));
+
+
+    let {usermanagement, additionalInfos} = configs;
+
+    for (let userKey of Object.keys(usermanagement)) {
+        let user = usermanagement[userKey];
+        let additionalInfo = additionalInfos ? additionalInfos.user[userKey] : {};
+        if (additionalInfo && additionalInfo._shadow) {
+            let _shadow = additionalInfo._shadow;
+            user.groups = _shadow.ownGroups ? [... _shadow.ownGroups] : [];
+            user.configurationAttributes = _shadow.ownConfigurationAttributes ? Object.assign({}, _shadow.ownConfigurationAttributes) : {};
+        }
+    }
 
     return configs;
 }

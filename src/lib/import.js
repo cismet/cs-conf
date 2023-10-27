@@ -2,9 +2,9 @@ import util from 'util';
 
 import { singleRowFiller, nestedFiller } from './tools/db';
 import { getClientInfo, initClient } from './tools/db';
-import { logDebug, logInfo, logOut, logVerbose, logWarn } from './tools/tools';
+import { logDebug, logInfo, logOut, logVerbose, logWarn, topologicalSort } from './tools/tools';
 import { readConfigFiles } from './tools/configFiles';
-import { extractGroupAndDomain } from './tools/cids';
+import { completeConfigAttr, extractGroupAndDomain } from './tools/cids';
 
 import csCreate from './create';
 import csTruncate from './truncate';
@@ -824,8 +824,10 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
-    for (let userKey of Object.keys(usermanagement)) {
-        let user = usermanagement[userKey];
+    let unshadowed = unshadowUserManagement(usermanagement);
+
+    for (let userKey of Object.keys(unshadowed)) {
+        let user = unshadowed[userKey];
         csUserEntries.push([ 
             userKey, 
             user.pw_hash, 
@@ -889,6 +891,62 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
         }
     }
     return { csUserEntries, csUgMembershipEntries };
+}
+
+export function unshadowUserManagement(usermanagement) {
+    let unshadowed = {};
+
+    let shadowDependencyGraph = Object.keys(usermanagement).reduce((graphed, userKey) => (graphed[userKey] = usermanagement[userKey].shadows, graphed), {});           
+    let dependencySortedUsers = topologicalSort(shadowDependencyGraph);
+    for (let userKey of dependencySortedUsers) {
+        let unshadowedUser = unshadowUser(userKey, usermanagement);
+        unshadowed[userKey] = unshadowedUser;
+    }
+
+    return unshadowed;
+}
+
+export function unshadowUser(userKey, usermanagement) {      
+    let user = usermanagement[userKey];
+
+    if (user == null) throw Error(util.format("user '%s' not found", userKey));
+
+    let users = [...user.shadows];
+    let ownGroups = [...user.groups];
+    let ownConfigurationAttributes = Object.assign({}, user.configurationAttributes);
+
+    let _shadow = user.shadows.length > 0 ? {
+        users,
+        ownGroups,
+        ownConfigurationAttributes,
+    } : undefined;
+
+    let groups = [...user.groups];
+    let configurationAttributes = Object.assign({}, user.configurationAttributes);
+    let additionalInfo = user.additional_info ? Object.assign({}, user.additional_info) : {};
+
+    if (_shadow) {             
+        for (let shadowKey of [..._shadow.users]) {
+            let shadowUser = usermanagement[shadowKey];
+
+            if (shadowUser && shadowUser.groups) {
+                groups.push(...shadowUser.groups);
+            }
+
+            if (shadowUser && shadowUser.configurationAttributes) {
+                completeConfigAttr(configurationAttributes, shadowUser.configurationAttributes, shadowKey);
+            }
+        }
+        Object.assign(additionalInfo, { _shadow });
+    }
+
+    let unshadowed = Object.assign({}, user, {
+        groups,
+        configurationAttributes,
+        additional_info: additionalInfo,
+    });
+
+    return unshadowed;
 }
 
 // ---

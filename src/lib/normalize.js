@@ -2,7 +2,6 @@ import util from "util";
 
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 import { extendLocalDomain } from "./tools/cids";
-import { topologicalSort } from "./tools/tools";
 
 import { 
     defaultAdditionalInfos, 
@@ -39,7 +38,7 @@ export default async function csNormalize(options) {
 // ---
 
 export function normalizeConfigs(configs) {    
-    return Object.assign({}, configs, {
+    let normalized = Object.assign({}, configs, {
         config: normalizeConfig(configs.config),
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
         classes: normalizeClasses(configs.classes), 
@@ -49,8 +48,10 @@ export function normalizeConfigs(configs) {
         policyRules: normalizePolicyRules(configs.policyRules), 
         structure: normalizeStructure(configs.structure), 
         usergroups: normalizeUsergroups(configs.usergroups), 
-        usermanagement: normalizeUsermanagement(configs.usermanagement, configs.additionalInfos), 
+        usermanagement: normalizeUsermanagement(configs.usermanagement), 
     });
+
+    return normalized;
 }
 
 export function normalizeConfig(config = {}) {
@@ -264,7 +265,7 @@ export function normalizeUsergroup(usergroup) {
     return normalized;
 }
 
-export function normalizeUsermanagement(usermanagement, additionalInfos = {}) {
+export function normalizeUsermanagement(usermanagement) {
     let normalized = {};
     
     if (usermanagement) {
@@ -276,13 +277,6 @@ export function normalizeUsermanagement(usermanagement, additionalInfos = {}) {
         }
     }
 
-    let shadowDependencyGraph = Object.keys(normalized).reduce((graphed, userKey) => (graphed[userKey] = normalized[userKey].shadows, graphed), {});           
-    let dependencySortedUsers = topologicalSort(shadowDependencyGraph);
-
-    for (let userKey of dependencySortedUsers) {
-        unshadow(userKey, normalized, additionalInfos);        
-    }
-
     return normalized;
 }
 
@@ -291,10 +285,25 @@ export function normalizeUser(user, userKey) {
     if (user.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
     if (user.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
 
+    let shadows = user.shadows ? [...user.shadows] : [];
+    let groups = normalizeGroups(user.groups);
+    let configurationAttributes = normalizeConfigurationAttributes(user.configurationAttributes);
+
+    let additionalInfo = user.additional_info;
+    if (additionalInfo) {
+        if (additionalInfo._shadow) {
+            let _shadow = additionalInfo._shadow
+            shadows = _shadow.users;
+            groups = _shadow.ownGroups ?? [];
+            configurationAttributes = _shadow.ownConfigurationAttributes ?? {};
+            // TODO Warn if resulting groups and configuration-Attributes don't match
+        }
+    }    
     let normalized = Object.assign({}, defaultUser, user, {
-        groups: normalizeGroups(user.groups),
-        configurationAttributes: normalizeConfigurationAttributes(user.configurationAttributes),
-});
+        shadows,
+        groups,
+        configurationAttributes,
+    });
 
     return normalized;
 }
@@ -401,36 +410,4 @@ function normalizeSpecial(special, table) {
         };    
     }
     return null;
-}
-
-function unshadow(userKey, usermanagement) {      
-    let user = usermanagement[userKey];
-    if (user != null && user.shadows != null) {
-        let shadows = user.shadows;
-        if (shadows.length > 0) {
-            let additionalInfo = user.additional_info;
-            if (!additionalInfo._unshadowed_groups) {
-                additionalInfo._unshadowed_groups = user.groups;
-                for (let shadowKey of [...shadows].reverse()) {
-                    let shadow = usermanagement[shadowKey];
-                    if (shadow != null) {
-                        if (shadow.groups != null) {
-                            user.groups = [...new Set([...shadow.groups, ...user.groups])];
-                        }
-                    }
-                }            
-            }
-            if (!additionalInfo._unshadowed_configurationAttributes) {
-                for (let shadowKey of shadows) {
-                    additionalInfo._unshadowed_configurationAttributes = user.configurationAttributes;
-                    let shadow = usermanagement[shadowKey];
-                    if (shadow != null) {
-                        if (shadow.configurationAttributes != null) {
-                            user.configurationAttributes = [...new Set([...shadow.configurationAttributes, ...user.configurationAttributes])];
-                        }
-                    }
-                }
-            }            
-        }
-    }
 }
