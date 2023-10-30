@@ -2,23 +2,29 @@
     "Group1@LOCAL": {
         "descr": "Descr1",
         "prio": 0,
-        "members": [],
-        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }]},
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-        "additional_info": {}
+        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }]},
+        "additional_info": {},
+        "inspected": {
+            "members": [],
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }, 
     "Group2@LOCAL": { 
         "descr": null,
         "prio": 0,
-        "members": [],
         "configurationAttributes": {},
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-        "additional_info": {}
+        "additional_info": {},
+        "inspected": {
+            "members": [],
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }
 }

@@ -40,11 +40,15 @@ export function reorganizeConfig(config) {
         if (sync != null) {
             let noDropTables = sync.noDropTables;
             if (noDropTables != null) {
-                sync.noDropTables = noDropTables.sort();
+                sync.noDropTables = noDropTables.sort((a, b) => { 
+                    return a.localeCompare(b);
+                });
             }
             let noDropColumns = sync.noDropColumns;
             if (noDropColumns != null) {
-                sync.noDropColumns = noDropColumns.sort();
+                sync.noDropColumns = noDropColumns.sort((a, b) => { 
+                    return a.localeCompare(b);
+                });
             }
         }
     }
@@ -54,11 +58,15 @@ export function reorganizeConfig(config) {
 export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes }) {
     if (additionalInfos != null) {
         let sortedAdditionalInfos = {};    
-        for (let type of Object.keys(additionalInfos).sort()) {
+        for (let type of Object.keys(additionalInfos).sort((a, b) => { 
+            return a.localeCompare(b);
+        })) {
             let additionalInfo = additionalInfos[type];
             if (additionalInfo != null) {
                 let sortedAdditionalInfo = {};
-                for (let key of Object.keys(additionalInfo).sort()) {
+                for (let key of Object.keys(additionalInfo).sort((a, b) => { 
+                    return a.localeCompare(b);
+                })) {
                     sortedAdditionalInfo[key] = additionalInfo[key];
                 }
                 sortedAdditionalInfos[type] = sortedAdditionalInfo;                
@@ -143,8 +151,12 @@ export function reorganizeAttributes(attributes, order = 'auto') {
     for (let attributeKey of sortedAttributeKeys) {                    
         let attribute = attributes[attributeKey];
         reorganized[attributeKey] = Object.assign({
-            readPerms: attribute.readPerms ? [...attribute.readPerms].sort() : attribute.readPerms, 
-            writePerms: attribute.writePerms ? [...attribute.writePerms].sort() : attribute.writePerms,
+            readPerms: attribute.readPerms ? [...attribute.readPerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : attribute.readPerms, 
+            writePerms: attribute.writePerms ? [...attribute.writePerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : attribute.writePerms,
         }, attribute)
     }
     return reorganized;         
@@ -161,8 +173,12 @@ export function reorganizeClasses(classes) {
     for (let classKey of sortedClassKeys) {
         let clazz = classes[classKey];
         reorganized[classKey] = Object.assign({
-            readPerms: clazz.readPerms ? [...clazz.readPerms].sort() : clazz.readPerms,
-            writePerms: clazz.writePerms ? [...clazz.writePerms].sort() : clazz.writePerms,
+            readPerms: clazz.readPerms ? [...clazz.readPerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : clazz.readPerms,
+            writePerms: clazz.writePerms ? [...clazz.writePerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : clazz.writePerms,
             attributes: reorganizeAttributes(clazz.attributes, clazz.attributesOrder),
         }, clazz);
     }
@@ -193,9 +209,26 @@ export function reorganizeDomains(domains) {
 export function reorganizeDomain(domain) {
     if (domain == null) return null;
 
-    return Object.assign({}, domain, {
-        configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : domain.configurationAttributes,
-    });
+    let reorganized = {};
+    if (domain) {
+        Object.assign(reorganized, domain, {
+            configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : domain.configurationAttributes,
+            inspected: domain.inspected ? reorganizeDomainInspected(domain.inspected) : domain.inspected 
+        });
+    }
+    return reorganized;
+}
+
+export function reorganizeDomainInspected(domainInspected) {
+    let reorganized = {};
+    if (domainInspected) {
+        Object.assign(reorganized, domainInspected, {
+            groups: domainInspected.groups ? domainInspected.groups.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : domainInspected.groups,
+        });
+    }
+    return reorganized;
 }
 
 export function reorganizeDynchildhelpers(dynchildhelpers) {
@@ -248,8 +281,33 @@ export function reorganizeUsergroup(usergroup) {
     let reorganized = {};
     if (usergroup) {
         Object.assign(reorganized, usergroup, {
-            members: usergroup.members ? usergroup.members.sort() : usergroup.members,
             configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : usergroup.configurationAttributes,
+            inspected: usergroup.inspected ? reorganizeUsergroupInspected(usergroup.inspected) : usergroup.inspected 
+        });
+    }
+    return reorganized;
+}
+
+export function reorganizeUsergroupInspected(usergroupInspected) {
+    let reorganized = {};
+    if (usergroupInspected) {
+        Object.assign(reorganized, usergroupInspected, {
+            members: usergroupInspected.members ? usergroupInspected.members.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspected.members,
+            readPermClasses: usergroupInspected.readPermClasses ? usergroupInspected.readPermClasses.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspected.readPermClasses,
+            writePermClasses: usergroupInspected.writePermClasses ? usergroupInspected.writePermClasses.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspected.writePermClasses,
+            readPermAttributes: usergroupInspected.readPermAttributes ? usergroupInspected.readPermAttributes.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspected.readPermAttributes,
+            writePermAttributes: usergroupInspected.writePermAttributes ? usergroupInspected.writePermAttributes.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspected.writePermAttributes,
+            allConfigurationAttributes: usergroupInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes) : usergroupInspected.configurationAttributes,
         });
     }
     return reorganized;
@@ -259,7 +317,9 @@ export function reorganizeUsermanagement(usermanagement) {
     let reorganized = {};
 
     if (usermanagement != null) {
-        let sortedUserKeys = Object.keys(usermanagement).sort();
+        let sortedUserKeys = Object.keys(usermanagement).sort((a, b) => { 
+            return a.localeCompare(b);
+        });
         for (let userKey of sortedUserKeys) {    
             let user = usermanagement[userKey];
             reorganized[userKey] = reorganizeUser(user);
@@ -274,15 +334,58 @@ export function reorganizeUser(user) {
 
     if (user) {
         Object.assign(reorganized, user, {
+            groups : user.groups ? [...user.groups.sort((a, b) => { 
+                return a.localeCompare(b);
+            })] : user.groups,
             configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : user.configurationAttributes,
-            groups : user.groups ? [...user.groups.sort()] : user.groups,
-            readPermClasses: user.readPermClasses ? [...user.readPermClasses].sort() : user.readPermClasses,
-            writePermClasses: user.writePermClasses ? [...user.writePermClasses].sort() : user.writePermClasses,
-            readPermAttributes: user.readPermAttributes ? [...user.readPermAttributes].sort() : user.readPermAttributes,
-            writePermAttributes: user.writePermAttributes ? [...user.writePermAttributes].sort() : user.writePermAttributes,
+            inspected: user.inspected ? reorganizeUserInspected(user.inspected) : user.inspected 
         });
     }
 
+    return reorganized;
+}
+
+export function reorganizeUserInspected(userInspected) {
+    let reorganized = {};
+    if (userInspected) {
+        let memberOf = userInspected.memberOf ? userInspected.memberOf.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspected.memberOf;
+        let shadowMemberOf = {};
+        if (userInspected.shadowMemberOf) {
+            for (let shadowKey of Object.keys(userInspected.shadowMemberOf).sort((a, b) => { 
+                return a.localeCompare(b);
+            })) {
+                shadowMemberOf[shadowKey] = userInspected.shadowMemberOf[shadowKey] ? userInspected.shadowMemberOf[shadowKey].sort((a, b) => { 
+                    return a.localeCompare(b);
+                }) : userInspected.shadowMemberOf[shadowKey];
+            }
+        } 
+        let readPermClasses = userInspected.readPermClasses ? userInspected.readPermClasses.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspected.readPermClasses;
+        let writePermClasses = userInspected.writePermClasses ? userInspected.writePermClasses.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspected.writePermClasses;
+        let readPermAttributes = userInspected.readPermAttributes ? userInspected.readPermAttributes.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspected.readPermAttributes;
+        let writePermAttributes = userInspected.writePermAttributes ? userInspected.writePermAttributes.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspected.writePermAttributes;
+
+        let allConfigurationAttributes = userInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(userInspected.allConfigurationAttributes) : userInspected.configurationAttributes;
+
+        Object.assign(reorganized, userInspected, {
+            memberOf,
+            shadowMemberOf,
+            readPermClasses,
+            writePermClasses,
+            readPermAttributes,
+            writePermAttributes,
+            allConfigurationAttributes,
+        });
+    }
     return reorganized;
 }
 
@@ -295,10 +398,14 @@ function reorganizeNode(node) {
     if (node != null) {
         for (let node of node) {
             if (node.readPerms != null) {
-                node.readPerms = [...node.readPerms].sort();
+                node.readPerms = [...node.readPerms].sort((a, b) => { 
+                    return a.localeCompare(b);
+                });
             }
             if (node.writePerms != null) {
-                node.writePerms = [...node.writePerms].sort();
+                node.writePerms = [...node.writePerms].sort((a, b) => { 
+                    return a.localeCompare(b);
+                });
             }
             if (node.children != null) {
                 node.children = reorganizeNode(node.children);
@@ -331,14 +438,18 @@ function reorganizeConfigurationAttributes(configurationAttributes) {
               })
             for (let configurationAttribute of sortedConfigurationAttributeArray) {
                 reorganizedArray.push(Object.assign({}, configurationAttribute, {
-                    groups: configurationAttribute.groups ? configurationAttribute.groups.sort() : configurationAttribute.groups,
+                    groups: configurationAttribute.groups ? configurationAttribute.groups.sort((a, b) => { 
+                        return a.localeCompare(b);
+                    }) : configurationAttribute.groups,
                 }));
             }    
             reorganized[configurationAttributeKey] = reorganizedArray;
         } else {
             let configurationAttribute = configurationAttributeValue;
             reorganized[configurationAttributeKey] = Object.assign({}, configurationAttribute, {
-                groups: configurationAttribute.groups ? configurationAttribute.groups.sort() : configurationAttribute.groups,
+                groups: configurationAttribute.groups ? configurationAttribute.groups.sort((a, b) => { 
+                    return a.localeCompare(b);
+                }) : configurationAttribute.groups,
             });
         }
     }

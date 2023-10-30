@@ -5,12 +5,17 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
-        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }] },
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-        "additional_info": {}
+        "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }] },
+        "additional_info": {},
+        "inspected": {
+            "memberOf": [],
+            "shadowMemberOf": {},
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }, 
     "User2": {
         "pw_hash": "HashyHash2",
@@ -19,11 +24,16 @@
         "shadows": [],        
         "groups": ["Group3@LOCAL"],
         "configurationAttributes": {},
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-        "additional_info": {}
+        "additional_info": {},
+        "inspected": {
+            "memberOf": [],
+            "shadowMemberOf": {},
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }, 
     "User3": {
         "pw_hash": "HashyHash3",
@@ -32,11 +42,16 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-        "additional_info": {}
+        "additional_info": {},
+        "inspected": {
+            "memberOf": [],
+            "shadowMemberOf": {},
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }, 
     "User4": {
         "pw_hash": "HashyHash4",
@@ -45,10 +60,15 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
-        "readPermClasses": [],
-        "writePermClasses": [],
-        "readPermAttributes": [],
-        "writePermAttributes": [],        
-       "additional_info": {}
+        "additional_info": {},
+        "inspected": {
+            "memberOf": [],
+            "shadowMemberOf": {},
+            "readPermClasses": [],
+            "writePermClasses": [],
+            "readPermAttributes": [],
+            "writePermAttributes": [],
+            "allConfigurationAttributes": {}
+        }      
     }
 }

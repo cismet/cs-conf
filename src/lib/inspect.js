@@ -6,9 +6,9 @@ import { logOut } from "./tools/tools";
 import { completeConfigAttr, extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
 import { normalizeConfigs } from "./normalize";
 
-import { simplifyUser, simplifyUsergroup, simplifyDomain, simplifyUsermanagement, simplifyUsergroups, simplifyDomains } from "./simplify";
-import { reorganizeUser, reorganizeUsergroup, reorganizeDomain, reorganizeDomains, reorganizeUsergroups, reorganizeUsermanagement } from "./reorganize";
-import { unshadowUserManagement } from "./import";
+import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains } from "./simplify";
+import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains } from "./reorganize";
+import { unshadowUsermanagement } from "./import";
 
 export default async function csInspect({ userKey, groupKey, domainKey, aggregateConfAttrValues = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);
@@ -30,30 +30,28 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
     let result = null;
     if (userKey) {
         if (userKey == '*') {
-            normalizedConfigs.usermanagement = unshadowUserManagement(normalizedConfigs.usermanagement);
-            let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, aggregateConfAttrValues);
+            let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
             let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
             let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeShadowInfo: false });
             result = simplifiedUsermanamgement;
         } else {
-            normalizedConfigs.usermanagement = unshadowUserManagement(normalizedConfigs.usermanagement);
-            let inspectedUser = inspectUser(userKey, normalizedConfigs, aggregateConfAttrValues);
-            let reorganizedUser = reorganizeUser(inspectedUser);
-            let simplifiedUser = simplifyUser(reorganizedUser, { normalize: false, removeShadowInfo: false })
-            result = simplifiedUser;
+            let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+            let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
+            let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeShadowInfo: false })
+            result = simplifiedUsermanamgement;
         }
     } else if (groupKey) {
         if (groupKey == '*') {
-            let inspectedUsergroups = inspectUsergroups(normalizedConfigs, aggregateConfAttrValues);
+            let inspectedUsergroups = inspectUsergroups(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
             let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
             let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
             result = simplifiedUsergroups;
         } else {
             let normalizedGroupKey = extendLocalDomain(groupKey);
-            let inspectedGroup = inspectUsergroup(normalizedGroupKey, normalizedConfigs, aggregateConfAttrValues);
-            let reorganizedGroup = reorganizeUsergroup(inspectedGroup);
-            let simplifiedGroup = simplifyUsergroup(reorganizedGroup);
-            result = simplifiedGroup;
+            let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+            let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
+            let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
+            result = simplifiedGroups;
         }
     } else if (domainKey) {
         if (domainKey == '*') {
@@ -62,10 +60,10 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
             let simplifiedDomains = simplifyDomains(reorganizedDomains);
             result = simplifiedDomains;
         } else {
-            let inspectedDomain = inspectDomain(domainKey, normalizedConfigs, aggregateConfAttrValues);
-            let reorganizedDomain = reorganizeDomain(inspectedDomain);
-            let simplifiedDomain = simplifyDomain(reorganizedDomain);            
-            result = simplifiedDomain;
+            let inspectedDomains = inspectDomain(domainKey, normalizedConfigs, aggregateConfAttrValues);
+            let reorganizedDomains = reorganizeDomains(inspectedDomains);
+            let simplifiedDomains = simplifyDomains(reorganizedDomains);            
+            result = simplifiedDomains;
         }
     }
     if (fileTarget) {
@@ -77,26 +75,28 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
 
 // ---
 
-export function inspectUsermanagement(configs, aggregateConfAttrValues = false) {
+export function inspectUsermanagement(configs, unshadowedUsermanagement, aggregateConfAttrValues = false) {
     let inspected = {};
     
     let { usermanagement } = configs;
     for (let userKey of Object.keys(usermanagement)) {
-        inspected[userKey] = inspectUser(userKey, configs, aggregateConfAttrValues);
+        Object.assign(inspected, inspectUser(userKey, configs, unshadowedUsermanagement, aggregateConfAttrValues));
     }
 
     return inspected;
 }
 
-export function inspectUser(userKey, {usermanagement, usergroups, domains, classes}, aggregateConfAttrValues = false) {
+export function inspectUser(userKey, {usermanagement, usergroups, domains, classes}, unshadowedUsermanagement, aggregateConfAttrValues = false) {
     if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
     if (!user) throw Error(util.format("user '%s' not found", userKey));
 
-    let domainKeys = new Set();
-    let groupKeysSet = new Set();
-    for (let groupKey of user.groups.sort((a, b) => {
+    let unshadowedUser = unshadowedUsermanagement[userKey];
+
+    let domainKeySet = new Set();
+    let groupKeySet = new Set();
+    for (let groupKey of unshadowedUser.groups.sort((a, b) => {
         if (a.prio === null && b.prio === null) return 0;
         if (a.prio === null) return 1;
         if (b.prio === null) return -1;
@@ -104,46 +104,61 @@ export function inspectUser(userKey, {usermanagement, usergroups, domains, class
       })) {
         let groupAndDomain = extractGroupAndDomain(groupKey);
         let domainKey = groupAndDomain.domain;
-        domainKeys.add(domainKey);
-        groupKeysSet.add(groupKey);
+        domainKeySet.add(domainKey);
+        groupKeySet.add(groupKey);
 
         if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
-    let configurationAttributes = Object.assign({}, user.configurationAttributes);
-
-    for (let groupKey of groupKeysSet) {
+    let allConfigurationAttributes = Object.assign({}, unshadowedUser.configurationAttributes);    
+    for (let groupKey of groupKeySet) {
         let group = usergroups[groupKey];
         let groupConfigurationAttributes = group.configurationAttributes;
-        let completition = {_group: groupKey};
-        completeConfigAttr(configurationAttributes, groupConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
+        let completition = {group: groupKey};
+        completeConfigAttr(allConfigurationAttributes, groupConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
     }
-
-    for (let domainKey of domainKeys) {            
+    for (let domainKey of domainKeySet) {            
         let domain = domains[domainKey];
         let domainConfigurationAttributes = domain.configurationAttributes;
-        let completition = {_domain: domainKey};
-        completeConfigAttr(configurationAttributes, domainConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
+        let completition = {domain: domainKey};
+        completeConfigAttr(allConfigurationAttributes, domainConfigurationAttributes, userKey, completition, aggregateConfAttrValues);
     }
 
-    let inspected = Object.assign({}, user, { configurationAttributes }, permsForGroups([...groupKeysSet], classes));
+    let shadowMemberOf = {};
+    if (user.shadows) {
+        for (let shadowKey of user.shadows) {
+            shadowMemberOf[shadowKey] = unshadowedUsermanagement[shadowKey].groups;
+        }
+    }
+
+    let memberOf = [...groupKeySet];
+
+    let inspectedUser = Object.assign({
+        memberOf,
+        shadowMemberOf,
+        allConfigurationAttributes,
+    }, permsForGroups([...groupKeySet], classes));
+
+    let inspected = {};
+    inspected[userKey] = Object.assign({}, user, { inspected: inspectedUser });
+
     return inspected;
 }
 
 // ---
 
-export function inspectUsergroups(configs, aggregateConfAttrValues = false) {
+export function inspectUsergroups(configs, unshadowedUsermanagement, aggregateConfAttrValues = false) {
     let inspected = {};
     
     let { usergroups } = configs;
     for (let groupKey of Object.keys(usergroups)) {
-        inspected[groupKey] = inspectUsergroup(groupKey, configs, aggregateConfAttrValues);
+        Object.assign(inspected, inspectUsergroup(groupKey, configs, unshadowedUsermanagement, aggregateConfAttrValues));
     }
 
     return inspected;
 }
 
-export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains, classes }, aggregateConfAttrValues = false) {
+export function inspectUsergroup(groupKey, { usergroups, domains, classes }, unshadowedUsermanagement, aggregateConfAttrValues = false) {
     if (!groupKey) throw Error(util.format("groupKey is missing"));
 
     let group = usergroups[groupKey];
@@ -155,22 +170,26 @@ export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains
     let domain = domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' of usergroup '%s' not found", domainKey, groupKey));
 
-    let configurationAttributes = Object.assign({}, group.configurationAttributes);
-    completeConfigAttr(configurationAttributes, domain.configurationAttributes, groupKey, {_domain: domainKey}, aggregateConfAttrValues);
+    let allConfigurationAttributes = Object.assign({}, group.configurationAttributes);
+    completeConfigAttr(allConfigurationAttributes, domain.configurationAttributes, groupKey, {domain: domainKey}, aggregateConfAttrValues);
 
     let userKeySet = new Set();
-    for (let userKey of Object.keys(usermanagement)) {
-        let user = usermanagement[userKey];
-        if (user.groups.includes(groupKey)) {
+    for (let userKey of Object.keys(unshadowedUsermanagement)) {
+        let user = unshadowedUsermanagement[userKey];
+        if (user.groups && user.groups.includes(groupKey)) {
             userKeySet.add(userKey);
         }
     }
     let members = [...userKeySet];
 
-    let inspected = Object.assign({}, group, { 
-        configurationAttributes: configurationAttributes,
+    let inspectedGroup = Object.assign({ 
         members,
+        allConfigurationAttributes,
     }, permsForGroup(groupKey, classes));
+
+    let inspected = {};
+    inspected[groupKey] = Object.assign({}, group, { inspected: inspectedGroup });
+
     return inspected;
 }
 
@@ -181,19 +200,35 @@ export function inspectDomains(configs, aggregateConfAttrValues = false) {
     
     let { domains } = configs;
     for (let domainKey of Object.keys(domains)) {
-        inspected[domainKey] = inspectDomain(domainKey, configs, aggregateConfAttrValues);
+        Object.assign(inspected, inspectDomain(domainKey, configs, aggregateConfAttrValues));
     }
 
     return inspected;
 }
 
-export function inspectDomain(domainKey, { domains }, aggregateConfAttrValues = false) {
+export function inspectDomain(domainKey, { domains, usergroups }, aggregateConfAttrValues = false) {
     if (!domainKey) throw Error(util.format("domainKey is missing"));
 
     let domain = domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' not found", domainKey));
 
-    let inspected = Object.assign({}, domain);
+    let groupKeySet = new Set();
+    for (let groupKey of Object.keys(usergroups)) {
+        let groupAndDomain = extractGroupAndDomain(groupKey);
+        if (domainKey == groupAndDomain.domain) {
+            groupKeySet.add(groupAndDomain.group);
+        }
+    }
+
+    let groups = [...groupKeySet];
+
+    let inspectedDomain = Object.assign({
+        groups,
+    });
+
+    let inspected = {};
+    inspected[domainKey] = Object.assign({}, domain, { inspected: inspectedDomain });
+
     return inspected;
 }
 

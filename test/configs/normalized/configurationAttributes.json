@@ -1,5 +1,5 @@
 {
     "inTestGroup": [{ "groups": [], "value": null, "xmlfile": null }],
-    "withoutGroupNorValue": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }],
-    "InNoGroupWithValue": [{ "groups": [], "value": "test", "xmlfile": null, "_domain": null, "_group": null }]
+    "withoutGroupNorValue": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }],
+    "InNoGroupWithValue": [{ "groups": [], "value": "test", "xmlfile": null, "domain": null, "group": null }]
 }

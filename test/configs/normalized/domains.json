@@ -1,6 +1,10 @@
 {
   "LOCAL": {
-    "configurationAttributes": {"test": [{ "groups": [], "value": null, "xmlfile": null, "_domain": null, "_group": null }]}, 
-    "additional_info": {}
+    "configurationAttributes": {"test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }]}, 
+    "additional_info": {},
+    "inspected": {
+      "groups": [],
+      "members": []
+    }
   }
 }

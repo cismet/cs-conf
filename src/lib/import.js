@@ -824,7 +824,7 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
-    let unshadowed = unshadowUserManagement(usermanagement);
+    let unshadowed = unshadowUsermanagement(usermanagement);
 
     for (let userKey of Object.keys(unshadowed)) {
         let user = unshadowed[userKey];
@@ -893,7 +893,7 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
     return { csUserEntries, csUgMembershipEntries };
 }
 
-export function unshadowUserManagement(usermanagement) {
+export function unshadowUsermanagement(usermanagement) {
     let unshadowed = {};
 
     let shadowDependencyGraph = Object.keys(usermanagement).reduce((graphed, userKey) => (graphed[userKey] = usermanagement[userKey].shadows, graphed), {});           

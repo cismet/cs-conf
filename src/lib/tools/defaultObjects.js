@@ -94,14 +94,15 @@ export const defaultConfigurationAttributes = {
     groups: [],
     value: null,
     xmlfile: null,
-    _domain: null,
-    _group: null,
+    domain: null,
+    group: null,
 };
 
 // domains
 export const defaultDomain = {
     configurationAttributes: {},
     additional_info: {},
+    inspected: {},
 };
 
 // dynchildhelpers
@@ -139,13 +140,9 @@ export const defaultNode = {
 export const defaultUserGroup = {
     descr: null,
     prio: 0,
-    members: [],
     configurationAttributes: {},
-    readPermClasses: [],
-    writePermClasses: [],
-    readPermAttributes: [],
-    writePermAttributes: [],
     additional_info: {},
+    inspected: {},
 };
 
 // usermanagement
@@ -156,12 +153,36 @@ export const defaultUser = {
     shadows: [],
     groups: [],
     configurationAttributes: {},
+    additional_info: {},
+    inspected : {},
+};
+
+// ---
+
+export const defaultUserInspected = {
+    memberOf: [],
+    shadowMemberOf: {},
     readPermClasses: [],
     writePermClasses: [],
     readPermAttributes: [],
     writePermAttributes: [],
-    additional_info: {},
+    allConfigurationAttributes: {}
 };
+
+export const defaultUserGroupInspected = {
+    members: [],
+    readPermClasses: [],
+    writePermClasses: [],
+    readPermAttributes: [],
+    writePermAttributes: [],
+    allConfigurationAttributes: {},
+};
+
+export const defaultDomainInspected = {
+    groups: [],
+};
+
+// ---
 
 export function copyFromTemplate(object, template) {
     let copy = {};

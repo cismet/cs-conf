@@ -21,7 +21,9 @@ import {
     defaultUser, 
     defaultUserGroup, 
     defaultNode, 
-    defaultPolicyRule, 
+    defaultPolicyRule,
+    defaultUserInspected,
+    defaultDomainInspected,
 } from "./tools/defaultObjects";
 
 import { 
@@ -40,6 +42,8 @@ import {
     normalizeUser,
     normalizeUsergroup, 
 } from "./normalize";
+import { clean } from "./tools/tools";
+import stringify from "json-stringify-pretty-compact";
 
 // ---
 
@@ -93,6 +97,7 @@ export function simplifyConfig(config, { normalize = true } = {}) {
             delete simplified.sync;
         }
     }
+    clean(simplified);
     return Object.keys(simplified).length === 0 ? undefined : simplified;
 }
 
@@ -107,13 +112,14 @@ export function simplifyAdditionalInfos(additionalInfos) {
                     simplifiedType[key] = normalized[type][key];
                 }
                 delete simplifiedType._shadow;
-                if (Object.keys(simplifiedType).length > 0) {
+                if (Object.keys(simplifiedType).length) {
                     simplified[type] = simplifiedType;
                 }
             }
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyClasses(classes) {
@@ -139,7 +145,8 @@ export function simplifyClasses(classes) {
             simplified[classKey] = simplifiedClazz;
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyDomains(domains, mainDomain = null) {
@@ -173,7 +180,8 @@ export function simplifyDomains(domains, mainDomain = null) {
             simplified[domainKey] = domain;
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyDomain(domain) {
@@ -181,8 +189,20 @@ export function simplifyDomain(domain) {
     
     let simplified = copyFromTemplate(Object.assign({}, domain, {
         configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes),
+        inspected: simplifyDomainInspected(domain.inspected),
     }), defaultDomain);
     return simplified;
+}
+
+export function simplifyDomainInspected(domainInspected) {
+    let simplified = {};
+    if (domainInspected) {
+        simplified = copyFromTemplate(Object.assign({}, domainInspected, { 
+            groups: domainInspected.groups && domainInspected.groups.length ? domainInspected.groups : undefined,
+        }), defaultDomainInspected);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyDynchildhelpers(dynchildhelpers) {
@@ -196,7 +216,8 @@ export function simplifyDynchildhelpers(dynchildhelpers) {
             simplified[dynchildhelperKey] = copyFromTemplate(dynchildhelper, defaultDynchildhelper);
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyPolicyRules(policyRules) {
@@ -208,7 +229,7 @@ export function simplifyPolicyRules(policyRules) {
             simplified.push(copyFromTemplate(policyRule, defaultPolicyRule));
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return simplified.length ? simplified : undefined;
 }
 
 export function simplifyStructure(structure) {
@@ -223,15 +244,14 @@ export function simplifyUsergroups(usergroups, { normalize = true } = {}) {
 
     let simplified = {};
     let preprocessed = normalize ? normalizeUsergroups(usergroups) : usergroups;
-
     for (let groupKey of Object.keys(preprocessed)) {
         let group = preprocessed[groupKey];
         if (group != null) {
             simplified[removeLocalDomain(groupKey)] = simplifyUsergroup(group, { normalize: false });
         }
     }
-
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyUsergroup(group, { normalize = false } = {}) {
@@ -239,15 +259,31 @@ export function simplifyUsergroup(group, { normalize = false } = {}) {
 
     let simplified = {};
     let preprocessed = normalize ? normalizeUsergroup(group) : group;
-
     if (group) {
         Object.assign(simplified, copyFromTemplate(Object.assign({}, preprocessed, { 
             configurationAttributes: simplifyConfigurationAttributes(preprocessed.configurationAttributes),
+            inspected: simplifyUsergroupInspected(preprocessed.inspected),
         }), defaultUserGroup));
     }
-
     return simplified;
 }
+
+export function simplifyUsergroupInspected(usergroupInspected) {
+    let simplified = {};
+    if (usergroupInspected) {
+        simplified = copyFromTemplate(Object.assign({}, usergroupInspected, { 
+            members: usergroupInspected.members.length ? [...usergroupInspected.members] : undefined,
+            readPermClasses: usergroupInspected.readPermClasses.length ? [...usergroupInspected.readPermClasses] : undefined,
+            writePermClasses: usergroupInspected.writePermClasses.length ? [...usergroupInspected.writePermClasses] : undefined,
+            readPermAttributes: usergroupInspected.readPermAttributes.length ? [...usergroupInspected.readPermAttributes] : undefined,
+            writePermAttributes: usergroupInspected.writePermAttributes.length ? [...usergroupInspected.writePermAttributes] : undefined,
+            allConfigurationAttributes: simplifyConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
+        }), usergroupInspected);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
 
 export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true, normalize = true } = {}) {
     if (!usermanagement) return undefined;
@@ -263,7 +299,8 @@ export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true
             simplified[userKey] = simplifiedUser;
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyUser(user, { removeShadowInfo = true, normalize = true } = {}) {
@@ -273,21 +310,48 @@ export function simplifyUser(user, { removeShadowInfo = true, normalize = true }
     let preprocessed = normalize ? normalizeUser(user) : user;
 
     if (preprocessed != null) {    
-        let groups = [...preprocessed.groups];
-        let configurationAttributes = Object.assign({}, preprocessed.configurationAttributes);        
         let additionalInfo = Object.assign({}, preprocessed.additional_info); 
         if (removeShadowInfo && additionalInfo._shadow) {
             delete additionalInfo._shadow;
         }
 
         simplified = copyFromTemplate(Object.assign({}, preprocessed, { 
-            groups: simplifyGroups(groups),
-            configurationAttributes: simplifyConfigurationAttributes(configurationAttributes),
+            groups: simplifyGroups(preprocessed.groups),
+            configurationAttributes: simplifyConfigurationAttributes( preprocessed.configurationAttributes),
             additional_info: additionalInfo,
+            inspected: simplifyUserInspected(preprocessed.inspected),
         }), defaultUser);
     }
-    
-    return simplified;
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyUserInspected(userInspected) {
+    let simplified = {};
+    if (userInspected) {
+        simplified = copyFromTemplate(Object.assign({}, userInspected, { 
+            memberOf: simplifyGroups(userInspected.memberOf),
+            shadowMemberOf: simplifyshadowMemberOf(userInspected.shadowMemberOf),
+            readPermClasses: userInspected.readPermClasses.length ? [...userInspected.readPermClasses] : undefined,
+            writePermClasses: userInspected.writePermClasses.length ? [...userInspected.writePermClasses] : undefined,
+            readPermAttributes: userInspected.readPermAttributes.length ? [...userInspected.readPermAttributes] : undefined,
+            writePermAttributes: userInspected.writePermAttributes.length ? [...userInspected.writePermAttributes] : undefined,
+            allConfigurationAttributes: simplifyConfigurationAttributes(userInspected.allConfigurationAttributes),
+        }), defaultUserInspected);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyshadowMemberOf(shadowMemberOf) {
+    if (!shadowMemberOf) return undefined;
+
+    let simplified = {};    
+    if (shadowMemberOf != null) {    
+        for (let shadowKey of Object.keys(shadowMemberOf)) {
+            simplified[shadowKey] = simplifyGroups(shadowMemberOf[shadowKey]);
+        }
+    }
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyGroup(group) {
@@ -300,7 +364,6 @@ export function simplifyGroup(group) {
 
 export function simplifyGroups(groups) {
     let simplified = [];
-
     if (groups != null) {
         for (let group of groups) {
             let simplifiedGroup = simplifyGroup(group);
@@ -309,8 +372,7 @@ export function simplifyGroups(groups) {
             }
         }
     }
-
-    return simplified.length > 0 ? simplified : undefined;
+    return simplified.length ? simplified : undefined;
 }
 
 // ---
@@ -328,14 +390,13 @@ function simplifyNodes(nodes) {
             }), defaultNode));
         }
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return simplified.length ? simplified : undefined;
 }
 
 function simplifyAttributes(attributes, pk = defaultClass.pk, classKey) {
     if (attributes == null) return null;
 
     let simplified = {};
-
     let normalized = normalizeAttributes(attributes, pk, classKey);
     for (let attributeKey of Object.keys(normalized)) {
         let attribute = normalized[attributeKey];
@@ -349,7 +410,7 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, classKey) {
                 if (simplifiedAttribute.name == attributeKey) {
                     delete simplifiedAttribute.name;
                 }
-                if (Object.entries(simplifiedPkAttribute).length > 0) {
+                if (Object.entries(simplifiedPkAttribute).length) {
                     simplified[pk] = Object.assign(
                         {
                             readPerms: simplifyPerms(attribute.readPerms), 
@@ -365,7 +426,8 @@ function simplifyAttributes(attributes, pk = defaultClass.pk, classKey) {
             }
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 function simplifyPerms(perms) {
@@ -375,7 +437,7 @@ function simplifyPerms(perms) {
     for (let perm of normalizePerms(perms)) {
         simplified.push(removeLocalDomain(perm));
     }
-    return simplified.length > 0 ? simplified : undefined;
+    return simplified.length ? simplified : undefined;
 }
 
 export function simplifyConfigurationAttributes(configurationAttributes) {
@@ -383,7 +445,6 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
 
     let simplified = {};
     let normalized = normalizeConfigurationAttributes(configurationAttributes);
-
     for (let configurationAttributeKey of Object.keys(normalized)) {
         let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
         let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
@@ -400,14 +461,15 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
             simplified[configurationAttributeKey] = simplifiedArray[0];
         }
     }
-    return Object.keys(simplified).length > 0 ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyConfigurationAttribute(configurationAttribute) {
     if (configurationAttribute == null) return null;
     let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, { 
         groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups),
-        _group: configurationAttribute._group ? removeLocalDomain(configurationAttribute._group) : undefined,
+        group: configurationAttribute.group ? removeLocalDomain(configurationAttribute.group) : undefined,
     }), defaultConfigurationAttributes);
     return simplified;
 }
@@ -421,5 +483,5 @@ function simplifyConfigurationAttributeGroups(groups) {
         }
     }
 
-    return simplified.length > 0 ? simplified : undefined;
+    return simplified.length ? simplified : undefined;
 }

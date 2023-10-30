@@ -12,11 +12,14 @@ import {
     defaultConfigurationAttributes, 
     defaultClass, 
     defaultDomain, 
+    defaultDomainInspected, 
     defaultDynchildhelper, 
     defaultNode, 
     defaultUser, 
+    defaultUserInspected,
     defaultUserGroup, 
-    defaultPolicyRule, 
+    defaultUserGroupInspected,
+    defaultPolicyRule,
 } from "./tools/defaultObjects";
 
 // ---
@@ -55,18 +58,24 @@ export function normalizeConfigs(configs) {
 }
 
 export function normalizeConfig(config = {}) {
-    let normalized = Object.assign({}, defaultConfig, config, {
-        connection: Object.assign({}, defaultConfigConnection, config.connection),
-        sync: Object.assign({}, defaultConfigSync, config.sync),
+    let normalized = Object.assign({}, defaultConfig, {
+        connection: Object.assign({}, defaultConfigConnection),
+        sync: Object.assign({}, defaultConfigSync),
     });
+    if (config) {
+        Object.assign(normalized, config, {
+            connection: Object.assign(normalized.connection, config.connection),
+            sync: Object.assign(normalized.sync, config.sync),
+        });
+    }
     return normalized;
 }
 
 export function normalizeAdditionalInfos(additionalInfos) {
-    let normalized = {};
+    let normalized = Object.assign({}, defaultAdditionalInfos);
     
     if (additionalInfos) {
-        Object.assign(normalized, defaultAdditionalInfos, additionalInfos);
+        Object.assign(normalized, additionalInfos);
     }
     
     return normalized;
@@ -86,28 +95,32 @@ export function normalizeClasses(classes) {
 }
 
 export function normalizeClass(classKey, clazz) {
-    if (clazz.pk === null) throw Error(util.format("normalizeClasses: [%s] pk of can't be null", classKey));
-    //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw Error(util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk));
-    //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw Error(util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType));
-    //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw Error(util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany));
-    //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw Error(util.format("normalizeClasses: manyToMany '%s' has to be uppercase", clazz.manyToMany));
+    let normalized = Object.assign({}, defaultClass);
+    if (clazz != null) {
+        if (clazz.pk === null) throw Error(util.format("normalizeClasses: [%s] pk of can't be null", classKey));
+        //if (clazz.pk !== undefined && clazz.pk !== clazz.pk.toUpperCase()) throw Error(util.format("normalizeClasses: pk '%s' has to be uppercase", clazz.pk));
+        //if (clazz.cidsType !== undefined && clazz.cidsType !== clazz.cidsType.toUpperCase()) throw Error(util.format("normalizeClasses: cidsType '%s' has to be uppercase", clazz.cidsType));
+        //if (clazz.oneToMany !== undefined && clazz.oneToMany !== clazz.oneToMany.toUpperCase()) throw Error(util.format("normalizeClasses: oneToMany '%s' has to be uppercase", clazz.oneToMany));
+        //if (clazz.manyToMany !== undefined && clazz.manyToMany !== clazz.manyToMany.toUpperCase()) throw Error(util.format("normalizeClasses: manyToMany '%s' has to be uppercase", clazz.manyToMany));
 
-    if (clazz.pk != null) {
-        clazz.pk = clazz.pk.toLowerCase();
-    }            
+        if (clazz.pk != null) {
+            clazz.pk = clazz.pk.toLowerCase();
+        }            
 
-    return Object.assign({}, defaultClass, clazz, {
-        name: clazz.name != null ? clazz.name : classKey,
-        toString: normalizeSpecial(clazz.toString, classKey),
-        editor: normalizeSpecial(clazz.editor, classKey),
-        renderer: normalizeSpecial(clazz.renderer, classKey),
-        attributes: normalizeAttributes(clazz.attributes, clazz.pk, classKey),
-        icon: null,
-        classIcon: clazz.classIcon || clazz.icon || null,
-        objectIcon: clazz.objectIcon || clazz.icon || null,
-        readPerms: normalizePerms(clazz.readPerms),
-        writePerms: normalizePerms(clazz.writePerms),
-    });
+        return Object.assign(normalized, clazz, {
+            name: clazz.name != null ? clazz.name : classKey,
+            toString: normalizeSpecial(clazz.toString, classKey),
+            editor: normalizeSpecial(clazz.editor, classKey),
+            renderer: normalizeSpecial(clazz.renderer, classKey),
+            attributes: normalizeAttributes(clazz.attributes, clazz.pk, classKey),
+            icon: null,
+            classIcon: clazz.classIcon || clazz.icon || null,
+            objectIcon: clazz.objectIcon || clazz.icon || null,
+            readPerms: normalizePerms(clazz.readPerms),
+            writePerms: normalizePerms(clazz.writePerms),
+        });
+    }
+    return normalized;
 }
 
 export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
@@ -180,7 +193,6 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
 
 export function normalizeDomains(domains) {
     let normalized = {};
-
     if (domains) {
         for (let domainKey of Object.keys(domains)) {
             if (normalized.hasOwnProperty(domainKey)) throw Error(util.format("normalizeDomains: domain '%s' already exists", domainKey));
@@ -189,77 +201,108 @@ export function normalizeDomains(domains) {
             normalized[domainKey] = normalizeDomain(domain);
         }
     }
-
     return normalized;
 }
 
 export function normalizeDomain(domain) {
-    let normalized = {};
-
+    let normalized = Object.assign({}, defaultDomain);
     if (domain) {
-        Object.assign(normalized, defaultDomain, domain, {
-            configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes)
+        Object.assign(normalized, domain, {
+            configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes),
+            inspected: normalizeDomainInspected(domain.inspected),
         });
     }
+    return normalized;
+}
 
+export function normalizeDomainInspected(domainInspected) {
+    let normalized = Object.assign({}, defaultDomainInspected);
+    if (domainInspected) {
+        Object.assign(normalized, domainInspected, {
+            groups: domainInspected.groups ?? [],
+        });
+    }
     return normalized;
 }
 
 export function normalizeDynchildhelpers(dynchildhelpers) {
     let normalized = {};
-
     if (dynchildhelpers) {
         for (let dynchildhelperKey of Object.keys(dynchildhelpers)) {
             let dynchildhelper = dynchildhelpers[dynchildhelperKey];
-
-            if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
-            if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
-
-            normalized[dynchildhelperKey] = Object.assign({}, defaultDynchildhelper, dynchildhelper);
+            normalized[dynchildhelperKey] = normalizeDynchildhelper(dynchildhelper);
         }
     }
+    return normalized;
+}
 
+export function normalizeDynchildhelper(dynchildhelper) {
+    let normalized = Object.assign({}, defaultDynchildhelper);
+    if (dynchildhelper) {
+        if (dynchildhelper.code == null && dynchildhelper.code_file == null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
+        if (dynchildhelper.code != null && dynchildhelper.code_file != null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
+        Object.assign(normalized, dynchildhelper);
+    }
     return normalized;
 }
 
 export function normalizePolicyRules(policyRules) {
     let normalized = [];
-    
     if (policyRules) {
-        for (let policyRule of policyRules) {
-            if (policyRule.policy == null) throw Error("normalizePolicyRules: missing policy");
-            if (policyRule.permission == null) throw Error("normalizePolicyRules: missing permission");
-            if (policyRule.default_value == null) throw Error("normalizePolicyRules: missing default_value");
-            
-            normalized.push(Object.assign({}, defaultPolicyRule, policyRule));
+        for (let policyRule of policyRules) {           
+            normalized.push(normalizePolicyRule(policyRule));
         }
+    }    
+    return normalized;
+}
+
+export function normalizePolicyRule(policyRule) {
+    let normalized = Object.assign({}, defaultPolicyRule);    
+    if (policyRule) {
+        if (policyRule.policy == null) throw Error("normalizePolicyRules: missing policy");
+        if (policyRule.permission == null) throw Error("normalizePolicyRules: missing permission");
+        if (policyRule.default_value == null) throw Error("normalizePolicyRules: missing default_value");
+        Object.assign(normalized, policyRule)
     }
-    
     return normalized;
 }
 
 export function normalizeStructure(structure) {
-       return normalizeNode(structure);
+       return normalizeNodes(structure);
 }
 
 export function normalizeUsergroups(usergroups) {
     let normalized = {};
-
     if (usergroups) {
         for (let groupKey of Object.keys(usergroups)) {
             let usergroup = usergroups[groupKey];
             normalized[extendLocalDomain(groupKey)] = normalizeUsergroup(usergroup);
         }
     }
-
     return normalized;
 }
 
 export function normalizeUsergroup(usergroup) {
-    let normalized = {};
+    let normalized = Object.assign({}, defaultUserGroup);
     if (usergroup != null) {
-        Object.assign(normalized, defaultUserGroup, usergroup, {
+        Object.assign(normalized, usergroup, {
             configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
+            inspected: normalizeUsergroupInspected(usergroup.inspected),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeUsergroupInspected(usergroupInspected) {
+    let normalized = Object.assign({}, defaultUserGroupInspected);
+    if (usergroupInspected) {
+        Object.assign(normalized, usergroupInspected, {
+            members: usergroupInspected.members ?? [],
+            readPermClasses: usergroupInspected.readPermClasses ?? [],
+            writePermClasses: usergroupInspected.writePermClasses ?? [],
+            readPermAttributes: usergroupInspected.readPermAttributes ?? [],
+            writePermAttributes: usergroupInspected.writePermAttributes ?? [],
+            allConfigurationAttributes: normalizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
         });
     }
     return normalized;
@@ -267,7 +310,6 @@ export function normalizeUsergroup(usergroup) {
 
 export function normalizeUsermanagement(usermanagement) {
     let normalized = {};
-    
     if (usermanagement) {
         for (let userKey of Object.keys(usermanagement)) {
             let user = usermanagement[userKey];
@@ -276,41 +318,70 @@ export function normalizeUsermanagement(usermanagement) {
             }
         }
     }
-
     return normalized;
 }
 
 export function normalizeUser(user, userKey) {
-    if (user.pw_hash == null) throw Error(util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey));
-    if (user.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
-    if (user.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
+    let normalized = Object.assign({}, defaultUser);
+    if (user) {
+        if (user.pw_hash == null) throw Error(util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey));
+        if (user.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
+        if (user.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
 
-    let shadows = user.shadows ? [...user.shadows] : [];
-    let groups = normalizeGroups(user.groups);
-    let configurationAttributes = normalizeConfigurationAttributes(user.configurationAttributes);
+        let shadows = user.shadows ? [...user.shadows] : [];
+        let groups = normalizeGroups(user.groups);
+        let configurationAttributes = normalizeConfigurationAttributes(user.configurationAttributes);
 
-    let additionalInfo = user.additional_info;
-    if (additionalInfo) {
-        if (additionalInfo._shadow) {
-            let _shadow = additionalInfo._shadow
-            shadows = _shadow.users;
-            groups = _shadow.ownGroups ?? [];
-            configurationAttributes = _shadow.ownConfigurationAttributes ?? {};
-            // TODO Warn if resulting groups and configuration-Attributes don't match
+        let additionalInfo = user.additional_info;
+        if (additionalInfo) {
+            if (additionalInfo._shadow) {
+                let _shadow = additionalInfo._shadow
+                shadows = _shadow.users;
+                groups = _shadow.ownGroups ?? [];
+                configurationAttributes = _shadow.ownConfigurationAttributes ?? {};
+                // TODO Warn if resulting groups and configuration-Attributes don't match
+            }
+        }    
+        Object.assign(normalized, user, {
+            shadows,
+            groups,
+            configurationAttributes,
+            inspected: normalizeUserInspected(user.inspected),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeUserInspected(userInspected) {
+    let normalized = Object.assign({}, defaultUserInspected);
+    if (userInspected) {
+        Object.assign(normalized, userInspected, {
+            memberOf: normalizeGroups(userInspected.memberOf),
+            shadowMemberOf: normalizeshadowMemberOf(userInspected.shadowMemberOf),
+            readPermClasses: userInspected.readPermClasses ?? [],
+            writePermClasses: userInspected.writePermClasses ?? [],
+            readPermAttributes: userInspected.readPermAttributes ?? [],
+            writePermAttributes: userInspected.writePermAttributes ?? [],
+            allConfigurationAttributes: normalizeConfigurationAttributes(userInspected.allConfigurationAttributes),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeshadowMemberOf(shadowMemberOf) {
+    let normalized = {};
+    if (shadowMemberOf) {
+        for (let memberOfShadowKey of Object.keys(shadowMemberOf)) {
+            let memberOfShadow = shadowMemberOf[memberOfShadowKey];
+            normalized[memberOfShadow] = normalizeGroups(memberOfShadow);
         }
-    }    
-    let normalized = Object.assign({}, defaultUser, user, {
-        shadows,
-        groups,
-        configurationAttributes,
-    });
-
+        Object.assign(normalized, shadowMemberOf);
+    }
     return normalized;
 }
 
 export function normalizeGroups(groups) {
     let normalized = [];
-
     if (groups) {
         for (let group of groups) {
             normalized.push(normalizeGroup(group));
@@ -326,68 +397,74 @@ export function normalizeGroup(group) {
 
 export function normalizePerms(perms) {
     let normalized = [];
-    
     if (perms) {
         for (let permission of perms) {  
             normalized.push(extendLocalDomain(permission));
         }
     }
-
     return normalized;
 }
 
 export function normalizeConfigurationAttributes(configurationAttributes) {
     let normalized = {};
-
     if (configurationAttributes) {        
         for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
             let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
             let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
-
             normalized[configurationAttributeKey] = [];
             for (let configurationAttribute of configurationAttributeArray) {
-                if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
-
-                normalized[configurationAttributeKey].push(Object.assign({}, defaultConfigurationAttributes, configurationAttribute, {
-                    groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
-                }));
+                normalized[configurationAttributeKey].push(normalizeConfigurationAttribute(configurationAttribute));
             }
         }    
     }
+    return normalized;
+}
 
+export function normalizeConfigurationAttribute(configurationAttribute) {
+    let normalized = Object.assign({}, defaultConfigurationAttributes);
+    if (configurationAttribute) {        
+        if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
+        Object.assign(normalized, configurationAttribute, {
+            groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
+        });
+    }
     return normalized;
 }
 
 // ---
 
-function normalizeNode(nodes) {
+function normalizeNodes(nodes) {
     let normalized = [];
-
     if (nodes != null) {
         let lastNode = null;
         for (let node of nodes) {
-            if (node.link == null) {
-                if (node.name == null) throw Error(util.format("normalizeStructure: missing name for node (the one after %s)", lastNode.name));
-                if (node.dynamic_children_file != null && node.dynamic_children != null) throw Error(util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", node.name));
-                //if (node.children != null && (node.dynamic_children_file != null || node.dynamic_children != null)){ console.table(node);  throw Error("children and dynamic_children(_file) can't both be set"});
-            }
-
-            normalized.push(Object.assign({}, defaultNode, node, {
-                table: node.table != null ? node.table.toLowerCase() : node.table,
-                children: normalizeNode(node.children),
-                readPerms: normalizePerms(node.readPerms),
-                writePerms: normalizePerms(node.writePerms),
-            }));
+            normalized.push(normalizeNode(node, lastNode));
             lastNode = node;
         }
     }
-
     return normalized;
+}
+
+function normalizeNode(node, lastNode) {
+    let normalized = Object.assign({}, defaultNode);
+    if (node) {
+        if (node.link == null) {
+            if (node.name == null) throw Error(util.format("normalizeStructure: missing name for node (the one after %s)", lastNode.name));
+            if (node.dynamic_children_file != null && node.dynamic_children != null) throw Error(util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", node.name));
+            //if (node.children != null && (node.dynamic_children_file != null || node.dynamic_children != null)){ console.table(node);  throw Error("children and dynamic_children(_file) can't both be set"});
+        }
+        Object.assign(normalized, node, {
+            table: node.table != null ? node.table.toLowerCase() : node.table,
+            children: normalizeNodes(node.children),
+            readPerms: normalizePerms(node.readPerms),
+            writePerms: normalizePerms(node.writePerms),
+        })
+    }
+    return normalized
 }
 
 function normalizeConfigurationAttributeGroups(groups) {
     let normalized = [];
-
     if (groups != null) {
         for (let group of groups) {
             if (group != null) {
@@ -395,7 +472,6 @@ function normalizeConfigurationAttributeGroups(groups) {
             }
         }
     }
-
     return normalized;
 }
 

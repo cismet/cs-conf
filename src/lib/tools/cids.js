@@ -42,10 +42,10 @@ export function completeConfigAttr(aggrConfigAttrs, configurationAttributes, tar
                     aggrConfigAttrs[configurationAttributeKey].push(Object.assign({}, configurationAttribute, completion));
                 }
             } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
-                if (completion._domain) {
-                    logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion._domain, targetKey));
-                } else if (completion._group) {
-                    logDebug(util.format("configurationAttribute '%s' of group '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion._group, targetKey));
+                if (completion.domain) {
+                    logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion.domain, targetKey));
+                } else if (completion.group) {
+                    logDebug(util.format("configurationAttribute '%s' of group '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion.group, targetKey));
                 } else {
                     logDebug(util.format("configurationAttribute '%s' of target '%s' skipped sinced it already exists in Array", configurationAttributeKey, targetKey));
                 }
