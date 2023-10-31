@@ -13,12 +13,12 @@ export const defaultConfigSync = {
 export const defaultConfig = {
     formatVersion: 1,
     configsDir: '.',
-    connection: defaultConfigConnection,
     domainName: null,
-    // TODO policies { class, attribute, node } for automatic interpretation of permissions in inspect
+    connection: defaultConfigConnection,
     schema: 'public',
-    maxFileLength: 80,
+    policyRules: defaultPolicyRules,
     sync: defaultConfigSync,
+    maxFileLength: 80,
 };
 
 export const defaultConfigPolicies = {

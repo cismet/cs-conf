@@ -203,6 +203,9 @@ export function prepareImport(configs) {
 
     let csEntries = {};
 
+    logVerbose(util.format(" ↳ preparing policyRules (%d)", Object.keys(normalizedConfigs.config.policyRules).length));
+    Object.assign(csEntries, preparePolicyRules(normalizedConfigs));
+    
     logVerbose(util.format(" ↳ preparing domains (%d)", Object.keys(normalizedConfigs.domains).length));
     Object.assign(csEntries, prepareDomains(normalizedConfigs));
 
@@ -215,9 +218,6 @@ export function prepareImport(configs) {
     logVerbose(util.format(" ↳ preparing configuration attributes (%d)", Object.keys(normalizedConfigs.configurationAttributes).length));
     Object.assign(csEntries, prepareConfigAttrs(normalizedConfigs));
 
-    logVerbose(util.format(" ↳ preparing policyRules (%d)", normalizedConfigs.policyRules.length));
-    Object.assign(csEntries, preparePolicyRules(normalizedConfigs));
-    
     logVerbose(util.format(" ↳ preparing classes (%d)", Object.keys(normalizedConfigs.classes).length));
     Object.assign(csEntries, prepareClasses(normalizedConfigs));
 
@@ -639,7 +639,8 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
     return { csDomainEntries };
 }
 
-function preparePolicyRules({ policyRules }) {
+function preparePolicyRules({ config }) {
+    let { policyRules } = config;
     let csPolicyRulesEntries = [];    
     for (let policyRuleKey of Object.keys(policyRules)) {
         let policyRule = policyRules[policyRuleKey];

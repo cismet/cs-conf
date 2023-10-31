@@ -48,8 +48,7 @@ export function normalizeConfigs(configs) {
         classes: normalizeClasses(configs.classes), 
         configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
         domains: normalizeDomains(configs.domains), 
-        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
-        policyRules: normalizePolicyRules(configs.policyRules), 
+        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),        
         structure: normalizeStructure(configs.structure), 
         usergroups: normalizeUsergroups(configs.usergroups), 
         usermanagement: normalizeUsermanagement(configs.usermanagement), 
@@ -67,6 +66,7 @@ export function normalizeConfig(config = {}) {
         Object.assign(normalized, config, {
             connection: Object.assign(normalized.connection, config.connection),
             sync: Object.assign(normalized.sync, config.sync),
+            policyRules: normalizePolicyRules(config.policyRules), 
         });
     }
     return normalized;
@@ -252,13 +252,13 @@ export function normalizePolicyRules(policyRules) {
     if (policyRules) {
         for (let policyRuleKey of Object.keys(policyRules)) {
             let policyRule = policyRules[policyRuleKey];
-            normalized[policyRuleKey] = normalizePolicyRule(policyRule, policyRuleKey);
+            normalized[policyRuleKey] = normalizePolicyRule(policyRule);
         }
     }    
     return normalized;
 }
 
-export function normalizePolicyRule(policyRule, policyRuleKey) {
+export function normalizePolicyRule(policyRule) {
     let normalized = Object.assign({}, defaultPolicyRule());    
     if (policyRule) {
         Object.assign(normalized, policyRule)

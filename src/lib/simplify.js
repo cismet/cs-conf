@@ -73,7 +73,6 @@ export function simplifyConfigs(configs) {
         classes: simplifyClasses(configs.classes), 
         domains: simplifyDomains(configs.domains, configs.config.domainName), 
         dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
-        policyRules: simplifyPolicyRules(configs.policyRules), 
         structure: simplifyStructure(configs.structure), 
         usergroups: simplifyUsergroups(configs.usergroups), 
         usermanagement: simplifyUsermanagement(configs.usermanagement), 
@@ -89,14 +88,9 @@ export function simplifyConfig(config, { normalize = true } = {}) {
     if (preprocessed) {
         Object.assign(simplified, copyFromTemplate(preprocessed, defaultConfig), {
             connection: copyFromTemplate(preprocessed.connection, defaultConfigConnection),
+            policyRules: simplifyPolicyRules(config.policyRules), 
             sync: copyFromTemplate(preprocessed.sync, defaultConfigSync),
         });
-        if (Object.keys(simplified.connection).length === 0) {
-            delete simplified.connection;
-        }
-        if (Object.keys(simplified.sync).length === 0) {
-            delete simplified.sync;
-        }
     }
     clean(simplified);
     return Object.keys(simplified).length === 0 ? undefined : simplified;

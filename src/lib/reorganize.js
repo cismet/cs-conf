@@ -26,8 +26,7 @@ export function reorganizeConfigs(configs) {
         additionalInfos: reorganizeAdditionalInfos(configs.additionalInfos, configs), 
         classes: reorganizeClasses(configs.classes), 
         domains: reorganizeDomains(configs.domains), 
-        dynchildhelpers: reorganizeDynchildhelpers(configs.dynchildhelpers),
-        policyRules: reorganizePolicyRules(configs.policyRules), 
+        dynchildhelpers: reorganizeDynchildhelpers(configs.dynchildhelpers),        
         structure: reorganizeStructure(configs.structure), 
         usergroups: reorganizeUsergroups(configs.usergroups), 
         usermanagement: reorganizeUsermanagement(configs.usermanagement), 
@@ -50,8 +49,9 @@ export function reorganizeConfig(config) {
             sync.noDropColumns = noDropColumns.sort((a, b) => { 
                 return a.localeCompare(b);
             });
-        }
+        }        
     }
+    config.policyRules = reorganizePolicyRules(config.policyRules);
     return config;
 }
 

@@ -62,6 +62,9 @@ function exportConfigs(fetchedData, config) {
     logOut(util.format("Exporting configuration from '%s' ...", getClientInfo()));
     let configs = { config };
 
+    logVerbose(" ↳ exporting policyRules into config.json");
+    Object.assign(configs, exportPolicyRules(fetchedData, configs));
+
     logVerbose(" ↳ creating additionalInfos.json");
     Object.assign(configs, exportAdditionalInfos(fetchedData, configs));
 
@@ -70,9 +73,6 @@ function exportConfigs(fetchedData, config) {
 
     logVerbose(" ↳ creating domains.json");
     Object.assign(configs, exportDomains(fetchedData, configs));
-
-    logVerbose(" ↳ creating policyRules.json");
-    Object.assign(configs, exportPolicyRules(fetchedData, configs));
 
     logVerbose(" ↳ creating usergroups.json");
     Object.assign(configs, exportUsergroups(fetchedData, configs));
@@ -484,7 +484,7 @@ function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
     };
 }
 
-function exportPolicyRules({ csPolicyRules }, {}) {
+function exportPolicyRules({ csPolicyRules }, { config }) {
     let policyRules = Object.assign({}, defaultPolicyRules());
     for (let csPolicyRule of csPolicyRules) {
         let policyRuleKey = csPolicyRule.policy;
@@ -496,7 +496,7 @@ function exportPolicyRules({ csPolicyRules }, {}) {
             policyRule.defaultWrite = csPolicyRule.default_value;
         }
     }
-    return { policyRules };
+    Object.assign(config, { policyRules });
 }
 
 function exportStructure({ csCatNodes, csCatLinks, csUgCatNodePerms }, {}) {
