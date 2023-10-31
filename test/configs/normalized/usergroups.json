@@ -6,10 +6,10 @@
         "additional_info": {},
         "inspected": {
             "members": [],
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }, 
@@ -20,10 +20,10 @@
         "additional_info": {},
         "inspected": {
             "members": [],
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }

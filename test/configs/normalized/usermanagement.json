@@ -10,10 +10,10 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }, 
@@ -28,10 +28,10 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }, 
@@ -46,10 +46,10 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }, 
@@ -64,10 +64,10 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "readPermClasses": [],
-            "writePermClasses": [],
-            "readPermAttributes": [],
-            "writePermAttributes": [],
+            "canReadClasses": [],
+            "canWriteClasses": [],
+            "canReadAttributes": [],
+            "canWriteAttributes": [],
             "allConfigurationAttributes": {}
         }      
     }

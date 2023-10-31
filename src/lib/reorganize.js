@@ -295,18 +295,18 @@ export function reorganizeUsergroupInspected(usergroupInspected) {
             members: usergroupInspected.members ? usergroupInspected.members.sort((a, b) => { 
                 return a.localeCompare(b);
             }) : usergroupInspected.members,
-            readPermClasses: usergroupInspected.readPermClasses ? usergroupInspected.readPermClasses.sort((a, b) => { 
+            canReadClasses: usergroupInspected.canReadClasses ? usergroupInspected.canReadClasses.sort((a, b) => { 
                 return a.localeCompare(b);
-            }) : usergroupInspected.readPermClasses,
-            writePermClasses: usergroupInspected.writePermClasses ? usergroupInspected.writePermClasses.sort((a, b) => { 
+            }) : usergroupInspected.canReadClasses,
+            canWriteClasses: usergroupInspected.canWriteClasses ? usergroupInspected.canWriteClasses.sort((a, b) => { 
                 return a.localeCompare(b);
-            }) : usergroupInspected.writePermClasses,
-            readPermAttributes: usergroupInspected.readPermAttributes ? usergroupInspected.readPermAttributes.sort((a, b) => { 
+            }) : usergroupInspected.canWriteClasses,
+            canReadAttributes: usergroupInspected.canReadAttributes ? usergroupInspected.canReadAttributes.sort((a, b) => { 
                 return a.localeCompare(b);
-            }) : usergroupInspected.readPermAttributes,
-            writePermAttributes: usergroupInspected.writePermAttributes ? usergroupInspected.writePermAttributes.sort((a, b) => { 
+            }) : usergroupInspected.canReadAttributes,
+            canWriteAttributes: usergroupInspected.canWriteAttributes ? usergroupInspected.canWriteAttributes.sort((a, b) => { 
                 return a.localeCompare(b);
-            }) : usergroupInspected.writePermAttributes,
+            }) : usergroupInspected.canWriteAttributes,
             allConfigurationAttributes: usergroupInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes) : usergroupInspected.configurationAttributes,
         });
     }
@@ -361,28 +361,28 @@ export function reorganizeUserInspected(userInspected) {
                 }) : userInspected.shadowMemberOf[shadowKey];
             }
         } 
-        let readPermClasses = userInspected.readPermClasses ? userInspected.readPermClasses.sort((a, b) => { 
+        let canReadClasses = userInspected.canReadClasses ? userInspected.canReadClasses.sort((a, b) => { 
             return a.localeCompare(b);
-        }) : userInspected.readPermClasses;
-        let writePermClasses = userInspected.writePermClasses ? userInspected.writePermClasses.sort((a, b) => { 
+        }) : userInspected.canReadClasses;
+        let canWriteClasses = userInspected.canWriteClasses ? userInspected.canWriteClasses.sort((a, b) => { 
             return a.localeCompare(b);
-        }) : userInspected.writePermClasses;
-        let readPermAttributes = userInspected.readPermAttributes ? userInspected.readPermAttributes.sort((a, b) => { 
+        }) : userInspected.canWriteClasses;
+        let canReadAttributes = userInspected.canReadAttributes ? userInspected.canReadAttributes.sort((a, b) => { 
             return a.localeCompare(b);
-        }) : userInspected.readPermAttributes;
-        let writePermAttributes = userInspected.writePermAttributes ? userInspected.writePermAttributes.sort((a, b) => { 
+        }) : userInspected.canReadAttributes;
+        let canWriteAttributes = userInspected.canWriteAttributes ? userInspected.canWriteAttributes.sort((a, b) => { 
             return a.localeCompare(b);
-        }) : userInspected.writePermAttributes;
+        }) : userInspected.canWriteAttributes;
 
         let allConfigurationAttributes = userInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(userInspected.allConfigurationAttributes) : userInspected.configurationAttributes;
 
         Object.assign(reorganized, userInspected, {
             memberOf,
             shadowMemberOf,
-            readPermClasses,
-            writePermClasses,
-            readPermAttributes,
-            writePermAttributes,
+            canReadClasses,
+            canWriteClasses,
+            canReadAttributes,
+            canWriteAttributes,
             allConfigurationAttributes,
         });
     }

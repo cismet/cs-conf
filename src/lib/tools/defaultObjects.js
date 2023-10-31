@@ -52,7 +52,7 @@ export const defaultAttribute = {
 };
 
 export const defaultAttributePrimary = (table_name, pk) => { 
-        return Object.assign({}, defaultAttribute, {
+    return Object.assign({}, defaultAttribute, {
         name: pk,
         descr: 'Primary Key',
         dbType: 'INTEGER',
@@ -163,19 +163,19 @@ export const defaultUser = {
 export const defaultUserInspected = {
     memberOf: [],
     shadowMemberOf: {},
-    readPermClasses: [],
-    writePermClasses: [],
-    readPermAttributes: [],
-    writePermAttributes: [],
+    canReadClasses: [],
+    canWriteClasses: [],
+    canReadAttributes: [],
+    canWriteAttributes: [],
     allConfigurationAttributes: {}
 };
 
 export const defaultUserGroupInspected = {
     members: [],
-    readPermClasses: [],
-    writePermClasses: [],
-    readPermAttributes: [],
-    writePermAttributes: [],
+    canReadClasses: [],
+    canWriteClasses: [],
+    canReadAttributes: [],
+    canWriteAttributes: [],
     allConfigurationAttributes: {},
 };
 

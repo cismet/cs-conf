@@ -273,10 +273,10 @@ export function simplifyUsergroupInspected(usergroupInspected) {
     if (usergroupInspected) {
         simplified = copyFromTemplate(Object.assign({}, usergroupInspected, { 
             members: usergroupInspected.members.length ? [...usergroupInspected.members] : undefined,
-            readPermClasses: usergroupInspected.readPermClasses.length ? [...usergroupInspected.readPermClasses] : undefined,
-            writePermClasses: usergroupInspected.writePermClasses.length ? [...usergroupInspected.writePermClasses] : undefined,
-            readPermAttributes: usergroupInspected.readPermAttributes.length ? [...usergroupInspected.readPermAttributes] : undefined,
-            writePermAttributes: usergroupInspected.writePermAttributes.length ? [...usergroupInspected.writePermAttributes] : undefined,
+            canReadClasses: usergroupInspected.canReadClasses && usergroupInspected.canReadClasses.length ? [...usergroupInspected.canReadClasses] : undefined,
+            canWriteClasses: usergroupInspected.canWriteClasses && usergroupInspected.canWriteClasses.length ? [...usergroupInspected.canWriteClasses] : undefined,
+            canReadAttributes: usergroupInspected.canReadAttributes && usergroupInspected.canReadAttributes.length ? [...usergroupInspected.canReadAttributes] : undefined,
+            canWriteAttributes: usergroupInspected.canWriteAttributes && usergroupInspected.canWriteAttributes.length ? [...usergroupInspected.canWriteAttributes] : undefined,
             allConfigurationAttributes: simplifyConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
         }), usergroupInspected);
     }
@@ -331,10 +331,10 @@ export function simplifyUserInspected(userInspected) {
         simplified = copyFromTemplate(Object.assign({}, userInspected, { 
             memberOf: simplifyGroups(userInspected.memberOf),
             shadowMemberOf: simplifyshadowMemberOf(userInspected.shadowMemberOf),
-            readPermClasses: userInspected.readPermClasses.length ? [...userInspected.readPermClasses] : undefined,
-            writePermClasses: userInspected.writePermClasses.length ? [...userInspected.writePermClasses] : undefined,
-            readPermAttributes: userInspected.readPermAttributes.length ? [...userInspected.readPermAttributes] : undefined,
-            writePermAttributes: userInspected.writePermAttributes.length ? [...userInspected.writePermAttributes] : undefined,
+            canReadClasses: userInspected.canReadClasses.length ? [...userInspected.canReadClasses] : undefined,
+            canWriteClasses: userInspected.canWriteClasses.length ? [...userInspected.canWriteClasses] : undefined,
+            canReadAttributes: userInspected.canReadAttributes.length ? [...userInspected.canReadAttributes] : undefined,
+            canWriteAttributes: userInspected.canWriteAttributes.length ? [...userInspected.canWriteAttributes] : undefined,
             allConfigurationAttributes: simplifyConfigurationAttributes(userInspected.allConfigurationAttributes),
         }), defaultUserInspected);
     }

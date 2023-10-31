@@ -298,10 +298,10 @@ export function normalizeUsergroupInspected(usergroupInspected) {
     if (usergroupInspected) {
         Object.assign(normalized, usergroupInspected, {
             members: usergroupInspected.members ?? [],
-            readPermClasses: usergroupInspected.readPermClasses ?? [],
-            writePermClasses: usergroupInspected.writePermClasses ?? [],
-            readPermAttributes: usergroupInspected.readPermAttributes ?? [],
-            writePermAttributes: usergroupInspected.writePermAttributes ?? [],
+            canReadClasses: usergroupInspected.canReadClasses ?? [],
+            canWriteClasses: usergroupInspected.canWriteClasses ?? [],
+            canReadAttributes: usergroupInspected.canReadAttributes ?? [],
+            canWriteAttributes: usergroupInspected.canWriteAttributes ?? [],
             allConfigurationAttributes: normalizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
         });
     }
@@ -358,10 +358,10 @@ export function normalizeUserInspected(userInspected) {
         Object.assign(normalized, userInspected, {
             memberOf: normalizeGroups(userInspected.memberOf),
             shadowMemberOf: normalizeshadowMemberOf(userInspected.shadowMemberOf),
-            readPermClasses: userInspected.readPermClasses ?? [],
-            writePermClasses: userInspected.writePermClasses ?? [],
-            readPermAttributes: userInspected.readPermAttributes ?? [],
-            writePermAttributes: userInspected.writePermAttributes ?? [],
+            canReadClasses: userInspected.canReadClasses ?? [],
+            canWriteClasses: userInspected.canWriteClasses ?? [],
+            canReadAttributes: userInspected.canReadAttributes ?? [],
+            canWriteAttributes: userInspected.canWriteAttributes ?? [],
             allConfigurationAttributes: normalizeConfigurationAttributes(userInspected.allConfigurationAttributes),
         });
     }

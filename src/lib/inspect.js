@@ -296,15 +296,15 @@ function permsForGroups(groupKeys, classes) {
         }
     }
 
-    let readPermClasses = readPermClassesSet.size > 0 ? [...readPermClassesSet] : [];
-    let writePermClasses = writePermClassesSet.size > 0 ? [...writePermClassesSet] : [];
-    let readPermAttributes = readPermAttributesSet.size > 0 ? [...readPermAttributesSet] : [];
-    let writePermAttributes = writePermAttributesSet.size > 0 ? [...writePermClassesSet] : [];
+    let canReadClasses = readPermClassesSet.size > 0 ? [...readPermClassesSet] : [];
+    let canWriteClasses = writePermClassesSet.size > 0 ? [...writePermClassesSet] : [];
+    let canReadAttributes = readPermAttributesSet.size > 0 ? [...readPermAttributesSet] : [];
+    let canWriteAttributes = writePermAttributesSet.size > 0 ? [...writePermClassesSet] : [];
 
     return {
-        readPermClasses,
-        writePermClasses,
-        readPermAttributes,
-        writePermAttributes,
+        canReadClasses,
+        canWriteClasses,
+        canReadAttributes,
+        canWriteAttributes,
     };
 }
