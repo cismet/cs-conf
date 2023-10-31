@@ -270,7 +270,8 @@ commands.set('inspect', program.command('inspect')
 	.option('-g, --group <groupKey>', 'inspects group(s)')
 	.option('-d, --domain <domainKey>', 'inspects domain(s)')
 	.option('-A, --aggregate', 'aggregate configurationAttribute values')
-	.option('-O, --output <filepath>', 'output into file')	
+	.option('-P, --print', 'only print the inspected information')		
+	.option('-O, --output <filepath>', 'output into file', "inspect.%s.%s.json")	
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
@@ -281,6 +282,7 @@ commands.set('inspect', program.command('inspect')
 			domainKey: cmd.domain,
 			fileTarget: cmd.output,
 			aggregateConfAttrValues: cmd.aggregate !== undefined,
+			print: cmd.print !== undefined,
 		}, cmd);
 	})
 );	 	 

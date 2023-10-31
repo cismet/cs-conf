@@ -10,16 +10,17 @@ import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains } from "./s
 import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains } from "./reorganize";
 import { unshadowUsermanagement } from "./import";
 
-export default async function csInspect({ userKey, groupKey, domainKey, aggregateConfAttrValues = false, fileTarget }) {
+export default async function csInspect({ userKey, groupKey, domainKey, aggregateConfAttrValues = false, print = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);
     let normalizedConfigs = normalizeConfigs(configs);
 
     if (configs == null) throw Error("config not set");
 
+    let type = undefined;
     let keys = [];
-    if (userKey) keys.push(userKey)
-    if (groupKey) keys.push(groupKey)
-    if (domainKey) keys.push(domainKey)
+    if (userKey) { type = 'user'; keys.push(userKey); }
+    if (groupKey) { type = 'group'; keys.push(groupKey); }
+    if (domainKey) { type = 'domain'; keys.push(domainKey); }
 
     if (keys.length == 0) {
         throw Error("at least one key is necessary")
@@ -27,49 +28,56 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
         throw Error("unambiguous parameters: only one key is allowed.")
     }
 
+    let key = keys.shift();
+
     let result = null;
-    if (userKey) {
-        if (userKey == '*') {
-            let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
-            let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
-            let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeShadowInfo: false });
-            result = simplifiedUsermanamgement;
-        } else {
-            let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
-            let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
-            let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeShadowInfo: false })
-            result = simplifiedUsermanamgement;
-        }
-    } else if (groupKey) {
-        if (groupKey == '*') {
-            let inspectedUsergroups = inspectUsergroups(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
-            let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
-            let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
-            result = simplifiedUsergroups;
-        } else {
-            let normalizedGroupKey = extendLocalDomain(groupKey);
-            let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
-            let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
-            let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
-            result = simplifiedGroups;
-        }
-    } else if (domainKey) {
-        if (domainKey == '*') {
-            let inspectedDomains = inspectDomains(normalizedConfigs, aggregateConfAttrValues);
-            let reorganizedDomains = reorganizeDomains(inspectedDomains);
-            let simplifiedDomains = simplifyDomains(reorganizedDomains);
-            result = simplifiedDomains;
-        } else {
-            let inspectedDomains = inspectDomain(domainKey, normalizedConfigs, aggregateConfAttrValues);
-            let reorganizedDomains = reorganizeDomains(inspectedDomains);
-            let simplifiedDomains = simplifyDomains(reorganizedDomains);            
-            result = simplifiedDomains;
-        }
+    switch (type) {
+        case "user": {
+            if (userKey == '*') {
+                let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
+                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeShadowInfo: false });
+                result = simplifiedUsermanamgement;
+            } else {
+                let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
+                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeShadowInfo: false })
+                result = simplifiedUsermanamgement;
+            }    
+        } break;
+        case "group": {
+            if (groupKey == '*') {
+                let inspectedUsergroups = inspectUsergroups(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
+                let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
+                result = simplifiedUsergroups;
+            } else {
+                let normalizedGroupKey = extendLocalDomain(groupKey);
+                let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
+                let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
+                result = simplifiedGroups;
+            }
+            } break;
+        case "user": {
+            if (domainKey == '*') {
+                let inspectedDomains = inspectDomains(normalizedConfigs, aggregateConfAttrValues);
+                let reorganizedDomains = reorganizeDomains(inspectedDomains);
+                let simplifiedDomains = simplifyDomains(reorganizedDomains);
+                result = simplifiedDomains;
+            } else {
+                let inspectedDomains = inspectDomain(domainKey, normalizedConfigs, aggregateConfAttrValues);
+                let reorganizedDomains = reorganizeDomains(inspectedDomains);
+                let simplifiedDomains = simplifyDomains(reorganizedDomains);            
+                result = simplifiedDomains;
+            }
+        } break;
     }
-    if (fileTarget) {
-        writeFile(stringify(result), fileTarget, {verboseOnly: false});
-    } else {
+    if (print) {
         logOut(stringify(result), { noSilent: true })
+    } else {
+        let outputFile = util.format(fileTarget, type, key);
+        writeFile(stringify(result), outputFile, {verboseOnly: false});
     }
 }
 
