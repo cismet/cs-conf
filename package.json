@@ -1,6 +1,6 @@
 {
   "name": "csconf",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "main": "cs-conf.js",
   "license": "MIT",
   "bin": {

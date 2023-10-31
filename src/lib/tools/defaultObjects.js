@@ -131,6 +131,7 @@ export const defaultNode = {
     node_type: 'N',
     dynamic_children_file: null,
     children: [],
+    artificial_id: null,
     key: null,
     link: null,
     url: null,
