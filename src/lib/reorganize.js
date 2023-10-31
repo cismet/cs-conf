@@ -85,8 +85,8 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
             }
         }     
         
-        if (sortedAdditionalInfos.group && usergroups) {
-            let additionalInfosGroup = sortedAdditionalInfos.group;
+        if (sortedAdditionalInfos.usergroup && usergroups) {
+            let additionalInfosGroup = sortedAdditionalInfos.usergroup;
             for (let groupKey of Object.keys(usergroups)) {
                 let usergroup = usergroups[groupKey];
                 let additionalInfo = additionalInfosGroup[groupKey];
