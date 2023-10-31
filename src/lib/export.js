@@ -93,7 +93,7 @@ function exportConfigs(fetchedData, config) {
 
     for (let userKey of Object.keys(usermanagement)) {
         let user = usermanagement[userKey];
-        let additionalInfo = additionalInfos ? additionalInfos.user[userKey] : {};
+        let additionalInfo = additionalInfos && additionalInfos.user ? additionalInfos.user[userKey] : {};
         if (additionalInfo && additionalInfo._shadow) {
             let _shadow = additionalInfo._shadow;
             user.groups = _shadow.ownGroups ? [... _shadow.ownGroups] : [];
@@ -460,6 +460,7 @@ function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
         let dynchildhelper = Object.assign({}, csDynamicChildreHelper);
         let dynchildhelperKey = dynchildhelper.name;
 
+        let helperSqlCounter = 0;
         let fileName;
         if (dynchildhelper.filename != null) {
             fileName = dynchildhelper.filename;
