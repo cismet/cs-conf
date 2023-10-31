@@ -196,7 +196,7 @@ export function prepareImport(configs) {
     logVerbose(" ↳ normalizing configuration");
     let normalizedConfigs = Object.assign(
         {
-            configurationAttributes: {},
+            configurationAttributeValues: {},
         },
         normalizeConfigs(configs)
     );
@@ -213,7 +213,7 @@ export function prepareImport(configs) {
     Object.assign(csEntries, prepareUsermanagement(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing configuration attributes (%d)", Object.keys(normalizedConfigs.configurationAttributes).length));
-    Object.assign(csEntries, prepareConfigAttrs(normalizedConfigs));
+    Object.assign(csEntries, prepareConfigurationAttributes(normalizedConfigs));
 
     logVerbose(util.format(" ↳ preparing policyRules (%d)", normalizedConfigs.policyRules.length));
     Object.assign(csEntries, preparePolicyRules(normalizedConfigs));
@@ -382,7 +382,7 @@ function prepareClasses({ classes, additionalInfos }) {
             classKey
         ]);
 
-        if (Object.keys(clazz.additional_info).length > 0) {
+        if (clazz.additional_info && Object.keys(clazz.additional_info).length > 0) {
             additionalInfos.class[classKey] = Object.assign({}, clazz.additional_info);
         }        
 
@@ -512,7 +512,7 @@ function prepareClasses({ classes, additionalInfos }) {
                 ]);            
             }
 
-            if (Object.keys(attribute.additional_info).length > 0) {
+            if (attribute.additional_info && Object.keys(attribute.additional_info).length > 0) {
                 additionalInfos.attribute[classKey + "." + attributeKey] = Object.assign({}, attribute.additional_info);
             }        
     
@@ -549,17 +549,17 @@ function prepareClasses({ classes, additionalInfos }) {
      };
 }
 
-function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
+function prepareConfigurationAttributes({ xmlFiles, configurationAttributeValues }) {
     let csConfigAttrKeyEntries = []
     let csConfigAttrValueEntries = new Map([['true', ['true', null]]]);
     let csConfigAttrValues4A = []; //only action attrs
     let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
     
-    if (configurationAttributes) {
+    if (configurationAttributeValues) {
         let id = 1;
         let duplicateKeyFinder = new Set();
-        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
-            let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+        for (let configurationAttributeKey of Object.keys(configurationAttributeValues)) {
+            let configurationAttributeArray = configurationAttributeValues[configurationAttributeKey];
             for (let configurationAttribute of configurationAttributeArray) {
                 let type;
                 if (configurationAttribute.value != null) {
@@ -608,7 +608,7 @@ function prepareConfigAttrs({ xmlFiles, configurationAttributes }) {
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
 }
 
-function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
+function prepareDomains({ domains, configurationAttributeValues, additionalInfos }) {
     let csDomainEntries = [];
     for (let domainKey of Object.keys(domains)) {
         let domain = domains[domainKey];
@@ -623,16 +623,16 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
                 let configurationAttributeArray = domainConfigurationAttribute[configurationAttributeKey];
                 for (let configurationAttribute of configurationAttributeArray) {
                     configurationAttribute.domain = domainKey;
-                    if (configurationAttributes[configurationAttributeKey]) {
-                        configurationAttributes[configurationAttributeKey].push(configurationAttribute);
+                    if (configurationAttributeValues[configurationAttributeKey]) {
+                        configurationAttributeValues[configurationAttributeKey].push(configurationAttribute);
                     } else {
-                        configurationAttributes[configurationAttributeKey] = [ configurationAttribute ];
+                        configurationAttributeValues[configurationAttributeKey] = [ configurationAttribute ];
                     }                    
                 }
             } 
         }
 
-        if (Object.keys(domain.additional_info).length > 0) {
+        if (domain.additional_info && Object.keys(domain.additional_info).length > 0) {
             additionalInfos.domain[domainKey] = Object.assign({}, domain.additional_info);
         }        
     }
@@ -779,7 +779,7 @@ function prepareStructure({ structure, structureSqlFiles, dynchildhelpers, helpe
     };
 }
 
-function prepareUsergroups({ usergroups, configurationAttributes, additionalInfos }) {
+function prepareUsergroups({ usergroups, configurationAttributeValues, additionalInfos }) {
     let csUgEntries = [];
     for (let groupKey of Object.keys(usergroups)) {
         let group = usergroups[groupKey];
@@ -804,23 +804,23 @@ function prepareUsergroups({ usergroups, configurationAttributes, additionalInfo
                 for (let configurationAttribute of configurationAttributeArray) {
                     configurationAttribute.group = groupAndDomain.group;
                     configurationAttribute.domain = groupAndDomain.domain;
-                    if (configurationAttributes[configurationAttributeKey]) {
-                        configurationAttributes[configurationAttributeKey].push(configurationAttribute);
+                    if (configurationAttributeValues[configurationAttributeKey]) {
+                        configurationAttributeValues[configurationAttributeKey].push(configurationAttribute);
                     } else {
-                        configurationAttributes[configurationAttributeKey] = [ configurationAttribute ];
+                        configurationAttributeValues[configurationAttributeKey] = [ configurationAttribute ];
                     }
                 }
             }
         }
 
-        if (Object.keys(group.additional_info).length > 0) {
+        if (group.additional_info && Object.keys(group.additional_info).length > 0) {
                 additionalInfos.group[groupKey] = Object.assign({}, group.additional_info);
         }        
     }
     return { csUgEntries };
 }
 
-function prepareUsermanagement({ usermanagement, configurationAttributes, additionalInfos }) {
+function prepareUsermanagement({ usermanagement, configurationAttributeValues, additionalInfos }) {
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
@@ -864,10 +864,10 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
                                 group: groupKey,
                                 domain: domainKey,
                             });
-                            if (configurationAttributes[configurationAttributeKey]) {
-                                configurationAttributes[configurationAttributeKey].push(pushConfigurationAttribute);
+                            if (configurationAttributeValues[configurationAttributeKey]) {
+                                configurationAttributeValues[configurationAttributeKey].push(pushConfigurationAttribute);
                             } else {
-                                configurationAttributes[configurationAttributeKey] = [ pushConfigurationAttribute ];
+                                configurationAttributeValues[configurationAttributeKey] = [ pushConfigurationAttribute ];
                             }
         
                         }
@@ -876,17 +876,17 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, additi
                             user: userKey,
                             domain: 'LOCAL',
                         });
-                        if (configurationAttributes[configurationAttributeKey]) {
-                            configurationAttributes[configurationAttributeKey].push(pushConfigurationAttribute);
+                        if (configurationAttributeValues[configurationAttributeKey]) {
+                            configurationAttributeValues[configurationAttributeKey].push(pushConfigurationAttribute);
                         } else {
-                            configurationAttributes[configurationAttributeKey] = [ pushConfigurationAttribute ];
+                            configurationAttributeValues[configurationAttributeKey] = [ pushConfigurationAttribute ];
                         }
                     }
                 }
             }
         }
 
-        if (Object.keys(user.additional_info).length > 0) {
+        if (user.additional_info && Object.keys(user.additional_info).length > 0) {
             additionalInfos.user[userKey] = Object.assign({}, user.additional_info);
         }
     }

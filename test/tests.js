@@ -3,6 +3,7 @@ import util from 'util';
 import { readConfigFile } from '../src/lib/tools/configFiles';
 import { 
     normalizeClasses, 
+    normalizeConfigurationAttributes, 
     normalizeDomains, 
     normalizeDynchildhelpers, 
     normalizePolicyRules, 
@@ -20,6 +21,7 @@ import {
 } from '../src/lib/reorganize';
 import { 
     simplifyClasses, 
+    simplifyConfigurationAttributes, 
     simplifyDomains, 
     simplifyDynchildhelpers, 
     simplifyPolicyRules, 
@@ -39,11 +41,12 @@ const folderReorganize = "./test/configs/reorganize"; // TODO
 const folderReorganized = "./test/configs/reorganized"; // TODO
 
 const allFunctions = {
-    'classes': { normalize: normalizeClasses, simplify: simplifyClasses, reorganize: reorganizeClasses, },
-    'domains': { normalize: normalizeDomains, simplify: simplifyDomains, reorganize: reorganizeDomains, },
-    'dynchildhelpers': { normalize: normalizeDynchildhelpers, simplify: simplifyDynchildhelpers, reorganize: reorganizeDynchildhelpers, },
     'policyRules': { normalize: normalizePolicyRules, simplify: simplifyPolicyRules, reorganize: reorganizePolicyRules, },
+    'classes': { normalize: normalizeClasses, simplify: simplifyClasses, reorganize: reorganizeClasses, },
+    'dynchildhelpers': { normalize: normalizeDynchildhelpers, simplify: simplifyDynchildhelpers, reorganize: reorganizeDynchildhelpers, },
     'structure': { normalize: normalizeStructure, simplify: simplifyStructure, reorganize: null, },
+    'configurationAttributes': { normalize: normalizeConfigurationAttributes, simplify: simplifyConfigurationAttributes, reorganize: null, },
+    'domains': { normalize: normalizeDomains, simplify: simplifyDomains, reorganize: reorganizeDomains, },
     'usergroups': { normalize: normalizeUsergroups, simplify: simplifyUsergroups, reorganize: reorganizeStructure, },
     'usermanagement': { normalize: normalizeUsermanagement, simplify: simplifyUsermanagement, reorganize: reorganizeUsermanagement, },
 };

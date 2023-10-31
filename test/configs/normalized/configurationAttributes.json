@@ -1,5 +1,29 @@
 {
-    "inTestGroup": [{ "groups": [], "value": null, "xmlfile": null }],
-    "withoutGroupNorValue": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }],
-    "InNoGroupWithValue": [{ "groups": [], "value": "test", "xmlfile": null, "domain": null, "group": null }]
+    "action": { 
+        "type": "action", 
+        "additional_info": null,
+        "inspected": {
+            "domainValues": {},
+            "groupValues": {},
+            "userValues": {}
+        }
+    },
+    "xml": { 
+        "type": "xml", 
+        "additional_info": null ,
+        "inspected": {
+            "domainValues": {},
+            "groupValues": {},
+            "userValues": {}
+        }
+    },
+    "value": { 
+        "type": "value", 
+        "additional_info": null, 
+        "inspected": {
+            "domainValues": {},
+            "groupValues": {},
+            "userValues": {}
+        }
+    }
 }

@@ -38,7 +38,7 @@
                 "arrayKey": null, 
                 "readPerms": [], 
                 "writePerms": [], 
-                "additional_info": {}
+                "additional_info": null
             },
             "id": {
                 "name": "id",
@@ -58,11 +58,11 @@
                 "arrayKey": null, 
                 "readPerms": [], 
                 "writePerms": [], 
-                "additional_info": {}
+                "additional_info": null
             }
         },
         "attributesOrder": "auto",
         "additionalAttributes": null, 
-        "additional_info": {}
+        "additional_info": null
     }          
 }

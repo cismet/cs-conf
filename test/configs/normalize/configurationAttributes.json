@@ -1,5 +1,5 @@
 {
-    "inTestGroup": { "keygroup": "testGroup" },
-    "withoutGroupNorValue": {},
-    "InNoGroupWithValue": { "value": "test", "xmlfile": null }
+    "action": { "type": "action" },
+    "xml": { "type": "xml" },
+    "value": { "type": "value" }
 }

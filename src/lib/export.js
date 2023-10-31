@@ -35,7 +35,8 @@ async function fetch() {
     return {
         csAdditionalInfos: await fetchStatement(client, 'cs_info', additionalInfosExportStatement),
         csPolicyRules: await fetchStatement(client, 'cs_policy_rules', policyRulesExportStatement),
-        csConfigAttrs: await fetchStatement(client, 'cs_config_attr_*', configAttrExportStatement),
+        csConfigAttrValues: await fetchStatement(client, 'cs_config_attr_values', configAttrValuesExportStatement),
+        csConfigAttrKeys: await fetchStatement(client, 'cs_config_attr_keys', configAttrKeysExportStatement),
         csDomains: await fetchStatement(client, 'cs_domains', domainsExportStatement),
         csUgs: await fetchStatement(client, 'cs_ug', usergroupsExportStatement),
         csUsrs: await fetchStatement(client, 'cs_usr', usersExportStatement),
@@ -70,14 +71,14 @@ function exportConfigs(fetchedData, config) {
     logVerbose(" ↳ creating domains.json");
     Object.assign(configs, exportDomains(fetchedData, configs));
 
-    logVerbose(" ↳ creating policyRules.json");
-    Object.assign(configs, exportPolicyRules(fetchedData, configs));
-
     logVerbose(" ↳ creating usergroups.json");
     Object.assign(configs, exportUsergroups(fetchedData, configs));
 
     logVerbose(" ↳ creating usermanagement.json");
     Object.assign(configs, exportUserManagement(fetchedData, configs));
+
+    logVerbose(" ↳ creating policyRules.json");
+    Object.assign(configs, exportPolicyRules(fetchedData, configs));
 
     logVerbose(" ↳ creating classes.json");
     Object.assign(configs, exportClasses(fetchedData, configs));
@@ -337,104 +338,125 @@ function exportClasses({ csClasses, csAttrs, csClassAttrs, csUgClassPerms, csUgA
 }
 
 
-function exportConfigAttributes({ csConfigAttrs }, {}) {
-    const userConfigAttrs = new Map();
-    const groupConfigAttrs = new Map();
-    const domainConfigAttrs = new Map();
-    const xmlFiles = new Map();
+function exportConfigAttributes({ csConfigAttrKeys, csConfigAttrValues }, {}) {
+
+    let configurationAttributes = {};
+    for (let csConfigAttrKey of csConfigAttrKeys) {
+        let configurationAttributeKey = csConfigAttrKey.key;
+        let configurationAttribute = {};
+        switch (csConfigAttrKey.type) {
+            case 'C': {
+                Object.assign(configurationAttribute, {type: "value"});
+            } break;
+            case 'X': {
+                Object.assign(configurationAttribute, {type: "xml"});
+            } break;
+            default: {
+                Object.assign(configurationAttribute, {type: "action"});
+            }
+        }
+        configurationAttributes[configurationAttributeKey] = configurationAttribute;
+    }
+
+    let configurationAttributeValues = {
+        domain: {},
+        group: {},
+        user: {},
+    }
+
+    let xmlFiles = new Map();
 
     let valuesToFilename = new Map();
     let xmlDocCounter = new Map();
-    for (let csConfigAttr of csConfigAttrs) {
-        let configurationAttributeKey = csConfigAttr.key;
-        let configurationAttribute = {}
-        switch (csConfigAttr.type) {
-            case 'C': {
-                configurationAttribute.value = csConfigAttr.value                
+    for (let csConfigAttrValue of csConfigAttrValues) {
+        let configurationAttributeKey = csConfigAttrValue.key;
+        let configurationAttributeValue = {};
+        switch (configurationAttributes[configurationAttributeKey].type) {
+            case 'value': {
+                configurationAttributeValue.value = csConfigAttrValue.value                
             } break;
-            case 'X': {
+            case 'xml': {
                 let xmlToSave;
                 try {
-                    xmlToSave = xmlFormatter(csConfigAttr.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
+                    xmlToSave = xmlFormatter(csConfigAttrValue.value, { collapseContent: true, lineSeparator: '\n', stripComments: false });
                 } catch (formatterProblem) {
-                    xmlToSave = csConfigAttr.value;
+                    xmlToSave = csConfigAttrValue.value;
                 }                    
 
                 let fileName;
-                if (csConfigAttr.filename != null) {
-                    fileName = csConfigAttr.filename;
-                } else if (valuesToFilename.has(csConfigAttr.value)) {
-                    fileName = valuesToFilename.get(csConfigAttr.value);
+                if (csConfigAttrValue.filename != null) {
+                    fileName = csConfigAttrValue.filename;
+                } else if (valuesToFilename.has(csConfigAttrValue.value)) {
+                    fileName = valuesToFilename.get(csConfigAttrValue.value);
                 } else {
-                    let counter = xmlDocCounter.has(csConfigAttr.key) ? xmlDocCounter.get(csConfigAttr.key) + 1 : 1;
-                    xmlDocCounter.set(csConfigAttr.key, counter);
-                    fileName = util.format("%s.%s.xml", csConfigAttr.key, zeroFill(4, counter));
+                    let counter = xmlDocCounter.has(csConfigAttrValue.key) ? xmlDocCounter.get(csConfigAttrValue.key) + 1 : 1;
+                    xmlDocCounter.set(csConfigAttrValue.key, counter);
+                    fileName = util.format("%s.%s.xml", csConfigAttrValue.key, zeroFill(4, counter));
                 }
-                valuesToFilename.set(csConfigAttr.value, fileName);
+                valuesToFilename.set(csConfigAttrValue.value, fileName);
                 xmlFiles.set(fileName, xmlToSave);
-                configurationAttribute.xmlfile = fileName;
+                configurationAttributeValue.xmlfile = fileName;
             } break;
         }
-        if (csConfigAttr.login_name) {
-            configurationAttribute = Object.assign(configurationAttribute, { groups: [ csConfigAttr.groupkey ] });
-            if (userConfigAttrs.has(csConfigAttr.login_name)) {
-                let configurationAttributes = userConfigAttrs.get(csConfigAttr.login_name);
-                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+        if (csConfigAttrValue.login_name) {
+            configurationAttributeValue = Object.assign(configurationAttributeValue, { groups: [ csConfigAttrValue.groupkey ] });
+            let configurationAttributeValuesUser = configurationAttributeValues.user[csConfigAttrValue.login_name];
+            if (configurationAttributeValuesUser) {
+                let configurationAttributeArray = configurationAttributeValuesUser[configurationAttributeKey];
                 if (configurationAttributeArray) {
                     let found = false;
                     for (let configurationAttribute of configurationAttributeArray) {
                         if (configurationAttribute != null) {
                             found = true;
-                            if (csConfigAttr.groupkey != null && configurationAttribute.groups != null && !configurationAttribute.groups.contains(csConfigAttr.groupkey)) {
-                                configurationAttribute.groups.push(csConfigAttr.groupkey);
+                            if (csConfigAttrValue.groupkey != null && configurationAttribute.groups != null && !configurationAttribute.groups.contains(csConfigAttrValue.groupkey)) {
+                                configurationAttribute.groups.push(csConfigAttrValue.groupkey);
                             }
                             break;
                         }
                     }
                     if (!found) {
-                        configurationAttributeArray.push(configurationAttribute);
+                        configurationAttributeArray.push(configurationAttributeValue);
                     }
                 } else {
-                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
+                    configurationAttributeValuesUser[configurationAttributeKey] = [configurationAttributeValue];
                 }
             } else {
-                userConfigAttrs.set(csConfigAttr.login_name, { [configurationAttributeKey]: [configurationAttribute] });
+                configurationAttributeValues.user[csConfigAttrValue.login_name] = { [configurationAttributeKey]: [configurationAttributeValue] };
             }
-        } else if (csConfigAttr.groupkey) {
-            if (groupConfigAttrs.has(csConfigAttr.groupkey)) {
-                let configurationAttributes = groupConfigAttrs.get(csConfigAttr.groupkey);
-                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+        } else if (csConfigAttrValue.groupkey) {
+            let configurationAttributeValuesGroup = configurationAttributeValues.group[csConfigAttrValue.groupkey];
+            if (configurationAttributeValuesGroup) {
+                let configurationAttributeArray = configurationAttributeValuesGroup[configurationAttributeKey];
                 if (configurationAttributeArray) {
-                    configurationAttributeArray.push(configurationAttribute);
+                    configurationAttributeArray.push(configurationAttributeValue);
                 } else {
-                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
+                    configurationAttributeValuesGroup[configurationAttributeKey] = [configurationAttributeValue];
                 }
             } else {
-                groupConfigAttrs.set(csConfigAttr.groupkey, { [configurationAttributeKey]: [configurationAttribute] });
+                configurationAttributeValues.group[csConfigAttrValue.groupkey] = { [configurationAttributeKey]: [configurationAttributeValue] };
             }
-        } else if (csConfigAttr.domainname) {
-            if (domainConfigAttrs.has(csConfigAttr.domainname)) {
-                let configurationAttributes = domainConfigAttrs.get(csConfigAttr.domainname);
-                let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
+        } else if (csConfigAttrValue.domainname) {
+            let configurationAttributeValuesDomain = configurationAttributeValues.domain[csConfigAttrValue.domainname];
+            if (configurationAttributeValuesDomain) {
+                let configurationAttributeArray = configurationAttributeValuesDomain[configurationAttributeKey];
                 if (configurationAttributeArray) {
-                    configurationAttributeArray.push(configurationAttribute);
+                    configurationAttributeArray.push(configurationAttributeValue);
                 } else {
-                    configurationAttributes[configurationAttributeKey] = [configurationAttribute];
+                    configurationAttributeValuesDomain[configurationAttributeKey] = [configurationAttributeValue];
                 }                
             } else {
-                domainConfigAttrs.set(csConfigAttr.domainname, { [configurationAttributeKey]: [configurationAttribute] });
+                configurationAttributeValues.domain[csConfigAttrValue.domainname] = { [configurationAttributeKey]: [configurationAttributeValue] };
             }
         }
     }
     return {
-        userConfigAttrs,
-        groupConfigAttrs,
-        domainConfigAttrs,
+        configurationAttributes,
+        configurationAttributeValues,
         xmlFiles
     }
 }
 
-function exportDomains({ csDomains }, { domainConfigAttrs }) {
+function exportDomains({ csDomains }, { configurationAttributeValues }) {
     let domains = {};
     for (let csDomain of csDomains) {
         let domain = Object.assign({}, csDomain);
@@ -443,9 +465,9 @@ function exportDomains({ csDomains }, { domainConfigAttrs }) {
         delete domain.domainname;
         
         //add the configuration attributes
-        let attributes = domainConfigAttrs.get(domainKey);
-        if (attributes) {
-            domain.configurationAttributes = attributes;        
+        let configurationAttributeValuesDomain = configurationAttributeValues.domain[domainKey];
+        if (configurationAttributeValuesDomain) {
+            domain.configurationAttributes = configurationAttributeValuesDomain;        
         }
         domains[domainKey] = domain;
     }
@@ -636,17 +658,17 @@ function visitingNodesByChildren(nodes, allNodes, links, duplicates) {
     return childrenIdsVisited;
 }
 
-function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
+function exportUsergroups({ csUgs }, { configurationAttributeValues }) {
     let usergroups = {};
 
     for (let csUg of csUgs) {
         let groupKey = csUg.name + (csUg.domain.toUpperCase() == 'LOCAL' ? '' : '@' + csUg.domain);
-        let configurationAttributes = groupConfigAttrs.get(csUg.name + '@' + csUg.domain);
+        let configurationAttributeValuesGroup = configurationAttributeValues.group[csUg.name + '@' + csUg.domain];
 
         let group = {
             descr: csUg.descr ?? undefined,
             prio: csUg.prio ?? undefined,
-            configurationAttributes: configurationAttributes ?? undefined,
+            configurationAttributes: configurationAttributeValuesGroup ?? undefined,
         };
         
         usergroups[groupKey] = group;
@@ -657,7 +679,7 @@ function exportUsergroups({ csUgs }, { groupConfigAttrs }) {
     }
 }
 
-function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) {
+function exportUserManagement({ csUsrs, csUgMemberships }, { configurationAttributeValues }) {
     let userGroupMap = new Map();
     for (let csUgMembership of csUgMemberships) {
         let user = userGroupMap.get(csUgMembership.login_name);
@@ -684,9 +706,9 @@ function exportUserManagement({ csUsrs, csUgMemberships }, { userConfigAttrs }) 
         }
 
         //add the configuration attributes
-        let attributes = userConfigAttrs.get(userKey);
-        if (attributes) {
-            user.configurationAttributes = attributes;
+        let configurationAttributeValuesUser = configurationAttributeValues.user[userKey];
+        if (configurationAttributeValuesUser) {
+            user.configurationAttributes = configurationAttributeValuesUser;
         }
 
         usermanagement[userKey] = user;
@@ -707,25 +729,34 @@ SELECT
 FROM cs_info;
 `;
 
-const configAttrExportStatement = `
+const configAttrValuesExportStatement = `
 SELECT 
     usr.login_name,
     domain.name AS domainname,
     ug.name || '@' || ug_domain.name AS groupkey,
     key.key,
-    type.type,
     value.value,
     value.filename
 FROM 
     cs_config_attr_jt AS jt
     INNER JOIN cs_config_attr_key key ON jt.key_id = key.id
-    INNER JOIN cs_config_attr_type type ON jt.type_id = type.id
     INNER JOIN cs_config_attr_value value ON jt.val_id = value.id
     LEFT OUTER JOIN cs_domain AS domain ON jt.dom_id = domain.id
     LEFT OUTER JOIN cs_usr AS usr ON jt.usr_id = usr.id
     LEFT OUTER JOIN cs_ug AS ug ON jt.ug_id = ug.id
     LEFT OUTER JOIN cs_domain AS ug_domain ON ug.domain = ug_domain.id
 ORDER BY jt.id
+;`;
+
+const configAttrKeysExportStatement = `
+SELECT DISTINCT
+    key.key,
+    type.type
+FROM 
+    cs_config_attr_jt AS jt
+    INNER JOIN cs_config_attr_key key ON jt.key_id = key.id
+    INNER JOIN cs_config_attr_type type ON jt.type_id = type.id
+    ORDER BY key.key
 ;`;
 
 const domainsExportStatement = 'SELECT name AS domainname FROM cs_domain ORDER BY id;';

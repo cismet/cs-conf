@@ -23,6 +23,7 @@ export default async function csReorganize(options) {
 export function reorganizeConfigs(configs) {
     return Object.assign({}, configs, {
         config: reorganizeConfig(configs.config), 
+        configurationAttributes: reorganizeConfigurationAttributes(configs.configurationAttributes),
         additionalInfos: reorganizeAdditionalInfos(configs.additionalInfos, configs), 
         classes: reorganizeClasses(configs.classes), 
         domains: reorganizeDomains(configs.domains), 
@@ -55,7 +56,7 @@ export function reorganizeConfig(config) {
     return config;
 }
 
-export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes }) {
+export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes, configurationAttributes }) {
     if (additionalInfos != null) {
         let sortedAdditionalInfos = {};    
         for (let type of Object.keys(additionalInfos).sort((a, b) => { 
@@ -78,7 +79,7 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
             for (let domainKey of Object.keys(domains)) {
                 let domain = domains[domainKey];
                 let additionalInfo = additionalInfosDomain[domainKey];
-                if (additionalInfo) {
+                if (domain && additionalInfo) {
                     domain.additional_info = additionalInfo;
                     delete additionalInfosDomain[domainKey];       
                 }
@@ -90,7 +91,7 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
             for (let groupKey of Object.keys(usergroups)) {
                 let usergroup = usergroups[groupKey];
                 let additionalInfo = additionalInfosGroup[groupKey];
-                if (additionalInfo) {
+                if (usergroup && additionalInfo) {
                     usergroup.additional_info = additionalInfo;
                     delete additionalInfosGroup[groupKey];    
                 }
@@ -102,7 +103,7 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
             for (let userKey of Object.keys(usermanagement)) {
                 let user = usermanagement[userKey]
                 let additionalInfo = additionalInfosUser[userKey];
-                if (additionalInfo) {
+                if (user && additionalInfo) {
                     user.additional_info = additionalInfo;
                     delete additionalInfosUser[userKey];        
                 }
@@ -119,7 +120,7 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
                         let attribute = attributes[attributeKey];
                         let attrributeInfoKey = classKey + "." + attributeKey;
                         let additionalInfo = additionalInfosAttribute[attrributeInfoKey];
-                        if (additionalInfo) {
+                        if (attrributeInfoKey && additionalInfo) {
                             attribute.additional_info = additionalInfo;
                             delete additionalInfosAttribute[attrributeInfoKey];        
                         }
@@ -128,13 +129,26 @@ export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups
 
                 let additionalInfosClass = sortedAdditionalInfos.class;    
                 let additionalInfo = additionalInfosClass[classKey];
-                if (additionalInfo) {
+                if (additionalInfosClass && additionalInfo) {
                     clazz.additional_info = additionalInfo;
                 }
                 delete additionalInfosClass[classKey];        
             }
         }
                 
+        if (sortedAdditionalInfos.configurationAttribute && configurationAttributes) {
+            let additionalInfosConfAttr = sortedAdditionalInfos.configurationAttribute;    
+            for (let configurationAttributeKey of Object.keys(additionalInfosConfAttr)) {
+                let configurationAttribute = configurationAttributes[configurationAttributeKey]
+                let additionalInfo = additionalInfosConfAttr[configurationAttributeKey];
+                if (configurationAttribute && additionalInfo) {
+                    configurationAttribute.additional_info = additionalInfo;
+                    delete additionalInfosConfAttr[configurationAttributeKey];        
+                }
+            }
+        }
+
+
         return sortedAdditionalInfos;
     }        
     return additionalInfos;
@@ -212,7 +226,7 @@ export function reorganizeDomain(domain) {
     let reorganized = {};
     if (domain) {
         Object.assign(reorganized, domain, {
-            configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributes(domain.configurationAttributes) : domain.configurationAttributes,
+            configurationAttributes: domain.configurationAttributes ? reorganizeConfigurationAttributeValues(domain.configurationAttributes) : domain.configurationAttributes,
             inspected: domain.inspected ? reorganizeDomainInspected(domain.inspected) : domain.inspected 
         });
     }
@@ -238,6 +252,17 @@ export function reorganizeDynchildhelpers(dynchildhelpers) {
             return a.toLowerCase().localeCompare(b.toLowerCase());
         }))
         reorganized[dynchildhelperKey] = dynchildhelpers[dynchildhelperKey];
+    }           
+    return reorganized;
+}
+
+export function reorganizeConfigurationAttributes(configurationAttributes) {
+    let reorganized = {};
+    if (configurationAttributes != null) {
+        for (let configurationAttribute of Object.keys(configurationAttributes).sort((a, b) => {
+            return a.localeCompare(b);
+        }))
+        reorganized[configurationAttribute] = configurationAttributes[configurationAttribute];
     }           
     return reorganized;
 }
@@ -281,7 +306,7 @@ export function reorganizeUsergroup(usergroup) {
     let reorganized = {};
     if (usergroup) {
         Object.assign(reorganized, usergroup, {
-            configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributes(usergroup.configurationAttributes) : usergroup.configurationAttributes,
+            configurationAttributes: usergroup.configurationAttributes ? reorganizeConfigurationAttributeValues(usergroup.configurationAttributes) : usergroup.configurationAttributes,
             inspected: usergroup.inspected ? reorganizeUsergroupInspected(usergroup.inspected) : usergroup.inspected 
         });
     }
@@ -307,7 +332,7 @@ export function reorganizeUsergroupInspected(usergroupInspected) {
             canWriteAttributes: usergroupInspected.canWriteAttributes ? usergroupInspected.canWriteAttributes.sort((a, b) => { 
                 return a.localeCompare(b);
             }) : usergroupInspected.canWriteAttributes,
-            allConfigurationAttributes: usergroupInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes) : usergroupInspected.configurationAttributes,
+            allConfigurationAttributes: usergroupInspected.allConfigurationAttributes ? reorganizeConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes) : usergroupInspected.configurationAttributes,
         });
     }
     return reorganized;
@@ -337,7 +362,7 @@ export function reorganizeUser(user) {
             groups : user.groups ? [...user.groups.sort((a, b) => { 
                 return a.localeCompare(b);
             })] : user.groups,
-            configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributes(user.configurationAttributes) : user.configurationAttributes,
+            configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributeValues(user.configurationAttributes) : user.configurationAttributes,
             inspected: user.inspected ? reorganizeUserInspected(user.inspected) : user.inspected 
         });
     }
@@ -374,7 +399,7 @@ export function reorganizeUserInspected(userInspected) {
             return a.localeCompare(b);
         }) : userInspected.canWriteAttributes;
 
-        let allConfigurationAttributes = userInspected.allConfigurationAttributes ? reorganizeConfigurationAttributes(userInspected.allConfigurationAttributes) : userInspected.configurationAttributes;
+        let allConfigurationAttributes = userInspected.allConfigurationAttributes ? reorganizeConfigurationAttributeValues(userInspected.allConfigurationAttributes) : userInspected.configurationAttributes;
 
         Object.assign(reorganized, userInspected, {
             memberOf,
@@ -418,15 +443,15 @@ function reorganizeNode(node) {
 /*
  * used by reorganizeDomains, reorganizeUsergroups, reorganizeUsermanagement
  */
-function reorganizeConfigurationAttributes(configurationAttributes) {
-    if (configurationAttributes == null) return null;
+function reorganizeConfigurationAttributeValues(configurationAttributeValues) {
+    if (configurationAttributeValues == null) return null;
     
     let reorganized = {};
-    let sortedConfigurationAttributeKeys = Object.keys(configurationAttributes).sort((a, b) => { 
+    let sortedConfigurationAttributeKeys = Object.keys(configurationAttributeValues).sort((a, b) => { 
         return a.localeCompare(b);
     })
     for (let configurationAttributeKey of sortedConfigurationAttributeKeys) {
-        let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+        let configurationAttributeValue = configurationAttributeValues[configurationAttributeKey];
         if (Array.isArray(configurationAttributeValue)) {
             let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [ configurationAttributeValue ];
             let reorganizedArray = [];

@@ -77,6 +77,7 @@ export function readConfigFiles(configsDir, topics) {
     let config = readConfigFile(util.format("%s/config.json", configsDir), true);
     let additionalInfos = readConfigFile(util.format("%s/additionalInfos.json", configsDir), true);
 
+    let configurationAttributes = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/configurationAttributes.json", configsDir), true) : null;
     let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : null;
     let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configsDir), true) : null;
     let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configsDir), true) : null;
@@ -123,6 +124,7 @@ export function readConfigFiles(configsDir, topics) {
 
     return {
         config,
+        configurationAttributes,
         additionalInfos,
         domains, 
         policyRules, 
@@ -141,6 +143,7 @@ export function writeConfigFiles(configs, configsDir) {
     let {
         config,
         additionalInfos,
+        configurationAttributes,
         domains,
         policyRules,
         usermanagement,
@@ -200,6 +203,7 @@ export function writeConfigFiles(configs, configsDir) {
 
     writeConfigFile(config, util.format("%s/config.json", configsDir), true);
     writeConfigFile(additionalInfos, util.format("%s/additionalInfos.json", configsDir), true);
+    writeConfigFile(configurationAttributes, util.format("%s/configurationAttributes.json", configsDir), true);
     writeConfigFile(domains, util.format("%s/domains.json", configsDir), true);
     writeConfigFile(policyRules, util.format("%s/policyRules.json", configsDir), true);
     writeConfigFile(usergroups, util.format("%s/usergroups.json", configsDir), true);

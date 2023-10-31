@@ -6,7 +6,7 @@
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
         "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }] },
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
@@ -24,7 +24,7 @@
         "shadows": [],        
         "groups": ["Group3@LOCAL"],
         "configurationAttributes": {},
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
@@ -42,7 +42,7 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
@@ -60,7 +60,7 @@
         "shadows": [],        
         "groups": [],
         "configurationAttributes": {},
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},

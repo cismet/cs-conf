@@ -1,7 +1,7 @@
 {
   "LOCAL": {
     "configurationAttributes": {"test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }]}, 
-    "additional_info": {},
+    "additional_info": null,
     "inspected": {
       "groups": []
     }

@@ -26,7 +26,7 @@ export const defaultAdditionalInfos = {
     group: {},
     domain: {},
     class: {},
-    attribute: {},
+    configurationAttribute: {},
 };
 
 // classes
@@ -48,7 +48,7 @@ export const defaultAttribute = {
     arrayKey: null,
     readPerms: [],
     writePerms: [],
-    additional_info: {},
+    additional_info: null,
 };
 
 export const defaultAttributePrimary = (table_name, pk) => { 
@@ -86,11 +86,11 @@ export const defaultClass = {
     attributes: null,
     attributesOrder: 'auto',
     additionalAttributes: null,
-    additional_info: {},
+    additional_info: null,
 };
 
 // domains, usergroups, usermanagement
-export const defaultConfigurationAttributes = {
+export const defaultConfigurationAttributeValue = {
     groups: [],
     value: null,
     xmlfile: null,
@@ -98,10 +98,16 @@ export const defaultConfigurationAttributes = {
     group: null,
 };
 
+export const defaultConfigurationAttributeKey = {
+    type: "action",
+    additional_info: null,
+    inspected: {},
+};
+
 // domains
 export const defaultDomain = {
     configurationAttributes: {},
-    additional_info: {},
+    additional_info: null,
     inspected: {},
 };
 
@@ -142,7 +148,7 @@ export const defaultUserGroup = {
     descr: null,
     prio: 0,
     configurationAttributes: {},
-    additional_info: {},
+    additional_info: null,
     inspected: {},
 };
 
@@ -154,11 +160,17 @@ export const defaultUser = {
     shadows: [],
     groups: [],
     configurationAttributes: {},
-    additional_info: {},
+    additional_info: null,
     inspected : {},
 };
 
 // ---
+
+export const defaultConfigurationAttributeInspected = {    
+    domainValues: {},
+    groupValues: {},
+    userValues: {},
+};
 
 export const defaultUserInspected = {
     memberOf: [],
@@ -167,7 +179,7 @@ export const defaultUserInspected = {
     canWriteClasses: [],
     canReadAttributes: [],
     canWriteAttributes: [],
-    allConfigurationAttributes: {}
+    allConfigurationAttributes: {},
 };
 
 export const defaultUserGroupInspected = {

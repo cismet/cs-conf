@@ -3,7 +3,7 @@
         "descr": "Descr1",
         "prio": 0,
         "configurationAttributes": { "test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }]},
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "members": [],
             "canReadClasses": [],
@@ -17,7 +17,7 @@
         "descr": null,
         "prio": 0,
         "configurationAttributes": {},
-        "additional_info": {},
+        "additional_info": null,
         "inspected": {
             "members": [],
             "canReadClasses": [],

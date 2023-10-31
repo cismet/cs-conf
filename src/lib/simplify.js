@@ -15,7 +15,7 @@ import {
     defaultConfig, 
     defaultConfigConnection, 
     defaultConfigSync, 
-    defaultConfigurationAttributes, 
+    defaultConfigurationAttributeValue, 
     defaultDomain, 
     defaultDynchildhelper, 
     defaultUser, 
@@ -24,6 +24,8 @@ import {
     defaultPolicyRule,
     defaultUserInspected,
     defaultDomainInspected,
+    defaultConfigurationAttributeKey,
+    defaultConfigurationAttributeInspected,
 } from "./tools/defaultObjects";
 
 import { 
@@ -31,7 +33,7 @@ import {
     normalizeAttributes, 
     normalizeClasses, 
     normalizeConfig, 
-    normalizeConfigurationAttributes, 
+    normalizeConfigurationAttributeValues, 
     normalizeDomains, 
     normalizeDynchildhelpers, 
     normalizeStructure, 
@@ -68,6 +70,7 @@ export default async function csSimplify(options) {
 export function simplifyConfigs(configs) {
     return Object.assign({}, configs, {
         config: simplifyConfig(configs.config), 
+        configurationAttributes: simplifyConfigurationAttributes(configs.configurationAttributes), 
         additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
         classes: simplifyClasses(configs.classes), 
         domains: simplifyDomains(configs.domains, configs.config.domainName), 
@@ -188,7 +191,7 @@ export function simplifyDomain(domain) {
     if (domain == null) return null;
     
     let simplified = copyFromTemplate(Object.assign({}, domain, {
-        configurationAttributes: simplifyConfigurationAttributes(domain.configurationAttributes),
+        configurationAttributes: simplifyConfigurationAttributeValues(domain.configurationAttributes),
         inspected: simplifyDomainInspected(domain.inspected),
     }), defaultDomain);
     return simplified;
@@ -261,7 +264,7 @@ export function simplifyUsergroup(group, { normalize = false } = {}) {
     let preprocessed = normalize ? normalizeUsergroup(group) : group;
     if (group) {
         Object.assign(simplified, copyFromTemplate(Object.assign({}, preprocessed, { 
-            configurationAttributes: simplifyConfigurationAttributes(preprocessed.configurationAttributes),
+            configurationAttributes: simplifyConfigurationAttributeValues(preprocessed.configurationAttributes),
             inspected: simplifyUsergroupInspected(preprocessed.inspected),
         }), defaultUserGroup));
     }
@@ -277,7 +280,7 @@ export function simplifyUsergroupInspected(usergroupInspected) {
             canWriteClasses: usergroupInspected.canWriteClasses && usergroupInspected.canWriteClasses.length ? [...usergroupInspected.canWriteClasses] : undefined,
             canReadAttributes: usergroupInspected.canReadAttributes && usergroupInspected.canReadAttributes.length ? [...usergroupInspected.canReadAttributes] : undefined,
             canWriteAttributes: usergroupInspected.canWriteAttributes && usergroupInspected.canWriteAttributes.length ? [...usergroupInspected.canWriteAttributes] : undefined,
-            allConfigurationAttributes: simplifyConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
+            allConfigurationAttributes: simplifyConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes),
         }), usergroupInspected);
     }
     clean(simplified);
@@ -317,7 +320,7 @@ export function simplifyUser(user, { removeShadowInfo = true, normalize = true }
 
         simplified = copyFromTemplate(Object.assign({}, preprocessed, { 
             groups: simplifyGroups(preprocessed.groups),
-            configurationAttributes: simplifyConfigurationAttributes( preprocessed.configurationAttributes),
+            configurationAttributes: simplifyConfigurationAttributeValues( preprocessed.configurationAttributes),
             additional_info: additionalInfo,
             inspected: simplifyUserInspected(preprocessed.inspected),
         }), defaultUser);
@@ -335,7 +338,7 @@ export function simplifyUserInspected(userInspected) {
             canWriteClasses: userInspected.canWriteClasses.length ? [...userInspected.canWriteClasses] : undefined,
             canReadAttributes: userInspected.canReadAttributes.length ? [...userInspected.canReadAttributes] : undefined,
             canWriteAttributes: userInspected.canWriteAttributes.length ? [...userInspected.canWriteAttributes] : undefined,
-            allConfigurationAttributes: simplifyConfigurationAttributes(userInspected.allConfigurationAttributes),
+            allConfigurationAttributes: simplifyConfigurationAttributeValues(userInspected.allConfigurationAttributes),
         }), defaultUserInspected);
     }
     clean(simplified);
@@ -444,15 +447,65 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
     if (configurationAttributes == null) return null;
 
     let simplified = {};
-    let normalized = normalizeConfigurationAttributes(configurationAttributes);
+    let normalized = normalizeConfigurationAttributeValues(configurationAttributes);
     for (let configurationAttributeKey of Object.keys(normalized)) {
-        let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+        let configurationAttribute = configurationAttributes[configurationAttributeKey];
+        if (configurationAttribute != null) {
+            simplified[configurationAttributeKey] = simplifyConfigurationAttributeKey(configurationAttribute);
+        }
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigurationAttributeKey(configurationAttribute) {
+    if (configurationAttribute == null) return null;
+    let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, {
+        inspected: simplifyConfigurationAttributeInspected(configurationAttribute.inspected),
+    }), defaultConfigurationAttributeKey);
+    return simplified;
+}
+
+export function simplifyConfigurationAttributeInspected(configurationAttributeInspected) {
+    let simplified = {};
+    if (configurationAttributeInspected) {
+        simplified = copyFromTemplate(Object.assign({}, configurationAttributeInspected, { 
+            domainValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.domainValues),
+            groupValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.groupValues),
+            userValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.userValues),
+        }), defaultConfigurationAttributeInspected);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigurationAttributeInspectedValues(configurationAttributeInspectedValues) {
+    let simplified = {};
+    if (configurationAttributeInspectedValues) {
+        for (let configurationAttributeInspectedValuesKey of Object.keys(configurationAttributeInspectedValues)) {
+            let configurationAttributeInspectedValue = configurationAttributeInspectedValues[configurationAttributeInspectedValuesKey];
+            if (configurationAttributeInspectedValue) {
+                simplified[configurationAttributeInspectedValuesKey] = configurationAttributeInspectedValue;
+            }
+        }
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigurationAttributeValues(configurationAttributeValues) {
+    if (configurationAttributeValues == null) return null;
+
+    let simplified = {};
+    let normalized = normalizeConfigurationAttributeValues(configurationAttributeValues);
+    for (let configurationAttributeKey of Object.keys(normalized)) {
+        let configurationAttributeValue = configurationAttributeValues[configurationAttributeKey];
         let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
 
         let simplifiedArray = [];
         for (let configurationAttribute of configurationAttributeArray) {
             if (configurationAttribute != null) {
-                simplifiedArray.push(simplifyConfigurationAttribute(configurationAttribute));
+                simplifiedArray.push(simplifyConfigurationAttributeValue(configurationAttribute));
             }
         }
         if (simplifiedArray.length > 1) {
@@ -465,12 +518,12 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyConfigurationAttribute(configurationAttribute) {
-    if (configurationAttribute == null) return null;
-    let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, { 
-        groups: simplifyConfigurationAttributeGroups(configurationAttribute.groups),
-        group: configurationAttribute.group ? removeLocalDomain(configurationAttribute.group) : undefined,
-    }), defaultConfigurationAttributes);
+export function simplifyConfigurationAttributeValue(configurationAttributeValue) {
+    if (configurationAttributeValue == null) return null;
+    let simplified = copyFromTemplate(Object.assign({}, configurationAttributeValue, { 
+        groups: simplifyConfigurationAttributeGroups(configurationAttributeValue.groups),
+        group: configurationAttributeValue.group ? removeLocalDomain(configurationAttributeValue.group) : undefined,
+    }), defaultConfigurationAttributeValue);
     return simplified;
 }
 

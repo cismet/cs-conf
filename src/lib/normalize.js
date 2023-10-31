@@ -9,7 +9,7 @@ import {
     defaultConfig, 
     defaultConfigConnection, 
     defaultConfigSync, 
-    defaultConfigurationAttributes, 
+    defaultConfigurationAttributeValue, 
     defaultClass, 
     defaultDomain, 
     defaultDomainInspected, 
@@ -20,6 +20,8 @@ import {
     defaultUserGroup, 
     defaultUserGroupInspected,
     defaultPolicyRule,
+    defaultConfigurationAttributeKey,
+    defaultConfigurationAttributeInspected,
 } from "./tools/defaultObjects";
 
 // ---
@@ -208,7 +210,7 @@ export function normalizeDomain(domain) {
     let normalized = Object.assign({}, defaultDomain);
     if (domain) {
         Object.assign(normalized, domain, {
-            configurationAttributes: normalizeConfigurationAttributes(domain.configurationAttributes),
+            configurationAttributes: normalizeConfigurationAttributeValues(domain.configurationAttributes),
             inspected: normalizeDomainInspected(domain.inspected),
         });
     }
@@ -286,7 +288,7 @@ export function normalizeUsergroup(usergroup) {
     let normalized = Object.assign({}, defaultUserGroup);
     if (usergroup != null) {
         Object.assign(normalized, usergroup, {
-            configurationAttributes: normalizeConfigurationAttributes(usergroup.configurationAttributes),
+            configurationAttributes: normalizeConfigurationAttributeValues(usergroup.configurationAttributes),
             inspected: normalizeUsergroupInspected(usergroup.inspected),
         });
     }
@@ -302,7 +304,7 @@ export function normalizeUsergroupInspected(usergroupInspected) {
             canWriteClasses: usergroupInspected.canWriteClasses ?? [],
             canReadAttributes: usergroupInspected.canReadAttributes ?? [],
             canWriteAttributes: usergroupInspected.canWriteAttributes ?? [],
-            allConfigurationAttributes: normalizeConfigurationAttributes(usergroupInspected.allConfigurationAttributes),
+            allConfigurationAttributes: normalizeConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes),
         });
     }
     return normalized;
@@ -330,7 +332,7 @@ export function normalizeUser(user, userKey) {
 
         let shadows = user.shadows ? [...user.shadows] : [];
         let groups = normalizeGroups(user.groups);
-        let configurationAttributes = normalizeConfigurationAttributes(user.configurationAttributes);
+        let configurationAttributes = normalizeConfigurationAttributeValues(user.configurationAttributes);
 
         let additionalInfo = user.additional_info;
         if (additionalInfo) {
@@ -362,7 +364,7 @@ export function normalizeUserInspected(userInspected) {
             canWriteClasses: userInspected.canWriteClasses ?? [],
             canReadAttributes: userInspected.canReadAttributes ?? [],
             canWriteAttributes: userInspected.canWriteAttributes ?? [],
-            allConfigurationAttributes: normalizeConfigurationAttributes(userInspected.allConfigurationAttributes),
+            allConfigurationAttributes: normalizeConfigurationAttributeValues(userInspected.allConfigurationAttributes),
         });
     }
     return normalized;
@@ -405,7 +407,56 @@ export function normalizePerms(perms) {
     return normalized;
 }
 
-export function normalizeConfigurationAttributes(configurationAttributes) {
+
+export function normalizeConfigurationAttributes(configurationAtributes) {
+    let normalized = {};
+    if (configurationAtributes) {
+        for (let configurationAttributeKey of Object.keys(configurationAtributes)) {
+            let configurationAtribute = configurationAtributes[configurationAttributeKey];
+            if (configurationAtribute != null) {
+                normalized[configurationAttributeKey] = normalizeConfigurationAtributeKey(configurationAtribute, configurationAttributeKey);
+            }
+        }
+    }
+    return normalized;
+}
+
+export function normalizeConfigurationAtributeKey(configurationAttribute, configurationAttributeKey) {
+    let normalized = Object.assign({}, defaultConfigurationAttributeKey);
+    if (configurationAttribute) {
+        Object.assign(normalized, configurationAttribute, {
+            inspected: normalizeConfigurationAttributeInspected(configurationAttribute.inspected),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeConfigurationAttributeInspected(configurationAttributeInspected) {
+    let normalized = Object.assign({}, defaultConfigurationAttributeInspected);
+    if (configurationAttributeInspected) {
+        Object.assign(normalized, configurationAttributeInspected, {
+            domainValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.domainValues),
+            groupValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.groupValues),
+            userValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.userValues),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeConfigurationAttributeInspectedValues(configurationAttributeInspectedValues) {
+    let normalized = {};
+    if (configurationAttributeInspectedValues) {
+        for (let configurationAttributeInspectedValueKey of Object.keys(configurationAttributeInspectedValues)) {
+            let configurationAttributeInspectedValue = configurationAttributeInspectedValues[configurationAttributeInspectedValueKey];
+            normalized[configurationAttributeInspectedValueKey] = configurationAttributeInspectedValue ?? [];
+        }
+    }
+    return normalized;
+}
+
+
+
+export function normalizeConfigurationAttributeValues(configurationAttributes) {
     let normalized = {};
     if (configurationAttributes) {        
         for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
@@ -413,15 +464,15 @@ export function normalizeConfigurationAttributes(configurationAttributes) {
             let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
             normalized[configurationAttributeKey] = [];
             for (let configurationAttribute of configurationAttributeArray) {
-                normalized[configurationAttributeKey].push(normalizeConfigurationAttribute(configurationAttribute));
+                normalized[configurationAttributeKey].push(normalizeConfigurationAttributeValue(configurationAttribute));
             }
         }    
     }
     return normalized;
 }
 
-export function normalizeConfigurationAttribute(configurationAttribute) {
-    let normalized = Object.assign({}, defaultConfigurationAttributes);
+export function normalizeConfigurationAttributeValue(configurationAttribute) {
+    let normalized = Object.assign({}, defaultConfigurationAttributeValue);
     if (configurationAttribute) {        
         if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
         Object.assign(normalized, configurationAttribute, {
