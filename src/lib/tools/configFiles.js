@@ -15,9 +15,14 @@ export function readConfigJsonFile(file) {
     logVerbose(util.format("Reading config file '%s' ...", file));
     let config = readConfigFile(file, true);
     let normalized = normalizeConfig(config);
-    let majorVersion =  version.split('.')[0];
+    let majorVersion = getFormatVersion();
     if (normalized.formatVersion != majorVersion) throw Error(util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion, majorVersion));
     return normalized;
+}
+ 
+export function getFormatVersion() {
+    let majorVersion =  parseInt(version.split('.')[0]);
+    return majorVersion;
 }
 
 export function readConfigFile(file, sub = false) {    

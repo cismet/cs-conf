@@ -2,7 +2,7 @@ import util from 'util';
 import fs from 'fs';
 import propertyParser from 'properties-file';
 
-import { readConfigFile, writeConfigFile } from './tools/configFiles';
+import { getFormatVersion, readConfigFile, writeConfigFile } from './tools/configFiles';
 import { logVerbose } from './tools/tools';
 import { simplifyConfig } from './simplify';
 import { normalizeConfig } from './normalize';
@@ -11,8 +11,10 @@ function getConfigFromRuntimeProperties(runtimeProperties) {
     logVerbose(util.format("Loading properties %s ...", runtimeProperties));
     let propFileContent = fs.readFileSync(runtimeProperties, {encoding: 'utf8'});
 
+    let formatVersion = getFormatVersion();
     let properties = propertyParser.parse(propFileContent);
     let config = {
+        formatVersion,
         connection: {
             jdbc: properties["connection.url"],
             user: properties["connection.username"],
