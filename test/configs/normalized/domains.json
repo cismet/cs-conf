@@ -3,8 +3,7 @@
     "configurationAttributes": {"test": [{ "groups": [], "value": null, "xmlfile": null, "domain": null, "group": null }]}, 
     "additional_info": {},
     "inspected": {
-      "groups": [],
-      "members": []
+      "groups": []
     }
   }
 }
