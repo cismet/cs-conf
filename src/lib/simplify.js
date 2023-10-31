@@ -21,9 +21,9 @@ import {
     defaultUser, 
     defaultUserGroup, 
     defaultNode, 
-    defaultPolicyRule,
     defaultUserInspected,
     defaultDomainInspected,
+    defaultPolicyRules,
 } from "./tools/defaultObjects";
 
 import { 
@@ -40,7 +40,8 @@ import {
     normalizePerms, 
     normalizePolicyRules,
     normalizeUser,
-    normalizeUsergroup, 
+    normalizeUsergroup,
+    normalizePolicyRule, 
 } from "./normalize";
 import { clean } from "./tools/tools";
 import stringify from "json-stringify-pretty-compact";
@@ -223,13 +224,29 @@ export function simplifyDynchildhelpers(dynchildhelpers) {
 export function simplifyPolicyRules(policyRules) {
     if (policyRules == null) return null;
 
-    let simplified = [];
-    for (let policyRule of normalizePolicyRules(policyRules)) {
+    let simplified = {};
+    let normalized = normalizePolicyRules(policyRules);
+    for (let policyRuleKey of Object.keys(normalized)) {
+        let policyRule = normalized[policyRuleKey];
         if (policyRule != null) {
-            simplified.push(copyFromTemplate(policyRule, defaultPolicyRule));
+            simplified[policyRuleKey] = simplifyPolicyRule(policyRule, policyRuleKey);
         }
     }
-    return simplified.length ? simplified : undefined;
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyPolicyRule(policyRule, policyRuleKey) {
+    if (policyRule == null) return null;
+
+    let simplified = {};
+    if (policyRule) {
+        let normalized = normalizePolicyRule(policyRule);
+        simplified = copyFromTemplate(normalized, defaultPolicyRules()[policyRuleKey])
+    }
+
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;        
 }
 
 export function simplifyStructure(structure) {

@@ -21,6 +21,13 @@ export const defaultConfig = {
     sync: defaultConfigSync,
 };
 
+export const defaultConfigPolicies = {
+    classes: null,
+    attributes: null,
+    classNodes: null,
+    pureNodes: null,
+}
+
 export const defaultAdditionalInfos = {
     user: {},
     group: {},
@@ -111,13 +118,6 @@ export const defaultDynchildhelper = {
     code_file: null,
 };
 
-// policyRules
-export const defaultPolicyRule = {
-    policy: null,
-    permission: null,
-    default_value: null,
-};
-
 // structure
 export const defaultNode = {
     name: null,
@@ -178,6 +178,27 @@ export const defaultUserGroupInspected = {
     canWriteAttributes: [],
     allConfigurationAttributes: {},
 };
+
+// policyRules
+export const defaultPolicyRules = () => {
+    return {
+        STANDARD: defaultPolicyRule(),
+        WIKI: defaultPolicyRule(true, true),
+        SECURE: defaultPolicyRule(false, false),
+    }
+};
+
+export const defaultPolicyRule = (defaultRead = true, defaultWrite = false) => {
+    return {
+        defaultRead,
+        defaultWrite,
+    }
+};
+
+export const defaultPermissionInspected = {
+    read: [],
+    write: [],
+}    
 
 export const defaultDomainInspected = {
     groups: [],

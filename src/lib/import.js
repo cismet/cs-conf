@@ -641,13 +641,24 @@ function prepareDomains({ domains, configurationAttributes, additionalInfos }) {
 
 function preparePolicyRules({ policyRules }) {
     let csPolicyRulesEntries = [];    
-    for (let policyRule of policyRules) {
-        csPolicyRulesEntries.push([ 
-            policyRule.policy, 
-            policyRule.permission, 
-            policyRule.default_value,
-            csPolicyRulesEntries.length + 1,
-        ]);
+    for (let policyRuleKey of Object.keys(policyRules)) {
+        let policyRule = policyRules[policyRuleKey];
+        if (policyRule.defaultRead != null) {
+            csPolicyRulesEntries.push([ 
+                policyRuleKey, 
+                "read", 
+                policyRule.defaultRead,
+                csPolicyRulesEntries.length + 1,
+            ]);
+        }
+        if (policyRule.defaultWrite != null) {
+            csPolicyRulesEntries.push([ 
+                policyRuleKey, 
+                "write", 
+                policyRule.defaultWrite,
+                csPolicyRulesEntries.length + 1,
+            ]);
+        }
     }
     return { csPolicyRulesEntries };
 }

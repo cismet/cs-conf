@@ -35,113 +35,112 @@ export function reorganizeConfigs(configs) {
 }
 
 export function reorganizeConfig(config) {
-    if (config != null) {
-        let sync = config.sync;
-        if (sync != null) {
-            let noDropTables = sync.noDropTables;
-            if (noDropTables != null) {
-                sync.noDropTables = noDropTables.sort((a, b) => { 
-                    return a.localeCompare(b);
-                });
-            }
-            let noDropColumns = sync.noDropColumns;
-            if (noDropColumns != null) {
-                sync.noDropColumns = noDropColumns.sort((a, b) => { 
-                    return a.localeCompare(b);
-                });
-            }
+    if (!config) return config;
+
+    let sync = config.sync;
+    if (sync != null) {
+        let noDropTables = sync.noDropTables;
+        if (noDropTables != null) {
+            sync.noDropTables = noDropTables.sort((a, b) => { 
+                return a.localeCompare(b);
+            });
+        }
+        let noDropColumns = sync.noDropColumns;
+        if (noDropColumns != null) {
+            sync.noDropColumns = noDropColumns.sort((a, b) => { 
+                return a.localeCompare(b);
+            });
         }
     }
     return config;
 }
 
 export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes }) {
-    if (additionalInfos != null) {
-        let sortedAdditionalInfos = {};    
-        for (let type of Object.keys(additionalInfos).sort((a, b) => { 
-            return a.localeCompare(b);
-        })) {
-            let additionalInfo = additionalInfos[type];
-            if (additionalInfo != null) {
-                let sortedAdditionalInfo = {};
-                for (let key of Object.keys(additionalInfo).sort((a, b) => { 
-                    return a.localeCompare(b);
-                })) {
-                    sortedAdditionalInfo[key] = additionalInfo[key];
-                }
-                sortedAdditionalInfos[type] = sortedAdditionalInfo;                
+    if (!additionalInfos) return additionalInfos;
+
+    let sortedAdditionalInfos = {};    
+    for (let type of Object.keys(additionalInfos).sort((a, b) => { 
+        return a.localeCompare(b);
+    })) {
+        let additionalInfo = additionalInfos[type];
+        if (additionalInfo != null) {
+            let sortedAdditionalInfo = {};
+            for (let key of Object.keys(additionalInfo).sort((a, b) => { 
+                return a.localeCompare(b);
+            })) {
+                sortedAdditionalInfo[key] = additionalInfo[key];
+            }
+            sortedAdditionalInfos[type] = sortedAdditionalInfo;                
+        }
+    }
+
+    if (sortedAdditionalInfos.domain && domains) {
+        let additionalInfosDomain = sortedAdditionalInfos.domain;
+        for (let domainKey of Object.keys(domains)) {
+            let domain = domains[domainKey];
+            let additionalInfo = additionalInfosDomain[domainKey];
+            if (additionalInfo) {
+                domain.additional_info = additionalInfo;
+                delete additionalInfosDomain[domainKey];       
             }
         }
-
-        if (sortedAdditionalInfos.domain && domains) {
-            let additionalInfosDomain = sortedAdditionalInfos.domain;
-            for (let domainKey of Object.keys(domains)) {
-                let domain = domains[domainKey];
-                let additionalInfo = additionalInfosDomain[domainKey];
-                if (additionalInfo) {
-                    domain.additional_info = additionalInfo;
-                    delete additionalInfosDomain[domainKey];       
-                }
-            }
-        }     
-        
-        if (sortedAdditionalInfos.usergroup && usergroups) {
-            let additionalInfosGroup = sortedAdditionalInfos.usergroup;
-            for (let groupKey of Object.keys(usergroups)) {
-                let usergroup = usergroups[groupKey];
-                let additionalInfo = additionalInfosGroup[groupKey];
-                if (additionalInfo) {
-                    usergroup.additional_info = additionalInfo;
-                    delete additionalInfosGroup[groupKey];    
-                }
-            }
-        }        
-
-        if (sortedAdditionalInfos.user && usermanagement) {
-            let additionalInfosUser = sortedAdditionalInfos.user;    
-            for (let userKey of Object.keys(usermanagement)) {
-                let user = usermanagement[userKey]
-                let additionalInfo = additionalInfosUser[userKey];
-                if (additionalInfo) {
-                    user.additional_info = additionalInfo;
-                    delete additionalInfosUser[userKey];        
-                }
+    }     
+    
+    if (sortedAdditionalInfos.usergroup && usergroups) {
+        let additionalInfosGroup = sortedAdditionalInfos.usergroup;
+        for (let groupKey of Object.keys(usergroups)) {
+            let usergroup = usergroups[groupKey];
+            let additionalInfo = additionalInfosGroup[groupKey];
+            if (additionalInfo) {
+                usergroup.additional_info = additionalInfo;
+                delete additionalInfosGroup[groupKey];    
             }
         }
+    }        
 
-        if (sortedAdditionalInfos.class && classes) {
-            for (let classKey of Object.keys(classes)) {
-                let clazz = classes[classKey];
-                let attributes = clazz.attributes;
-                if (sortedAdditionalInfos.attribute && attributes) {
-                    let additionalInfosAttribute = sortedAdditionalInfos.attribute;    
-                    for (let attributeKey of Object.keys(attributes)) {
-                        let attribute = attributes[attributeKey];
-                        let attrributeInfoKey = classKey + "." + attributeKey;
-                        let additionalInfo = additionalInfosAttribute[attrributeInfoKey];
-                        if (additionalInfo) {
-                            attribute.additional_info = additionalInfo;
-                            delete additionalInfosAttribute[attrributeInfoKey];        
-                        }
+    if (sortedAdditionalInfos.user && usermanagement) {
+        let additionalInfosUser = sortedAdditionalInfos.user;    
+        for (let userKey of Object.keys(usermanagement)) {
+            let user = usermanagement[userKey]
+            let additionalInfo = additionalInfosUser[userKey];
+            if (additionalInfo) {
+                user.additional_info = additionalInfo;
+                delete additionalInfosUser[userKey];        
+            }
+        }
+    }
+
+    if (sortedAdditionalInfos.class && classes) {
+        for (let classKey of Object.keys(classes)) {
+            let clazz = classes[classKey];
+            let attributes = clazz.attributes;
+            if (sortedAdditionalInfos.attribute && attributes) {
+                let additionalInfosAttribute = sortedAdditionalInfos.attribute;    
+                for (let attributeKey of Object.keys(attributes)) {
+                    let attribute = attributes[attributeKey];
+                    let attrributeInfoKey = classKey + "." + attributeKey;
+                    let additionalInfo = additionalInfosAttribute[attrributeInfoKey];
+                    if (additionalInfo) {
+                        attribute.additional_info = additionalInfo;
+                        delete additionalInfosAttribute[attrributeInfoKey];        
                     }
                 }
-
-                let additionalInfosClass = sortedAdditionalInfos.class;    
-                let additionalInfo = additionalInfosClass[classKey];
-                if (additionalInfo) {
-                    clazz.additional_info = additionalInfo;
-                }
-                delete additionalInfosClass[classKey];        
             }
+
+            let additionalInfosClass = sortedAdditionalInfos.class;    
+            let additionalInfo = additionalInfosClass[classKey];
+            if (additionalInfo) {
+                clazz.additional_info = additionalInfo;
+            }
+            delete additionalInfosClass[classKey];        
         }
-                
-        return sortedAdditionalInfos;
-    }        
-    return additionalInfos;
+    }
+            
+    return sortedAdditionalInfos;
 }
 
 export function reorganizeAttributes(attributes, order = 'auto') {
-    if (attributes == null) return null;
+    if (!attributes) return attributes;
 
     let reorganized = {};
     let sortedAttributeKeys = order == 'auto' ? Object.keys(attributes).sort((a, b) => { 
@@ -163,7 +162,7 @@ export function reorganizeAttributes(attributes, order = 'auto') {
 }
 
 export function reorganizeClasses(classes) {
-    if (classes == null) return null;
+    if (!classes) return classes;
 
     let sortedClassKeys = Object.keys(classes).sort((a, b) => {
         return a.localeCompare(b)
@@ -187,7 +186,7 @@ export function reorganizeClasses(classes) {
 }
 
 export function reorganizeDomains(domains) {
-    if (domains == null) return null;
+    if (!domains) return domains;
 
     let reorganized = {};
     reorganized['LOCAL'] = null;
@@ -207,7 +206,7 @@ export function reorganizeDomains(domains) {
 }
 
 export function reorganizeDomain(domain) {
-    if (domain == null) return null;
+    if (!domain) return domain;
 
     let reorganized = {};
     if (domain) {
@@ -220,6 +219,8 @@ export function reorganizeDomain(domain) {
 }
 
 export function reorganizeDomainInspected(domainInspected) {
+    if (!domainInspected) return domainInspected;
+
     let reorganized = {};
     if (domainInspected) {
         Object.assign(reorganized, domainInspected, {
@@ -232,6 +233,8 @@ export function reorganizeDomainInspected(domainInspected) {
 }
 
 export function reorganizeDynchildhelpers(dynchildhelpers) {
+    if (!dynchildhelpers) return dynchildhelpers;
+
     let reorganized = {};
     if (dynchildhelpers != null) {
         for (let dynchildhelperKey of Object.keys(dynchildhelpers).sort((a, b) => {
@@ -243,16 +246,13 @@ export function reorganizeDynchildhelpers(dynchildhelpers) {
 }
 
 export function reorganizePolicyRules(policyRules) {
+    if (!policyRules) return policyRules;
+
+    let reorganized = {};
     if (policyRules != null) {
-        policyRules = policyRules.sort((a, b) => {
-            let aPolicy = a.policy.toUpperCase();
-            let bPolicy = b.policy.toUpperCase();        
-            let aPermission = a.permission.toLowerCase();
-            let bPermission = b.permission.toLowerCase();        
-            return aPolicy.localeCompare(bPolicy) || aPermission.localeCompare(bPermission);
-        });
+        policyRules = Object.assign(reorganized, policyRules);
     }
-    return policyRules;
+    return reorganized;
 }
 
 export function reorganizeStructure(structure) {
@@ -260,6 +260,8 @@ export function reorganizeStructure(structure) {
 }
 
 export function reorganizeUsergroups(usergroups) {
+    if (!usergroups) return usergroups;
+
     let reorganized = {};
     if (usergroups != null) {
         let sortedGroupKeys = Object.keys(usergroups).sort((a, b) => {
@@ -278,6 +280,8 @@ export function reorganizeUsergroups(usergroups) {
 }
 
 export function reorganizeUsergroup(usergroup) {
+    if (!usergroup) return usergroup;
+
     let reorganized = {};
     if (usergroup) {
         Object.assign(reorganized, usergroup, {
@@ -289,6 +293,8 @@ export function reorganizeUsergroup(usergroup) {
 }
 
 export function reorganizeUsergroupInspected(usergroupInspected) {
+    if (!usergroupInspected) return usergroupInspected;
+
     let reorganized = {};
     if (usergroupInspected) {
         Object.assign(reorganized, usergroupInspected, {
@@ -314,8 +320,9 @@ export function reorganizeUsergroupInspected(usergroupInspected) {
 }
 
 export function reorganizeUsermanagement(usermanagement) {
-    let reorganized = {};
+    if (!usermanagement) return usermanagement;
 
+    let reorganized = {};
     if (usermanagement != null) {
         let sortedUserKeys = Object.keys(usermanagement).sort((a, b) => { 
             return a.localeCompare(b);
@@ -325,13 +332,13 @@ export function reorganizeUsermanagement(usermanagement) {
             reorganized[userKey] = reorganizeUser(user);
         }
     }    
-
     return reorganized;
 }
 
 export function reorganizeUser(user) {
-    let reorganized = {};
+    if (!user) return user;
 
+    let reorganized = {};
     if (user) {
         Object.assign(reorganized, user, {
             groups : user.groups ? [...user.groups.sort((a, b) => { 
@@ -346,6 +353,8 @@ export function reorganizeUser(user) {
 }
 
 export function reorganizeUserInspected(userInspected) {
+    if (!userInspected) return userInspected;
+
     let reorganized = {};
     if (userInspected) {
         let memberOf = userInspected.memberOf ? userInspected.memberOf.sort((a, b) => { 
@@ -395,21 +404,21 @@ export function reorganizeUserInspected(userInspected) {
  * used by reorganizeStructure
  */
 function reorganizeNode(node) {
-    if (node != null) {
-        for (let node of node) {
-            if (node.readPerms != null) {
-                node.readPerms = [...node.readPerms].sort((a, b) => { 
-                    return a.localeCompare(b);
-                });
-            }
-            if (node.writePerms != null) {
-                node.writePerms = [...node.writePerms].sort((a, b) => { 
-                    return a.localeCompare(b);
-                });
-            }
-            if (node.children != null) {
-                node.children = reorganizeNode(node.children);
-            }
+    if (!node) return node;
+
+    for (let node of node) {
+        if (node.readPerms != null) {
+            node.readPerms = [...node.readPerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            });
+        }
+        if (node.writePerms != null) {
+            node.writePerms = [...node.writePerms].sort((a, b) => { 
+                return a.localeCompare(b);
+            });
+        }
+        if (node.children != null) {
+            node.children = reorganizeNode(node.children);
         }
     }
     return node;
@@ -419,7 +428,7 @@ function reorganizeNode(node) {
  * used by reorganizeDomains, reorganizeUsergroups, reorganizeUsermanagement
  */
 function reorganizeConfigurationAttributes(configurationAttributes) {
-    if (configurationAttributes == null) return null;
+    if (!configurationAttributes) return configurationAttributes;
     
     let reorganized = {};
     let sortedConfigurationAttributeKeys = Object.keys(configurationAttributes).sort((a, b) => { 

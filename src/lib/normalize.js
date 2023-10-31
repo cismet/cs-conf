@@ -20,6 +20,7 @@ import {
     defaultUserGroup, 
     defaultUserGroupInspected,
     defaultPolicyRule,
+    defaultPolicyRules,
 } from "./tools/defaultObjects";
 
 // ---
@@ -247,21 +248,19 @@ export function normalizeDynchildhelper(dynchildhelper) {
 }
 
 export function normalizePolicyRules(policyRules) {
-    let normalized = [];
+    let normalized = Object.assign({}, defaultPolicyRules());    
     if (policyRules) {
-        for (let policyRule of policyRules) {           
-            normalized.push(normalizePolicyRule(policyRule));
+        for (let policyRuleKey of Object.keys(policyRules)) {
+            let policyRule = policyRules[policyRuleKey];
+            normalized[policyRuleKey] = normalizePolicyRule(policyRule, policyRuleKey);
         }
     }    
     return normalized;
 }
 
-export function normalizePolicyRule(policyRule) {
-    let normalized = Object.assign({}, defaultPolicyRule);    
+export function normalizePolicyRule(policyRule, policyRuleKey) {
+    let normalized = Object.assign({}, defaultPolicyRule());    
     if (policyRule) {
-        if (policyRule.policy == null) throw Error("normalizePolicyRules: missing policy");
-        if (policyRule.permission == null) throw Error("normalizePolicyRules: missing permission");
-        if (policyRule.default_value == null) throw Error("normalizePolicyRules: missing default_value");
         Object.assign(normalized, policyRule)
     }
     return normalized;
