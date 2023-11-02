@@ -36,23 +36,26 @@ export function reorganizeConfigs(configs) {
 export function reorganizeConfig(config) {
     if (!config) return config;
 
-    let sync = config.sync;
-    if (sync != null) {
-        let noDropTables = sync.noDropTables;
-        if (noDropTables != null) {
-            sync.noDropTables = noDropTables.sort((a, b) => { 
-                return a.localeCompare(b);
-            });
-        }
-        let noDropColumns = sync.noDropColumns;
-        if (noDropColumns != null) {
-            sync.noDropColumns = noDropColumns.sort((a, b) => { 
-                return a.localeCompare(b);
-            });
-        }        
-    }
-    config.policyRules = reorganizePolicyRules(config.policyRules);
-    return config;
+    let normalized = Object.assign({}, config, {
+        policies: reorganizeConfigPolicies(config.policies),
+        policyRules: reorganizeConfigPolicyRules(config.policyRules),
+        sync: reorganizeConfigSync(config.sync),
+    });
+    return normalized;
+}
+
+export function reorganizeConfigSync(sync) {
+    if (!sync) return sync;
+
+    let normalized = {
+        noDropTables: sync.noDropTables ? sync.noDropTables.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : sync.noDropTables,
+        noDropColumns: sync.noDropColumns ? sync.noDropColumns.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : sync.noDropColumns,
+    };
+    return normalized;
 }
 
 export function reorganizeAdditionalInfos(additionalInfos, { domains, usergroups, usermanagement, classes }) {
@@ -245,13 +248,17 @@ export function reorganizeDynchildhelpers(dynchildhelpers) {
     return reorganized;
 }
 
-export function reorganizePolicyRules(policyRules) {
+export function reorganizeConfigPolicies(policies) {
+    if (!policies) return policies;
+
+    let reorganized = Object.assign({}, policies);
+    return reorganized;
+}
+
+export function reorganizeConfigPolicyRules(policyRules) {
     if (!policyRules) return policyRules;
 
-    let reorganized = {};
-    if (policyRules != null) {
-        policyRules = Object.assign(reorganized, policyRules);
-    }
+    let reorganized = Object.assign({}, policyRules);
     return reorganized;
 }
 

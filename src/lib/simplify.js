@@ -23,7 +23,8 @@ import {
     defaultNode, 
     defaultUserInspected,
     defaultDomainInspected,
-    defaultPolicyRules,
+    defaultConfigPolicyRules,
+    defaultConfigPolicies,
 } from "./tools/defaultObjects";
 
 import { 
@@ -41,7 +42,8 @@ import {
     normalizePolicyRules,
     normalizeUser,
     normalizeUsergroup,
-    normalizePolicyRule, 
+    normalizePolicyRule,
+    normalizeConfigPolicies, 
 } from "./normalize";
 import { clean } from "./tools/tools";
 import stringify from "json-stringify-pretty-compact";
@@ -67,13 +69,14 @@ export default async function csSimplify(options) {
 // ---
 
 export function simplifyConfigs(configs) {
+    let config = simplifyConfig(configs.config);
     return Object.assign({}, configs, {
-        config: simplifyConfig(configs.config), 
+        config, 
         additionalInfos: simplifyAdditionalInfos(configs.additionalInfos), 
-        classes: simplifyClasses(configs.classes), 
-        domains: simplifyDomains(configs.domains, configs.config.domainName), 
+        classes: simplifyClasses(configs.classes, config.policies), 
+        domains: simplifyDomains(configs.domains, config.domainName), 
         dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
-        structure: simplifyStructure(configs.structure), 
+        structure: simplifyStructure(configs.structure, config.policies), 
         usergroups: simplifyUsergroups(configs.usergroups), 
         usermanagement: simplifyUsermanagement(configs.usermanagement), 
     });
@@ -87,13 +90,41 @@ export function simplifyConfig(config, { normalize = true } = {}) {
     let simplified = {};
     if (preprocessed) {
         Object.assign(simplified, copyFromTemplate(preprocessed, defaultConfig), {
-            connection: copyFromTemplate(preprocessed.connection, defaultConfigConnection),
-            policyRules: simplifyPolicyRules(config.policyRules), 
-            sync: copyFromTemplate(preprocessed.sync, defaultConfigSync),
+            connection: simplifyConfigConnection(preprocessed.connection),
+            policies: simplifyConfigPolicies(preprocessed.policies),
+            policyRules: simplifyPolicyRules(preprocessed.policyRules), 
+            sync: simplifyConfigSync(preprocessed.sync),
         });
     }
     clean(simplified);
     return Object.keys(simplified).length === 0 ? undefined : simplified;
+}
+
+export function simplifyConfigConnection(connection) {
+    let simplified = {};
+    if (connection) {
+        simplified = copyFromTemplate(connection, defaultConfigConnection);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigPolicies(policies) {
+    let simplified = {};
+    if (policies) {
+        simplified = copyFromTemplate(policies, defaultConfigPolicies);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigSync(sync) {
+    let simplified = {};
+    if (sync) {
+        simplified = copyFromTemplate(sync, defaultConfigSync);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyAdditionalInfos(additionalInfos) {
@@ -117,9 +148,10 @@ export function simplifyAdditionalInfos(additionalInfos) {
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyClasses(classes) {
+export function simplifyClasses(classes, policies) {
     if (classes == null) return null;
 
+    let normalizedPolicies = normalizeConfigPolicies(policies);
     let normalized = normalizeClasses(classes);
 
     let simplified = {};
@@ -133,7 +165,10 @@ export function simplifyClasses(classes) {
                 readPerms: simplifyPerms(clazz.readPerms), 
                 writePerms: simplifyPerms(clazz.writePerms),
                 attributes: simplifyAttributes(clazz.attributes, clazz.pk, classKey),
-            }), defaultClass);
+            }), Object.assign({}, defaultClass, normalizedPolicies ? {
+                policy : normalizedPolicies.server,
+                attribute_policy : normalizedPolicies.attributes ?? normalizedPolicies.server,
+            } : undefined));
             if (simplifiedClazz.name == classKey) {
                 delete simplifiedClazz.name;
             }
@@ -236,17 +271,19 @@ export function simplifyPolicyRule(policyRule, policyRuleKey) {
     let simplified = {};
     if (policyRule) {
         let normalized = normalizePolicyRule(policyRule);
-        simplified = copyFromTemplate(normalized, defaultPolicyRules()[policyRuleKey])
+        simplified = copyFromTemplate(normalized, defaultConfigPolicyRules()[policyRuleKey])
     }
 
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;        
 }
 
-export function simplifyStructure(structure) {
+export function simplifyStructure(structure, policies) {
     if (structure == null) return null;
-
-    return simplifyNodes(structure);
+    
+    let normalized = normalizeStructure(structure);
+    let simplified = simplifyNodes(normalized, policies);
+    return simplified;
 }
 
 
@@ -388,11 +425,11 @@ export function simplifyGroups(groups) {
 
 // ---
 
-function simplifyNodes(nodes) {
+function simplifyNodes(nodes, policies) {
     if (nodes == null) return null;
 
     let simplified = [];
-    for (let node of normalizeStructure(nodes)) {
+    for (let node of nodes) {
         if (node != null) {
             simplified.push(copyFromTemplate(Object.assign({}, node, { 
                 readPerms: simplifyPerms(node.readPerms),

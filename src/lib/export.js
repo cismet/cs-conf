@@ -11,7 +11,7 @@ import { getClientInfo, initClient } from './tools/db';
 import { simplifyConfigs } from './simplify';
 import { reorganizeConfigs } from './reorganize';
 import { normalizeConfig } from './normalize';
-import { defaultPolicyRules } from './tools/defaultObjects';
+import { defaultConfigPolicyRules } from './tools/defaultObjects';
 
 export default async function csExport(options) {
     let  { targetDir, normalized = false } = options;
@@ -485,7 +485,7 @@ function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
 }
 
 function exportPolicyRules({ csPolicyRules }, { config }) {
-    let policyRules = Object.assign({}, defaultPolicyRules());
+    let policyRules = Object.assign({}, defaultConfigPolicyRules());
     for (let csPolicyRule of csPolicyRules) {
         let policyRuleKey = csPolicyRule.policy;
         let policyRule = policyRules[policyRuleKey];

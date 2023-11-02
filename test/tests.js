@@ -3,26 +3,26 @@ import util from 'util';
 import { readConfigFile } from '../src/lib/tools/configFiles';
 import { 
     normalizeClasses, 
+    normalizeConfig, 
     normalizeDomains, 
     normalizeDynchildhelpers, 
-    normalizePolicyRules, 
     normalizeStructure, 
     normalizeUsergroups, 
     normalizeUsermanagement 
 } from '../src/lib/normalize';
 import { 
     reorganizeClasses, 
+    reorganizeConfig, 
     reorganizeDomains, 
     reorganizeDynchildhelpers, 
-    reorganizePolicyRules, 
     reorganizeStructure, 
     reorganizeUsermanagement 
 } from '../src/lib/reorganize';
 import { 
     simplifyClasses, 
+    simplifyConfig, 
     simplifyDomains, 
     simplifyDynchildhelpers, 
-    simplifyPolicyRules, 
     simplifyStructure, 
     simplifyUsergroups, 
     simplifyUsermanagement 
@@ -39,6 +39,7 @@ const folderReorganize = "./test/configs/reorganize"; // TODO
 const folderReorganized = "./test/configs/reorganized"; // TODO
 
 const allFunctions = {
+    'config': { normalize: normalizeConfig, simplify: simplifyConfig, reorganize: reorganizeConfig, },
     'domains': { normalize: normalizeDomains, simplify: simplifyDomains, reorganize: reorganizeDomains, },
     'usergroups': { normalize: normalizeUsergroups, simplify: simplifyUsergroups, reorganize: reorganizeStructure, },
     'usermanagement': { normalize: normalizeUsermanagement, simplify: simplifyUsermanagement, reorganize: reorganizeUsermanagement, },
@@ -48,7 +49,7 @@ const allFunctions = {
 };
 
 describe('Normalize:', () => {
-    global.config = { domainName: "TEST "};
+    global.config = readConfigFile(util.format('%s/%s', folderNormalize, "config.json"));
     describe('smoke1: normalize(expected) == normalized', testSmoke1);
     describe('smoke2: normalize(data) == normalized', testSmoke2);
     describe('smoke3: normalize(simplify(normalized)) == normalized', testSmoke3);

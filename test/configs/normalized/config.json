@@ -1,0 +1,36 @@
+{
+    "formatVersion": 2,
+    "configsDir": ".",
+    "domainName": "TEST",
+    "connection": {
+        "jdbc": "jdbc:postgresql://localhost:5432/test",
+        "user": "postgres",
+        "password": "secret"
+    },
+    "schema": "public",
+    "policies": {
+        "server": "STANDARD", 
+        "attributes": "STANDARD",
+        "classNodes": "STANDARD",
+        "pureNodes": "STANDARD"
+    },
+    "policyRules": {
+        "STANDARD": {
+            "defaultRead": true,
+            "defaultWrite": false
+        },
+        "WIKI": {
+            "defaultRead": true,
+            "defaultWrite": true
+        },
+        "SECURE": {
+            "defaultRead": false,
+            "defaultWrite": false
+        }
+    },
+    "sync": {
+        "noDropTables": [],
+        "noDropColumns": []
+    },
+    "maxFileLength": 80
+}

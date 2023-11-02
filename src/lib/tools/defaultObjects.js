@@ -16,16 +16,17 @@ export const defaultConfig = {
     domainName: null,
     connection: defaultConfigConnection,
     schema: 'public',
-    policyRules: defaultPolicyRules,
+    policies: defaultConfigPolicies,
+    policyRules: defaultConfigPolicyRules,
     sync: defaultConfigSync,
     maxFileLength: 80,
 };
 
 export const defaultConfigPolicies = {
-    classes: null,
-    attributes: null,
-    classNodes: null,
-    pureNodes: null,
+    server: "STANDARD",
+    attributes: "STANDARD",
+    classNodes: "STANDARD",
+    pureNodes: "STANDARD",
 }
 
 export const defaultAdditionalInfos = {
@@ -180,15 +181,15 @@ export const defaultUserGroupInspected = {
 };
 
 // policyRules
-export const defaultPolicyRules = () => {
+export const defaultConfigPolicyRules = () => {
     return {
-        STANDARD: defaultPolicyRule(),
-        WIKI: defaultPolicyRule(true, true),
-        SECURE: defaultPolicyRule(false, false),
+        STANDARD: defaultConfigPolicyRule(),
+        WIKI: defaultConfigPolicyRule(true, true),
+        SECURE: defaultConfigPolicyRule(false, false),
     }
 };
 
-export const defaultPolicyRule = (defaultRead = true, defaultWrite = false) => {
+export const defaultConfigPolicyRule = (defaultRead = true, defaultWrite = false) => {
     return {
         defaultRead,
         defaultWrite,

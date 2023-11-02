@@ -1,0 +1,9 @@
+{
+    "formatVersion": 2,
+    "domainName": "TEST",
+    "connection": {
+      "jdbc": "jdbc:postgresql://localhost:5432/test",
+      "user": "postgres",
+      "password": "secret"
+    }
+}
