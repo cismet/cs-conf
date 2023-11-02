@@ -19,9 +19,11 @@ import {
     defaultUserInspected,
     defaultUserGroup, 
     defaultUserGroupInspected,
-    defaultPolicyRule,
+    defaultConfigPolicyRule,
     defaultConfigurationAttributeKey,
     defaultConfigurationAttributeInspected,
+    defaultConfigPolicyRules,
+    defaultConfigPolicies,
 } from "./tools/defaultObjects";
 
 // ---
@@ -49,8 +51,7 @@ export function normalizeConfigs(configs) {
         classes: normalizeClasses(configs.classes), 
         configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
         domains: normalizeDomains(configs.domains), 
-        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),
-        policyRules: normalizePolicyRules(configs.policyRules), 
+        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),        
         structure: normalizeStructure(configs.structure), 
         usergroups: normalizeUsergroups(configs.usergroups), 
         usermanagement: normalizeUsermanagement(configs.usermanagement), 
@@ -60,26 +61,32 @@ export function normalizeConfigs(configs) {
 }
 
 export function normalizeConfig(config = {}) {
-    let normalized = Object.assign({}, defaultConfig, {
-        connection: Object.assign({}, defaultConfigConnection),
-        sync: Object.assign({}, defaultConfigSync),
+    let normalized = Object.assign({}, defaultConfig, config, {
+        connection: normalizeConfigConnection(config.connection),
+        sync: normalizeConfigSync(config.sync),
+        policies: normalizeConfigPolicies(config.policies),
+        policyRules: normalizeConfigPolicyRules(config.policyRules), 
     });
-    if (config) {
-        Object.assign(normalized, config, {
-            connection: Object.assign(normalized.connection, config.connection),
-            sync: Object.assign(normalized.sync, config.sync),
-        });
-    }
+    return normalized;
+}
+
+export function normalizeConfigConnection(connection) {
+    let normalized = Object.assign({}, defaultConfigConnection, connection ?? undefined);
+    return normalized;
+}
+
+export function normalizeConfigSync(sync) {
+    let normalized = Object.assign({}, defaultConfigSync, sync ?? undefined);
+    return normalized;
+}
+
+export function normalizeConfigPolicies(policies) {
+    let normalized = Object.assign({}, defaultConfigPolicies, policies ?? undefined);
     return normalized;
 }
 
 export function normalizeAdditionalInfos(additionalInfos) {
-    let normalized = Object.assign({}, defaultAdditionalInfos);
-    
-    if (additionalInfos) {
-        Object.assign(normalized, additionalInfos);
-    }
-    
+    let normalized = Object.assign({}, defaultAdditionalInfos, additionalInfos ?? undefined);
     return normalized;
 }
 
@@ -248,22 +255,20 @@ export function normalizeDynchildhelper(dynchildhelper) {
     return normalized;
 }
 
-export function normalizePolicyRules(policyRules) {
-    let normalized = [];
+export function normalizeConfigPolicyRules(policyRules) {
+    let normalized = Object.assign({}, defaultConfigPolicyRules());    
     if (policyRules) {
-        for (let policyRule of policyRules) {           
-            normalized.push(normalizePolicyRule(policyRule));
+        for (let policyRuleKey of Object.keys(policyRules)) {
+            let policyRule = policyRules[policyRuleKey];
+            normalized[policyRuleKey] = normalizeConfigPolicyRule(policyRule);
         }
     }    
     return normalized;
 }
 
-export function normalizePolicyRule(policyRule) {
-    let normalized = Object.assign({}, defaultPolicyRule);    
+export function normalizeConfigPolicyRule(policyRule) {
+    let normalized = Object.assign({}, defaultConfigPolicyRule());    
     if (policyRule) {
-        if (policyRule.policy == null) throw Error("normalizePolicyRules: missing policy");
-        if (policyRule.permission == null) throw Error("normalizePolicyRules: missing permission");
-        if (policyRule.default_value == null) throw Error("normalizePolicyRules: missing default_value");
         Object.assign(normalized, policyRule)
     }
     return normalized;

@@ -13,13 +13,21 @@ export const defaultConfigSync = {
 export const defaultConfig = {
     formatVersion: 1,
     configsDir: '.',
-    connection: defaultConfigConnection,
     domainName: null,
-    // TODO policies { class, attribute, node } for automatic interpretation of permissions in inspect
+    connection: defaultConfigConnection,
     schema: 'public',
-    maxFileLength: 80,
+    policies: defaultConfigPolicies,
+    policyRules: defaultConfigPolicyRules,
     sync: defaultConfigSync,
+    maxFileLength: 80,
 };
+
+export const defaultConfigPolicies = {
+    server: "STANDARD",
+    attributes: "STANDARD",
+    classNodes: "STANDARD",
+    pureNodes: "STANDARD",
+}
 
 export const defaultAdditionalInfos = {
     user: {},
@@ -117,13 +125,6 @@ export const defaultDynchildhelper = {
     code_file: null,
 };
 
-// policyRules
-export const defaultPolicyRule = {
-    policy: null,
-    permission: null,
-    default_value: null,
-};
-
 // structure
 export const defaultNode = {
     name: null,
@@ -190,6 +191,27 @@ export const defaultUserGroupInspected = {
     canWriteAttributes: [],
     allConfigurationAttributes: {},
 };
+
+// policyRules
+export const defaultConfigPolicyRules = () => {
+    return {
+        STANDARD: defaultConfigPolicyRule(),
+        WIKI: defaultConfigPolicyRule(true, true),
+        SECURE: defaultConfigPolicyRule(false, false),
+    }
+};
+
+export const defaultConfigPolicyRule = (defaultRead = true, defaultWrite = false) => {
+    return {
+        defaultRead,
+        defaultWrite,
+    }
+};
+
+export const defaultPermissionInspected = {
+    read: [],
+    write: [],
+}    
 
 export const defaultDomainInspected = {
     groups: [],

@@ -16,12 +16,18 @@ function getConfigFromRuntimeProperties(runtimeProperties) {
     let config = {
         formatVersion,
         connection: {
-            jdbc: properties["connection.url"],
-            user: properties["connection.username"],
-            password: properties["connection.password"],
+            jdbc: properties['connection.url'],
+            user: properties['connection.username'],
+            password: properties['connection.password'],
         },
         domainName: properties["serverName"],
-    }
+        policies: {
+            server: properties['serverPolicy'],
+            attributes: properties['attributePolicy'],
+            classNodes: properties['classNodePolicy'],
+            pureNodes: properties['pureNodePolicy'],
+        }
+    };
     return config;
 }
 

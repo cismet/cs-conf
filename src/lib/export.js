@@ -11,6 +11,7 @@ import { getClientInfo, initClient } from './tools/db';
 import { simplifyConfigs } from './simplify';
 import { reorganizeConfigs } from './reorganize';
 import { normalizeConfig } from './normalize';
+import { defaultConfigPolicyRules } from './tools/defaultObjects';
 
 export default async function csExport(options) {
     let  { targetDir, normalized = false } = options;
@@ -61,6 +62,9 @@ async function fetchStatement(client, topic, statement) {
 function exportConfigs(fetchedData, config) {
     logOut(util.format("Exporting configuration from '%s' ...", getClientInfo()));
     let configs = { config };
+
+    logVerbose(" ↳ exporting policyRules into config.json");
+    Object.assign(configs, exportPolicyRules(fetchedData, configs));
 
     logVerbose(" ↳ creating additionalInfos.json");
     Object.assign(configs, exportAdditionalInfos(fetchedData, configs));
@@ -506,12 +510,19 @@ function exportDynchildhelpers({ csDynamicChildreHelpers }, {}) {
     };
 }
 
-function exportPolicyRules({ csPolicyRules }, {}) {
-    let policyRules = [];
+function exportPolicyRules({ csPolicyRules }, { config }) {
+    let policyRules = Object.assign({}, defaultConfigPolicyRules());
     for (let csPolicyRule of csPolicyRules) {
-        policyRules.push(Object.assign({}, csPolicyRule));
+        let policyRuleKey = csPolicyRule.policy;
+        let policyRule = policyRules[policyRuleKey];
+        if (csPolicyRule && csPolicyRule.permission.toLowerCase() == "read") {
+            policyRule.defaultRead = csPolicyRule.default_value;
+        }
+        if (csPolicyRule && csPolicyRule.permission.toLowerCase() == "write") {
+            policyRule.defaultWrite = csPolicyRule.default_value;
+        }
     }
-    return { policyRules };
+    Object.assign(config, { policyRules });
 }
 
 function exportStructure({ csCatNodes, csCatLinks, csUgCatNodePerms }, {}) {

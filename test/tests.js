@@ -4,30 +4,30 @@ import { readConfigFile } from '../src/lib/tools/configFiles';
 import { 
     normalizeClasses, 
     normalizeConfigurationAttributes, 
+    normalizeConfig, 
     normalizeDomains, 
     normalizeDynchildhelpers, 
-    normalizePolicyRules, 
     normalizeStructure, 
     normalizeUsergroups, 
-    normalizeUsermanagement 
+    normalizeUsermanagement, 
 } from '../src/lib/normalize';
 import { 
     reorganizeClasses, 
+    reorganizeConfig, 
     reorganizeDomains, 
     reorganizeDynchildhelpers, 
-    reorganizePolicyRules, 
     reorganizeStructure, 
     reorganizeUsermanagement 
 } from '../src/lib/reorganize';
 import { 
     simplifyClasses, 
     simplifyConfigurationAttributes, 
+    simplifyConfig, 
     simplifyDomains, 
     simplifyDynchildhelpers, 
-    simplifyPolicyRules, 
     simplifyStructure, 
     simplifyUsergroups, 
-    simplifyUsermanagement 
+    simplifyUsermanagement, 
 } from '../src/lib/simplify';
 
 let should = chai.should();
@@ -41,7 +41,7 @@ const folderReorganize = "./test/configs/reorganize"; // TODO
 const folderReorganized = "./test/configs/reorganized"; // TODO
 
 const allFunctions = {
-    'policyRules': { normalize: normalizePolicyRules, simplify: simplifyPolicyRules, reorganize: reorganizePolicyRules, },
+    'config': { normalize: normalizeConfig, simplify: simplifyConfig, reorganize: reorganizeConfig, },
     'classes': { normalize: normalizeClasses, simplify: simplifyClasses, reorganize: reorganizeClasses, },
     'dynchildhelpers': { normalize: normalizeDynchildhelpers, simplify: simplifyDynchildhelpers, reorganize: reorganizeDynchildhelpers, },
     'structure': { normalize: normalizeStructure, simplify: simplifyStructure, reorganize: null, },
@@ -52,11 +52,10 @@ const allFunctions = {
 };
 
 describe('Normalize:', () => {
-    global.config = { domainName: "TEST "};
+    global.config = readConfigFile(util.format('%s/%s', folderNormalize, "config.json"));
     describe('smoke1: normalize(expected) == normalized', testSmoke1);
     describe('smoke2: normalize(data) == normalized', testSmoke2);
     describe('smoke3: normalize(simplify(normalized)) == normalized', testSmoke3);
-    describe('custom tests: policyRules', testPolicyRules);
 });
 
 function stringify(input) {
@@ -113,41 +112,4 @@ function testSmoke3() {
             });
         }
     }
-}
-
-// ========== CUSTOM ==========
-
-function testPolicyRules() {
-    it('missing policy', (done) => {
-        let policyRules = readConfigFile(util.format("%s/policyRules.json", folderNormalize));
-        let cloned = clone(policyRules);
-        try {
-            delete cloned[0].policy;
-            normalizePolicyRules(cloned);
-            should.fail('rule without policy is not allowed');
-        } catch (error) {}
-        done();
-    });
-
-    it('missing permission', (done) => {
-        let policyRules = readConfigFile(util.format("%s/policyRules.json", folderNormalize));
-        let cloned = clone(policyRules);
-        try {
-            delete cloned[0].permission;
-            normalizePolicyRules(cloned);
-            should.fail('rule without permission is not allowed');
-        } catch (error) {}
-        done();
-    });
-
-    it('missing value', (done) => {
-        let policyRules = readConfigFile(util.format("%s/policyRules.json", folderNormalize));
-        let cloned = clone(policyRules);
-        try {
-            delete cloned[0].value;
-            normalizePolicyRules(cloned);
-            should.fail('rule without value is not allowed');
-        } catch (error) {}
-        done();
-    });
 }
