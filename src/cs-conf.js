@@ -3,7 +3,10 @@
 import { version } from '../package.json';
 
 import util from 'util';
+import path from 'path';
 import program from 'commander';
+
+import csConfig from './lib/config';
 import csExport from './lib/export';
 import csImport from './lib/import';
 import csSync from './lib/sync';
@@ -16,12 +19,11 @@ import csPassword from './lib/password';
 import csNormalize, { normalizeConfig } from './lib/normalize';
 import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
+import csInspect from './lib/inspect';
+import csCheck from './lib/check';
+
 import { readConfigJsonFile } from './lib/tools/configFiles';
 import { clean, logDebug, logErr } from './lib/tools/tools';
-import csCheck from './lib/check';
-import csConfig from './lib/config';
-import path from 'path';
-import csInspect from './lib/inspect';
 
 global.rootSrcDir = __dirname;
 global.silent = false;
@@ -29,7 +31,7 @@ global.verbose = false;
 global.debug = false;
 
 const configOption = { 
-	flags: '-c, --config <filepath>', 
+	flags: '--config <filepath>', 
 	description: 'the config.json config file',
 	default: 'config.json',
 };
@@ -266,9 +268,10 @@ commands.set('password', program.command('password')
 commands.set('inspect', program.command('inspect')
 	.description('inspects object(s)')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-u, --user <userKey>', 'inspects user(s)')
-	.option('-g, --group <groupKey>', 'inspects group(s)')
+	.option('-c, --configuration-attribute <configurationAttributeKey>', 'inspects configurationAttribute(s)')
 	.option('-d, --domain <domainKey>', 'inspects domain(s)')
+	.option('-g, --group <groupKey>', 'inspects group(s)')
+	.option('-u, --user <userKey>', 'inspects user(s)')
 	.option('-A, --aggregate', 'aggregate configurationAttribute values')
 	.option('-P, --print', 'only print the inspected information')		
 	.option('-O, --output <filepath>', 'output into file', "inspect.%s.%s.json")	
@@ -277,11 +280,12 @@ commands.set('inspect', program.command('inspect')
 	.option(debugOption.flags, debugOption.description, debugOption.default)
 	.action(async (cmd) => {
 		cs('inspect', csInspect, { 
-			userKey: cmd.user,
-			groupKey: cmd.group,
-			domainKey: cmd.domain,
 			fileTarget: cmd.output,
-			aggregateConfAttrValues: cmd.aggregate !== undefined,
+			aggregateConfigurationAttributeValues: cmd.aggregate !== undefined,
+			configurationAttributeKey: cmd.configurationAttribute,
+			domainKey: cmd.domain,
+			groupKey: cmd.group,
+			userKey: cmd.user,
 			print: cmd.print !== undefined,
 		}, cmd);
 	})

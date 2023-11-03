@@ -263,13 +263,38 @@ export function reorganizeDynchildhelpers(dynchildhelpers) {
 }
 
 export function reorganizeConfigurationAttributes(configurationAttributes) {
+    if (!configurationAttributes) return configurationAttributes;
+
     let reorganized = {};
-    if (configurationAttributes != null) {
-        for (let configurationAttribute of Object.keys(configurationAttributes).sort((a, b) => {
-            return a.localeCompare(b);
-        }))
+    for (let configurationAttribute of Object.keys(configurationAttributes).sort((a, b) => {
+        return a.localeCompare(b);
+    })) {
         reorganized[configurationAttribute] = configurationAttributes[configurationAttribute];
-    }           
+    }
+    return reorganized;
+}
+
+export function reorganizeConfigurationAttribute(configurationAttribute) {
+    if (!configurationAttribute) return configurationAttribute;
+
+    let reorganized = {};
+    Object.assign(reorganized, configurationAttribute, {
+        inspected: reorganizeConfigurationAttributeInspected(configurationAttribute.inspected),
+    });
+    return reorganized;
+}
+
+export function reorganizeConfigurationAttributeInspected(configurationAttributeInspected) {
+    if (!configurationAttributeInspected) return configurationAttributeInspected;
+
+    let reorganized = {};
+    if (configurationAttributeInspected) {
+        Object.assign(reorganized, configurationAttributeInspected, {
+            domainValues: reorganizeConfigurationAttributeValues(configurationAttributeInspected.domainValues),
+            groupValues: reorganizeConfigurationAttributeValues(configurationAttributeInspected.groupValues),
+            userValues: reorganizeConfigurationAttributeValues(configurationAttributeInspected.userValues),
+        });
+    }
     return reorganized;
 }
 

@@ -2,15 +2,16 @@ import util from "util";
 import stringify from "json-stringify-pretty-compact";
 
 import { readConfigFiles, writeFile } from "./tools/configFiles";
-import { logOut } from "./tools/tools";
+import { logOut, logWarn } from "./tools/tools";
 import { completeConfigAttr, extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
 import { normalizeConfigs } from "./normalize";
 
-import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains } from "./simplify";
-import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains } from "./reorganize";
+import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyConfigurationAttributes, simplifyConfigurationAttribute } from "./simplify";
+import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains, reorganizeConfigurationAttributes, reorganizeConfigurationAttribute } from "./reorganize";
 import { unshadowUsermanagement } from "./import";
+import slug from "slug";
 
-export default async function csInspect({ userKey, groupKey, domainKey, aggregateConfAttrValues = false, print = false, fileTarget }) {
+export default async function csInspect({ configurationAttributeKey, domainKey, groupKey, userKey, aggregateConfigurationAttributeValues = false, print = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);
     let normalizedConfigs = normalizeConfigs(configs);
 
@@ -18,9 +19,10 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
 
     let type = undefined;
     let keys = [];
-    if (userKey) { type = 'user'; keys.push(userKey); }
-    if (groupKey) { type = 'group'; keys.push(groupKey); }
+    if (configurationAttributeKey) { type = 'configurationAttribute'; keys.push(configurationAttributeKey); }
     if (domainKey) { type = 'domain'; keys.push(domainKey); }
+    if (groupKey) { type = 'group'; keys.push(groupKey); }
+    if (userKey) { type = 'user'; keys.push(userKey); }
 
     if (keys.length == 0) {
         throw Error("at least one key is necessary")
@@ -34,12 +36,12 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
     switch (type) {
         case "user": {
             if (userKey == '*') {
-                let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
                 let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeShadowInfo: false });
                 result = simplifiedUsermanamgement;
             } else {
-                let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
                 let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeShadowInfo: false })
                 result = simplifiedUsermanamgement;
@@ -47,41 +49,113 @@ export default async function csInspect({ userKey, groupKey, domainKey, aggregat
         } break;
         case "group": {
             if (groupKey == '*') {
-                let inspectedUsergroups = inspectUsergroups(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let inspectedUsergroups = inspectUsergroups(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
                 let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
                 let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
                 result = simplifiedUsergroups;
             } else {
                 let normalizedGroupKey = extendLocalDomain(groupKey);
-                let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfAttrValues);
+                let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
                 let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
                 let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
                 result = simplifiedGroups;
             }
             } break;
-        case "user": {
+        case "domain": {
             if (domainKey == '*') {
-                let inspectedDomains = inspectDomains(normalizedConfigs, aggregateConfAttrValues);
+                let inspectedDomains = inspectDomains(normalizedConfigs, aggregateConfigurationAttributeValues);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);
                 result = simplifiedDomains;
             } else {
-                let inspectedDomains = inspectDomain(domainKey, normalizedConfigs, aggregateConfAttrValues);
+                let inspectedDomains = inspectDomain(domainKey, normalizedConfigs, aggregateConfigurationAttributeValues);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);            
                 result = simplifiedDomains;
+            }
+        } break;
+        case "configurationAttribute": {
+            if (configurationAttributeKey == '*') {
+                let inspectedConfigurationAttributes = inspectConfigurationAttributes(normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
+                let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
+                let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);
+                result = simplifiedConfigurationAttributes;
+            } else {
+                let inspectedConfigurationAttributes = inspectConfigurationAttribute(configurationAttributeKey, normalizedConfigs, unshadowUsermanagement(normalizedConfigs.usermanagement), aggregateConfigurationAttributeValues);
+                let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
+                let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);            
+                result = simplifiedConfigurationAttributes;
             }
         } break;
     }
     if (print) {
         logOut(stringify(result), { noSilent: true })
     } else {
-        let outputFile = util.format(fileTarget, type, key);
+        let outputFile = util.format(fileTarget, type, slug(key));
         writeFile(stringify(result), outputFile, {verboseOnly: false});
     }
 }
 
 // ---
+
+export function inspectConfigurationAttributes(configs, unshadowedUsermanagement, aggregateConfAttrValues = false) {
+    let inspected = {};
+    
+    let { configurationAttributes } = configs;
+    for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+        Object.assign(inspected, inspectConfigurationAttribute(configurationAttributeKey, configs, unshadowedUsermanagement, aggregateConfAttrValues));
+    }
+
+    return inspected;
+}
+
+export function inspectConfigurationAttribute(configurationAttributeKey, {configurationAttributes, usergroups, domains}, unshadowedUsermanagement, aggregateConfAttrValues = false) {
+    if (!configurationAttributeKey) throw Error(util.format("configurationAttributeKey is missing"));
+
+    let configurationAttribute = configurationAttributes[configurationAttributeKey];
+    if (!configurationAttribute) throw Error(util.format("configurationAttribute '%s' not found", configurationAttributeKey));
+
+    let foundAny = false;
+    let domainValues = {};
+    for (let [ domainKey, domain ] of Object.entries(domains)) {
+        if (domain && domain.configurationAttributes && domain.configurationAttributes[configurationAttributeKey]) {
+            domainValues[domainKey] = domain.configurationAttributes[configurationAttributeKey];
+            foundAny = true;
+        }
+    }
+
+    let groupValues = {};
+    for (let [ groupKey, group ] of Object.entries(usergroups)) {
+        if (group && group.configurationAttributes && group.configurationAttributes[configurationAttributeKey]) {
+            groupValues[groupKey] = group.configurationAttributes[configurationAttributeKey];
+            foundAny = true;
+        }
+    }
+
+    let userValues = {};
+    for (let [ userKey, user ] of Object.entries(unshadowedUsermanagement)) {
+        if (user && user.configurationAttributes && user.configurationAttributes[configurationAttributeKey]) {
+            userValues[userKey] = user.configurationAttributes[configurationAttributeKey];
+            foundAny = true;
+        }
+    }
+
+    let inspectedConfigurationAttribute = Object.assign({
+        domainValues,
+        groupValues,
+        userValues,
+    });
+
+    if (!foundAny) {
+        logWarn(util.format("configurationAttribute '%s' is not used anywhere.", configurationAttributeKey));
+    }
+
+    let inspected = {};
+    inspected[configurationAttributeKey] = Object.assign({}, configurationAttribute, { inspected: inspectedConfigurationAttribute });
+
+    return inspected;
+
+}
 
 export function inspectUsermanagement(configs, unshadowedUsermanagement, aggregateConfAttrValues = false) {
     let inspected = {};

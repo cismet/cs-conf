@@ -492,22 +492,22 @@ function simplifyPerms(perms) {
 }
 
 export function simplifyConfigurationAttributes(configurationAttributes) {
-    if (configurationAttributes == null) return null;
+    if (!configurationAttributes) return undefined;
 
     let simplified = {};
     let normalized = normalizeConfigurationAttributeValues(configurationAttributes);
     for (let configurationAttributeKey of Object.keys(normalized)) {
         let configurationAttribute = configurationAttributes[configurationAttributeKey];
         if (configurationAttribute != null) {
-            simplified[configurationAttributeKey] = simplifyConfigurationAttributeKey(configurationAttribute);
+            simplified[configurationAttributeKey] = simplifyConfigurationAttribute(configurationAttribute);
         }
     }
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyConfigurationAttributeKey(configurationAttribute) {
-    if (configurationAttribute == null) return null;
+export function simplifyConfigurationAttribute(configurationAttribute) {
+    if (!configurationAttribute) return undefined;
     let simplified = copyFromTemplate(Object.assign({}, configurationAttribute, {
         inspected: simplifyConfigurationAttributeInspected(configurationAttribute.inspected),
     }), defaultConfigurationAttributeKey);
@@ -515,28 +515,12 @@ export function simplifyConfigurationAttributeKey(configurationAttribute) {
 }
 
 export function simplifyConfigurationAttributeInspected(configurationAttributeInspected) {
-    let simplified = {};
-    if (configurationAttributeInspected) {
-        simplified = copyFromTemplate(Object.assign({}, configurationAttributeInspected, { 
-            domainValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.domainValues),
-            groupValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.groupValues),
-            userValues: simplifyConfigurationAttributeInspectedValues(configurationAttributeInspected.userValues),
-        }), defaultConfigurationAttributeInspected);
-    }
-    clean(simplified);
-    return Object.keys(simplified).length ? simplified : undefined;
-}
-
-export function simplifyConfigurationAttributeInspectedValues(configurationAttributeInspectedValues) {
-    let simplified = {};
-    if (configurationAttributeInspectedValues) {
-        for (let configurationAttributeInspectedValuesKey of Object.keys(configurationAttributeInspectedValues)) {
-            let configurationAttributeInspectedValue = configurationAttributeInspectedValues[configurationAttributeInspectedValuesKey];
-            if (configurationAttributeInspectedValue) {
-                simplified[configurationAttributeInspectedValuesKey] = configurationAttributeInspectedValue;
-            }
-        }
-    }
+    if (!configurationAttributeInspected) return undefined;
+    let simplified = copyFromTemplate(Object.assign({}, configurationAttributeInspected, { 
+        domainValues: simplifyConfigurationAttributeValues(configurationAttributeInspected.domainValues),
+        groupValues: simplifyConfigurationAttributeValues(configurationAttributeInspected.groupValues),
+        userValues: simplifyConfigurationAttributeValues(configurationAttributeInspected.userValues),
+    }), defaultConfigurationAttributeInspected);
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;
 }
