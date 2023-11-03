@@ -95,18 +95,27 @@ function exportConfigs(fetchedData, config) {
 
 
     let {usermanagement, additionalInfos} = configs;
-
     for (let userKey of Object.keys(usermanagement)) {
         let user = usermanagement[userKey];
         let additionalInfo = additionalInfos && additionalInfos.user ? additionalInfos.user[userKey] : {};
-        if (additionalInfo && additionalInfo._shadow) {
-            let _shadow = additionalInfo._shadow;
-            user.groups = _shadow.ownGroups ? [... _shadow.ownGroups] : [];
-            user.configurationAttributes = _shadow.ownConfigurationAttributes ? Object.assign({}, _shadow.ownConfigurationAttributes) : {};
-        }
+        usermanagement[userKey] = shadowing(user, additionalInfo);
     }
-
     return configs;
+}
+
+export function shadowing(user, additionalInfo = user.additional_info) {
+    if (!user) return user;
+
+    let shadowed = Object.assign({}, user);
+    if (additionalInfo && additionalInfo._shadow) {
+        let _shadow = additionalInfo._shadow;
+
+        Object.assign(shadowed, {
+            groups: _shadow.ownGroups ? [... _shadow.ownGroups] : [],
+            configurationAttributes: _shadow.ownConfigurationAttributes ? Object.assign({}, _shadow.ownConfigurationAttributes) : {},
+        });
+    }
+    return shadowed;
 }
 
 // ---
