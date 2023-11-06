@@ -358,19 +358,31 @@ export function reorganizeUsergroupInspected(usergroupInspected) {
             members: usergroupInspected.members ? usergroupInspected.members.sort((a, b) => { 
                 return a.localeCompare(b);
             }) : usergroupInspected.members,
-            canReadClasses: usergroupInspected.canReadClasses ? usergroupInspected.canReadClasses.sort((a, b) => { 
-                return a.localeCompare(b);
-            }) : usergroupInspected.canReadClasses,
-            canWriteClasses: usergroupInspected.canWriteClasses ? usergroupInspected.canWriteClasses.sort((a, b) => { 
-                return a.localeCompare(b);
-            }) : usergroupInspected.canWriteClasses,
-            canReadAttributes: usergroupInspected.canReadAttributes ? usergroupInspected.canReadAttributes.sort((a, b) => { 
-                return a.localeCompare(b);
-            }) : usergroupInspected.canReadAttributes,
-            canWriteAttributes: usergroupInspected.canWriteAttributes ? usergroupInspected.canWriteAttributes.sort((a, b) => { 
-                return a.localeCompare(b);
-            }) : usergroupInspected.canWriteAttributes,
             allConfigurationAttributes: usergroupInspected.allConfigurationAttributes ? reorganizeConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes) : usergroupInspected.configurationAttributes,
+            permissions: usergroupInspected.permissions ? reorganizeUsergroupInspectedPermissions(usergroupInspected.permissions) : usergroupInspected.permissions,
+        });
+    }
+    return reorganized;
+}
+
+export function reorganizeUsergroupInspectedPermissions(usergroupInspectedPermissions) {
+    if (!usergroupInspectedPermissions) return usergroupInspectedPermissions;
+
+    let reorganized = {};
+    if (usergroupInspectedPermissions) {
+        Object.assign(reorganized, usergroupInspectedPermissions, {
+            canReadClasses: usergroupInspectedPermissions.canReadClasses ? usergroupInspectedPermissions.canReadClasses.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspectedPermissions.canReadClasses,
+            canWriteClasses: usergroupInspectedPermissions.canWriteClasses ? usergroupInspectedPermissions.canWriteClasses.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspectedPermissions.canWriteClasses,
+            canReadAttributes: usergroupInspectedPermissions.canReadAttributes ? usergroupInspectedPermissions.canReadAttributes.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspectedPermissions.canReadAttributes,
+            canWriteAttributes: usergroupInspectedPermissions.canWriteAttributes ? usergroupInspectedPermissions.canWriteAttributes.sort((a, b) => { 
+                return a.localeCompare(b);
+            }) : usergroupInspectedPermissions.canWriteAttributes,
         });
     }
     return reorganized;
@@ -427,29 +439,42 @@ export function reorganizeUserInspected(userInspected) {
                 }) : userInspected.shadowMemberOf[shadowKey];
             }
         } 
-        let canReadClasses = userInspected.canReadClasses ? userInspected.canReadClasses.sort((a, b) => { 
-            return a.localeCompare(b);
-        }) : userInspected.canReadClasses;
-        let canWriteClasses = userInspected.canWriteClasses ? userInspected.canWriteClasses.sort((a, b) => { 
-            return a.localeCompare(b);
-        }) : userInspected.canWriteClasses;
-        let canReadAttributes = userInspected.canReadAttributes ? userInspected.canReadAttributes.sort((a, b) => { 
-            return a.localeCompare(b);
-        }) : userInspected.canReadAttributes;
-        let canWriteAttributes = userInspected.canWriteAttributes ? userInspected.canWriteAttributes.sort((a, b) => { 
-            return a.localeCompare(b);
-        }) : userInspected.canWriteAttributes;
-
         let allConfigurationAttributes = userInspected.allConfigurationAttributes ? reorganizeConfigurationAttributeValues(userInspected.allConfigurationAttributes) : userInspected.configurationAttributes;
+        let permissions = userInspected.permissions ? reorganizeUserInspectedPermissions(userInspected.permissions) : userInspected.permissions;
 
         Object.assign(reorganized, userInspected, {
             memberOf,
             shadowMemberOf,
+            allConfigurationAttributes,
+            permissions,
+        });
+    }
+    return reorganized;
+}
+
+export function reorganizeUserInspectedPermissions(userInspectedPermissions) {
+    if (!userInspectedPermissions) return userInspectedPermissions;
+
+    let reorganized = {};
+    if (userInspectedPermissions) {
+        let canReadClasses = userInspectedPermissions.canReadClasses ? userInspectedPermissions.canReadClasses.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspectedPermissions.canReadClasses;
+        let canWriteClasses = userInspectedPermissions.canWriteClasses ? userInspectedPermissions.canWriteClasses.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspectedPermissions.canWriteClasses;
+        let canReadAttributes = userInspectedPermissions.canReadAttributes ? userInspectedPermissions.canReadAttributes.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspectedPermissions.canReadAttributes;
+        let canWriteAttributes = userInspectedPermissions.canWriteAttributes ? userInspectedPermissions.canWriteAttributes.sort((a, b) => { 
+            return a.localeCompare(b);
+        }) : userInspectedPermissions.canWriteAttributes;
+
+        Object.assign(reorganized, userInspectedPermissions, {
             canReadClasses,
             canWriteClasses,
             canReadAttributes,
             canWriteAttributes,
-            allConfigurationAttributes,
         });
     }
     return reorganized;

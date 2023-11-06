@@ -172,7 +172,7 @@ export function inspectUsermanagement(configs, { aggregateConfigurationAttribute
     return inspected;
 }
 
-export function inspectUser(userKey, { usermanagement, usergroups, domains, classes }, { aggregateConfigurationAttributeValues = false } = {}) {
+export function inspectUser(userKey, { usermanagement, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
     if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
@@ -215,14 +215,15 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, clas
             shadowMemberOf[shadowKey] = usermanagement[shadowKey].groups;
         }
     }
-
     let memberOf = [...groupKeySet];
+    let permissions = permissionsForGroups([...groupKeySet], classes, config.policyRules);
 
-    let inspectedUser = Object.assign({
+    let inspectedUser = {
         memberOf,
         shadowMemberOf,
         allConfigurationAttributes,
-    }, permsForGroups([...groupKeySet], classes));
+        permissions
+    };
 
     let inspected = {};
     inspected[userKey] = Object.assign({}, shadowedUser, { inspected: inspectedUser });
@@ -243,7 +244,7 @@ export function inspectUsergroups(configs, { aggregateConfigurationAttributeValu
     return inspected;
 }
 
-export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains, classes }, { aggregateConfigurationAttributeValues = false } = {}) {
+export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
     if (!groupKey) throw Error(util.format("groupKey is missing"));
 
     let group = usergroups[groupKey];
@@ -267,11 +268,13 @@ export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains
         }
     }
     let members = [...userKeySet];
+    let permissions = permissionsForGroups([groupKey], classes, config.policyRules);
 
-    let inspectedGroup = Object.assign({ 
+    let inspectedGroup = { 
         members,
         allConfigurationAttributes,
-    }, permsForGroup(groupKey, classes));
+        permissions,
+    };
 
     let inspected = {};
     inspected[groupKey] = Object.assign({}, group, { inspected: inspectedGroup });
@@ -320,53 +323,97 @@ export function inspectDomain(domainKey, { domains, usergroups }) {
 
 // ---
 
-function permsForGroup(groupKey, classes) {
-    return permsForGroups([groupKey], classes);
-}
-
-function permsForGroups(groupKeys, classes) {
+function permissionsForGroups(groupKeys, classes, policyRules) {
     let readPermClassesSet = new Set();
     let writePermClassesSet = new Set();
     let readPermAttributesSet = new Set();
     let writePermAttributesSet = new Set();
-
+    
     for (let classKey of Object.keys(classes)) {
         let clazz = classes[classKey];
-        if (clazz) {
+        if (clazz) {        
             let classPolicy = clazz.policy;
-            // TODO inspect server policy for automatic interpretation
-            let classFullKey = classPolicy ? util.format("%s [%s]", classKey, classPolicy) : util.format("%s", classKey);
-            if (clazz.readPerms) {
-                for (let perm of clazz.readPerms) {
-                    if (groupKeys.includes(perm)) {
-                        readPermClassesSet.add(classFullKey);
+
+            let defaultPolicy = policyRules && classPolicy ? policyRules[classPolicy] : null;            
+            let defaultCanReadClass = defaultPolicy && defaultPolicy.defaultRead;
+            let defaultCanWriteClass = defaultPolicy && defaultPolicy.defaultWrite;
+            
+            let classCanRead = false;
+            for (let groupKey of groupKeys) {        
+                if (clazz.readPerms) {
+                    let groupReadPerm = clazz.readPerms.includes(groupKey);   
+                    let groupCanRead = defaultCanReadClass ? !groupReadPerm : groupReadPerm;
+                    if (groupCanRead) {
+                        classCanRead = true
+                        break;
                     }
                 }
             }
-            if (clazz.writePerms) {
-                for (let perm of clazz.writePerms) {
-                    if (groupKeys.includes(perm)) {
-                        writePermClassesSet.add(classFullKey);
+
+            let classCanWrite = false;
+            for (let groupKey of groupKeys) {        
+                if (clazz.writePerms) {
+                    let groupWritePerm = clazz.writePerms.includes(groupKey);   
+                    let groupCanWrite = defaultCanWriteClass ? !groupWritePerm : groupWritePerm;
+                    if (groupCanWrite) {
+                        classCanWrite = true;
+                        break;
                     }
                 }
             }
+            
+            if (classCanRead) {
+                readPermClassesSet.add(classKey);
+            }
+            if (classCanWrite) {
+                writePermClassesSet.add(classKey);
+            }
+
             let attributes = clazz.attributes;
             // TODO inspect server policy for automatic interpretation
             if (attributes) {
                 let attributePolicy = clazz.attribute_policy
+                let defaultAttributesPolicy = policyRules && attributePolicy ? policyRules[attributePolicy] : null;
+                let defaultCanReadAttributes =  defaultAttributesPolicy && defaultAttributesPolicy.defaultRead;
+                let defaultCanWriteAttributes =  defaultAttributesPolicy && defaultAttributesPolicy.defaultWrite;
                 for (let attributeKey of Object.keys(attributes)) {
                     let attribute = attributes[attributeKey];
                     if (attribute) {
-                        let fullAttributeKey = attributePolicy ? util.format("%s.%s [%s]", classKey, attributeKey, attributePolicy) : util.format("%s.%s", classKey, attributeKey);
-                        for (let perm of attribute.writePerms) {
-                            if (groupKeys.includes(perm)) {
-                                readPermAttributesSet.add(fullAttributeKey);
+                        let attributeCanRead = false;
+                        if (classCanRead) {
+                            for (let groupKey of groupKeys) {        
+                                if (attribute.readPerms) {
+                                    let groupReadPerm = attribute.readPerms.includes(groupKey);   
+                                    let groupCanRead = defaultCanReadAttributes ? !groupReadPerm : groupReadPerm;
+                                    if (groupCanRead) {
+                                        attributeCanRead = true;
+                                        break;
+                                    }
+                                }
                             }
                         }
-                        for (let perm of attribute.writePerms) {
-                            if (groupKeys.includes(perm)) {
-                                writePermAttributesSet.add(fullAttributeKey);
+
+                        let attributeCanWrite = false;
+                        if (classCanWrite) {
+                            for (let groupKey of groupKeys) {        
+                                if (attribute.writePerms) {
+                                    let groupWritePerm = attribute.writePerms.includes(groupKey);   
+                                    let groupCanWrite = defaultCanWriteAttributes ? !groupWritePerm : groupWritePerm;
+                                    if (groupCanWrite) {
+                                        attributeCanWrite = true;
+                                       
+                                        break;
+                                    }
+                                }
                             }
+                        }
+
+                        let fullAttributeKey = util.format("%s.%s", classKey, attributeKey);
+                        if (attributeCanRead) {
+                            readPermAttributesSet.add(fullAttributeKey);
+                        }
+                        if (attributeCanWrite) {
+                            writePermAttributesSet.add(fullAttributeKey);
                         }
                     }
                 }
@@ -377,7 +424,7 @@ function permsForGroups(groupKeys, classes) {
     let canReadClasses = readPermClassesSet.size > 0 ? [...readPermClassesSet] : [];
     let canWriteClasses = writePermClassesSet.size > 0 ? [...writePermClassesSet] : [];
     let canReadAttributes = readPermAttributesSet.size > 0 ? [...readPermAttributesSet] : [];
-    let canWriteAttributes = writePermAttributesSet.size > 0 ? [...writePermClassesSet] : [];
+    let canWriteAttributes = writePermAttributesSet.size > 0 ? [...writePermAttributesSet] : [];
 
     return {
         canReadClasses,

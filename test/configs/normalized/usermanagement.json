@@ -10,11 +10,13 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }, 
     "User2": {
@@ -28,11 +30,13 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }, 
     "User3": {
@@ -46,11 +50,13 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }, 
     "User4": {
@@ -64,11 +70,13 @@
         "inspected": {
             "memberOf": [],
             "shadowMemberOf": {},
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }
 }

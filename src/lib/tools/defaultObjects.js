@@ -176,20 +176,28 @@ export const defaultConfigurationAttributeInspected = {
 export const defaultUserInspected = {
     memberOf: [],
     shadowMemberOf: {},
+    allConfigurationAttributes: {},
+    permissions: {},
+};
+
+export const defaultUserInspectedPermissions = {
     canReadClasses: [],
     canWriteClasses: [],
     canReadAttributes: [],
     canWriteAttributes: [],
-    allConfigurationAttributes: {},
 };
 
 export const defaultUserGroupInspected = {
     members: [],
+    allConfigurationAttributes: {},
+    permissions: {},
+};
+
+export const defaultUserGroupInspectedPermissions = {
     canReadClasses: [],
     canWriteClasses: [],
     canReadAttributes: [],
     canWriteAttributes: [],
-    allConfigurationAttributes: {},
 };
 
 // policyRules

@@ -6,11 +6,13 @@
         "additional_info": null,
         "inspected": {
             "members": [],
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }, 
     "Group2@LOCAL": { 
@@ -20,11 +22,13 @@
         "additional_info": null,
         "inspected": {
             "members": [],
-            "canReadClasses": [],
-            "canWriteClasses": [],
-            "canReadAttributes": [],
-            "canWriteAttributes": [],
-            "allConfigurationAttributes": {}
+            "allConfigurationAttributes": {},
+            "permissions": {
+                "canReadClasses": [],
+                "canWriteClasses": [],
+                "canReadAttributes": [],
+                "canWriteAttributes": []    
+            }
         }      
     }
 }

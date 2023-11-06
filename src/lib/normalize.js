@@ -24,6 +24,8 @@ import {
     defaultConfigurationAttributeInspected,
     defaultConfigPolicyRules,
     defaultConfigPolicies,
+    defaultUserGroupInspectedPermissions,
+    defaultUserInspectedPermissions,
 } from "./tools/defaultObjects";
 
 // ---
@@ -303,15 +305,25 @@ export function normalizeUsergroup(usergroup) {
 }
 
 export function normalizeUsergroupInspected(usergroupInspected) {
-    let normalized = Object.assign({}, defaultUserGroupInspected);
+    let normalized = Object.assign({}, defaultUserGroupInspected, { permissions: defaultUserGroupInspectedPermissions });
     if (usergroupInspected) {
         Object.assign(normalized, usergroupInspected, {
             members: usergroupInspected.members ?? [],
-            canReadClasses: usergroupInspected.canReadClasses ?? [],
-            canWriteClasses: usergroupInspected.canWriteClasses ?? [],
-            canReadAttributes: usergroupInspected.canReadAttributes ?? [],
-            canWriteAttributes: usergroupInspected.canWriteAttributes ?? [],
             allConfigurationAttributes: normalizeConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes),
+            permissions: normalizeUsergroupInspectedPermissions(usergroupInspected.permissions),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeUsergroupInspectedPermissions(usergroupInspectedPermissions) {
+    let normalized = Object.assign({}, defaultUserGroupInspectedPermissions);
+    if (usergroupInspectedPermissions) {
+        Object.assign(normalized, usergroupInspectedPermissions, {
+            canReadClasses: usergroupInspectedPermissions.canReadClasses ?? [],
+            canWriteClasses: usergroupInspectedPermissions.canWriteClasses ?? [],
+            canReadAttributes: usergroupInspectedPermissions.canReadAttributes ?? [],
+            canWriteAttributes: usergroupInspectedPermissions.canWriteAttributes ?? [],
         });
     }
     return normalized;
@@ -362,16 +374,26 @@ export function normalizeUser(user, userKey) {
 }
 
 export function normalizeUserInspected(userInspected) {
-    let normalized = Object.assign({}, defaultUserInspected);
+    let normalized = Object.assign({}, defaultUserInspected, { permissions: defaultUserInspectedPermissions });
     if (userInspected) {
         Object.assign(normalized, userInspected, {
             memberOf: normalizeGroups(userInspected.memberOf),
             shadowMemberOf: normalizeshadowMemberOf(userInspected.shadowMemberOf),
-            canReadClasses: userInspected.canReadClasses ?? [],
-            canWriteClasses: userInspected.canWriteClasses ?? [],
-            canReadAttributes: userInspected.canReadAttributes ?? [],
-            canWriteAttributes: userInspected.canWriteAttributes ?? [],
             allConfigurationAttributes: normalizeConfigurationAttributeValues(userInspected.allConfigurationAttributes),
+            permissions: normalizeUserInspectedPermissions(userInspected.permissions),
+        });
+    }
+    return normalized;
+}
+
+export function normalizeUserInspectedPermissions(userInspectedPermissions) {
+    let normalized = Object.assign({}, defaultUserInspectedPermissions);
+    if (userInspectedPermissions) {
+        Object.assign(normalized, userInspectedPermissions, {
+            canReadClasses: userInspectedPermissions.canReadClasses ?? [],
+            canWriteClasses: userInspectedPermissions.canWriteClasses ?? [],
+            canReadAttributes: userInspectedPermissions.canReadAttributes ?? [],
+            canWriteAttributes: userInspectedPermissions.canWriteAttributes ?? [],
         });
     }
     return normalized;

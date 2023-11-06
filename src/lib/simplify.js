@@ -27,6 +27,8 @@ import {
     defaultConfigurationAttributeInspected,
     defaultConfigPolicyRules,
     defaultConfigPolicies,
+    defaultUserGroupInspectedPermissions,
+    defaultUserInspectedPermissions,
 } from "./tools/defaultObjects";
 
 import { 
@@ -324,17 +326,27 @@ export function simplifyUsergroupInspected(usergroupInspected) {
     if (usergroupInspected) {
         simplified = copyFromTemplate(Object.assign({}, usergroupInspected, { 
             members: usergroupInspected.members.length ? [...usergroupInspected.members] : undefined,
-            canReadClasses: usergroupInspected.canReadClasses && usergroupInspected.canReadClasses.length ? [...usergroupInspected.canReadClasses] : undefined,
-            canWriteClasses: usergroupInspected.canWriteClasses && usergroupInspected.canWriteClasses.length ? [...usergroupInspected.canWriteClasses] : undefined,
-            canReadAttributes: usergroupInspected.canReadAttributes && usergroupInspected.canReadAttributes.length ? [...usergroupInspected.canReadAttributes] : undefined,
-            canWriteAttributes: usergroupInspected.canWriteAttributes && usergroupInspected.canWriteAttributes.length ? [...usergroupInspected.canWriteAttributes] : undefined,
             allConfigurationAttributes: simplifyConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes),
-        }), usergroupInspected);
+            permissions: simplifyUsergroupInspectedPermissions(usergroupInspected.permissions),
+        }), defaultUserInspected);
     }
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
+export function simplifyUsergroupInspectedPermissions(usergroupInspectedPermissions) {
+    let simplified = {};
+    if (usergroupInspectedPermissions) {
+        simplified = copyFromTemplate(Object.assign({}, usergroupInspectedPermissions, { 
+            canReadClasses: usergroupInspectedPermissions.canReadClasses && usergroupInspectedPermissions.canReadClasses.length ? [...usergroupInspectedPermissions.canReadClasses] : undefined,
+            canWriteClasses: usergroupInspectedPermissions.canWriteClasses && usergroupInspectedPermissions.canWriteClasses.length ? [...usergroupInspectedPermissions.canWriteClasses] : undefined,
+            canReadAttributes: usergroupInspectedPermissions.canReadAttributes && usergroupInspectedPermissions.canReadAttributes.length ? [...usergroupInspectedPermissions.canReadAttributes] : undefined,
+            canWriteAttributes: usergroupInspectedPermissions.canWriteAttributes && usergroupInspectedPermissions.canWriteAttributes.length ? [...usergroupInspectedPermissions.canWriteAttributes] : undefined,
+        }), defaultUserGroupInspectedPermissions);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
 
 export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true, normalize = true } = {}) {
     if (!usermanagement) return undefined;
@@ -382,12 +394,23 @@ export function simplifyUserInspected(userInspected) {
         simplified = copyFromTemplate(Object.assign({}, userInspected, { 
             memberOf: simplifyGroups(userInspected.memberOf),
             shadowMemberOf: simplifyshadowMemberOf(userInspected.shadowMemberOf),
-            canReadClasses: userInspected.canReadClasses.length ? [...userInspected.canReadClasses] : undefined,
-            canWriteClasses: userInspected.canWriteClasses.length ? [...userInspected.canWriteClasses] : undefined,
-            canReadAttributes: userInspected.canReadAttributes.length ? [...userInspected.canReadAttributes] : undefined,
-            canWriteAttributes: userInspected.canWriteAttributes.length ? [...userInspected.canWriteAttributes] : undefined,
             allConfigurationAttributes: simplifyConfigurationAttributeValues(userInspected.allConfigurationAttributes),
+            permissions: simplifyUserInspectedPermissions(userInspected.permissions),
         }), defaultUserInspected);
+    }
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyUserInspectedPermissions(userInspectedPermissions) {
+    let simplified = {};
+    if (userInspectedPermissions) {
+        simplified = copyFromTemplate(Object.assign({}, userInspectedPermissions, { 
+            canReadClasses: userInspectedPermissions.canReadClasses.length ? [...userInspectedPermissions.canReadClasses] : undefined,
+            canWriteClasses: userInspectedPermissions.canWriteClasses.length ? [...userInspectedPermissions.canWriteClasses] : undefined,
+            canReadAttributes: userInspectedPermissions.canReadAttributes.length ? [...userInspectedPermissions.canReadAttributes] : undefined,
+            canWriteAttributes: userInspectedPermissions.canWriteAttributes.length ? [...userInspectedPermissions.canWriteAttributes] : undefined,
+        }), defaultUserInspectedPermissions);
     }
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;
