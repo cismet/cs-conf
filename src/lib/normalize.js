@@ -48,7 +48,7 @@ export function normalizeConfigs(configs) {
     let normalized = Object.assign({}, configs, {
         config: normalizeConfig(configs.config),
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
-        classes: normalizeClasses(configs.classes), 
+        classes: normalizeClasses(configs.classes, configs.config.policies), 
         configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
         domains: normalizeDomains(configs.domains), 
         dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),        
@@ -90,20 +90,20 @@ export function normalizeAdditionalInfos(additionalInfos) {
     return normalized;
 }
 
-export function normalizeClasses(classes) {
+export function normalizeClasses(classes, policies = defaultConfigPolicies) {
     let normalized = {};
     
     if (classes) {
         for (let classKey of Object.keys(classes)) {
             let clazz = classes[classKey];
-            let normalizedClass = normalizeClass(classKey, clazz);
+            let normalizedClass = normalizeClass(classKey, clazz, policies);
             normalized[classKey.toLowerCase()] = normalizedClass;
         }
     }
     return normalized;
 }
 
-export function normalizeClass(classKey, clazz) {
+export function normalizeClass(classKey, clazz, policies = defaultConfigPolicies) {
     let normalized = Object.assign({}, defaultClass);
     if (clazz != null) {
         if (clazz.pk === null) throw Error(util.format("normalizeClasses: [%s] pk of can't be null", classKey));
@@ -123,6 +123,8 @@ export function normalizeClass(classKey, clazz) {
             renderer: normalizeSpecial(clazz.renderer, classKey),
             attributes: normalizeAttributes(clazz.attributes, clazz.pk, classKey),
             icon: null,
+            policy: clazz.policy ?? policies.server,
+            attribute_policy: clazz.attribute_policy ?? policies.attributes,
             classIcon: clazz.classIcon || clazz.icon || null,
             objectIcon: clazz.objectIcon || clazz.icon || null,
             readPerms: normalizePerms(clazz.readPerms),

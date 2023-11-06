@@ -155,7 +155,7 @@ export function simplifyClasses(classes, policies) {
     if (classes == null) return null;
 
     let normalizedPolicies = normalizeConfigPolicies(policies);
-    let normalized = normalizeClasses(classes);
+    let normalized = normalizeClasses(classes, policies);
 
     let simplified = {};
     for (let classKey of Object.keys(normalized)) {
