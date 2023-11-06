@@ -3,7 +3,7 @@ import stringify from "json-stringify-pretty-compact";
 
 import { readConfigFiles, writeFile } from "./tools/configFiles";
 import { logOut, logWarn } from "./tools/tools";
-import { completeConfigAttr, extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
+import { completeConfigurationAttributeValues, extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
 import { normalizeConfigs } from "./normalize";
 
 import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyConfigurationAttributes, simplifyUser } from "./simplify";
@@ -16,7 +16,7 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
     let configs = readConfigFiles(global.configsDir);
     let normalizedConfigs = normalizeConfigs(configs);
     Object.assign(normalizedConfigs, {
-        usermanagement: unshadowUsermanagement(normalizedConfigs.usermanagement),
+        usermanagement: unshadowUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.configurationAttributes),
     })
 
     if (configs == null) throw Error("config not set");
@@ -172,7 +172,7 @@ export function inspectUsermanagement(configs, { aggregateConfigurationAttribute
     return inspected;
 }
 
-export function inspectUser(userKey, { usermanagement, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
+export function inspectUser(userKey, { usermanagement, configurationAttributes, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
     if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
@@ -194,18 +194,18 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, clas
         if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
-    let allConfigurationAttributes = Object.assign({}, user.configurationAttributes);    
+    let allConfigurationAttributeValues = Object.assign({}, user.configurationAttributes);    
     for (let groupKey of groupKeySet) {
         let group = usergroups[groupKey];
-        let groupConfigurationAttributes = group.configurationAttributes;
+        let groupConfigurationAttributeValues = group.configurationAttributes;
         let completition = {group: groupKey};
-        completeConfigAttr(allConfigurationAttributes, groupConfigurationAttributes, userKey, completition, aggregateConfigurationAttributeValues);
+        completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, groupConfigurationAttributeValues, userKey, completition, aggregateConfigurationAttributeValues);
     }
     for (let domainKey of domainKeySet) {            
         let domain = domains[domainKey];
-        let domainConfigurationAttributes = domain.configurationAttributes;
+        let domainConfigurationAttributeValues = domain.configurationAttributes;
         let completition = {domain: domainKey};
-        completeConfigAttr(allConfigurationAttributes, domainConfigurationAttributes, userKey, completition, aggregateConfigurationAttributeValues);
+        completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, userKey, completition, aggregateConfigurationAttributeValues);
     }
 
     let shadowedUser = simplifyUser(shadowing(user));
@@ -221,7 +221,7 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, clas
     let inspectedUser = {
         memberOf,
         shadowMemberOf,
-        allConfigurationAttributes,
+        allConfigurationAttributes: allConfigurationAttributeValues,
         permissions
     };
 
@@ -244,7 +244,7 @@ export function inspectUsergroups(configs, { aggregateConfigurationAttributeValu
     return inspected;
 }
 
-export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
+export function inspectUsergroup(groupKey, { usermanagement, configurationAttributes, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
     if (!groupKey) throw Error(util.format("groupKey is missing"));
 
     let group = usergroups[groupKey];
@@ -256,9 +256,10 @@ export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains
     let domain = domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' of usergroup '%s' not found", domainKey, groupKey));
 
-    let allConfigurationAttributes = Object.assign({}, group.configurationAttributes);
+    let allConfigurationAttributeValues = Object.assign({}, group.configurationAttributes);
     let completition = {domain: domainKey};
-    completeConfigAttr(allConfigurationAttributes, domain.configurationAttributes, groupKey, completition, aggregateConfigurationAttributeValues);
+    let domainConfigurationAttributeValues = domain.configurationAttributes;
+    completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, groupKey, completition, aggregateConfigurationAttributeValues);
 
     let userKeySet = new Set();
     for (let userKey of Object.keys(usermanagement)) {
@@ -272,7 +273,7 @@ export function inspectUsergroup(groupKey, { usermanagement, usergroups, domains
 
     let inspectedGroup = { 
         members,
-        allConfigurationAttributes,
+        allConfigurationAttributes: allConfigurationAttributeValues,
         permissions,
     };
 

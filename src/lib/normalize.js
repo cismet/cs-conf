@@ -136,7 +136,7 @@ export function normalizeClass(classKey, clazz, policies = defaultConfigPolicies
     return normalized;
 }
 
-export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
+export function normalizeAttributes(attributes, pk = defaultClass.pk, classKey) {
     let normalized = {};
 
     if (attributes) {
@@ -145,7 +145,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
             descr: "Primary Key",
             dbType: "INTEGER",
             mandatory: true,
-            defaultValue: util.format("nextval('%s_seq')", table),
+            defaultValue: util.format("nextval('%s_seq')", classKey),
             hidden: true,
         });
         for (let attributeKey of Object.keys(attributes)) {
@@ -161,7 +161,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 attribute.manyToMany = attribute.manyToMany.toLowerCase();
             }
 
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw Error(util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", table, attributeKey));
+            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw Error(util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", classKey, attributeKey));
 
             if (pk !== undefined && attributeKey.toLowerCase() == pk.toLowerCase()) {
                 pkMissing = false;
@@ -172,7 +172,7 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 ) throw Error("normalizeAttributes: primary key can only have dbType, no cidsType allowed");
                 
                 normalized[attributeKey.toLowerCase()] = Object.assign({}, pkDummy, attribute, {
-                    defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", table),
+                    defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", classKey),
                     name: attribute.name || attributeKey.toLowerCase(),
                     readPerms: normalizePerms(attribute.readPerms),
                     writePerms: normalizePerms(attribute.writePerms),    
@@ -184,8 +184,8 @@ export function normalizeAttributes(attributes, pk = defaultClass.pk, table) {
                 if (attribute.oneToMany != null) types.push(attribute.oneToMany);
                 if (attribute.manyToMany != null) types.push(attribute.manyToMany);
 
-                if (types.length == 0) throw Error(util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", table, attributeKey)); 
-                if (types.length > 1) throw Error(util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", table, attributeKey));
+                if (types.length == 0) throw Error(util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", classKey, attributeKey)); 
+                if (types.length > 1) throw Error(util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", classKey, attributeKey));
 
                 normalized[attributeKey.toLowerCase()] = Object.assign({}, defaultAttribute, attribute, {
                     name: attribute.name || attributeKey.toLowerCase(),
@@ -208,8 +208,6 @@ export function normalizeDomains(domains) {
     let normalized = {};
     if (domains) {
         for (let domainKey of Object.keys(domains)) {
-            if (normalized.hasOwnProperty(domainKey)) throw Error(util.format("normalizeDomains: domain '%s' already exists", domainKey));
-
             let domain = domains[domainKey];
             normalized[domainKey] = normalizeDomain(domain);
         }

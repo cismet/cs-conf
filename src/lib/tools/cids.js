@@ -30,18 +30,22 @@ export function extractGroupAndDomain(key) {
     }
 }
 
-export function completeConfigAttr(aggrConfigAttrs, configurationAttributes, targetKey, completion = {}, aggregateConfAttrValues = false) {
-    if (configurationAttributes) {
-        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
-            let configurationAttributeArray = configurationAttributes[configurationAttributeKey];
-            if (!aggrConfigAttrs[configurationAttributeKey]) {
-                aggrConfigAttrs[configurationAttributeKey] = [];
+export function completeConfigurationAttributeValues(configurationAttributes, completedConfigurationAttributeValues, configurationAttributeValues, targetKey, completion = {}, aggregateConfAttrValues = false) {
+    if (configurationAttributeValues) {
+        for (let configurationAttributeKey of Object.keys(configurationAttributeValues)) {
+            if (!configurationAttributes[configurationAttributeKey]) throw Error(util.format("configurationAttributeKey '%s' not found for '%s'.", configurationAttributeKey, completion));
+            
+            let configurationAttribute = configurationAttributes[configurationAttributeKey];            
+            
+            let configurationAttributeArray = configurationAttributeValues[configurationAttributeKey];
+            if (!completedConfigurationAttributeValues[configurationAttributeKey]) {
+                completedConfigurationAttributeValues[configurationAttributeKey] = [];
             }
-            if (aggrConfigAttrs[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
-                for (let configurationAttribute of configurationAttributeArray) {
-                    aggrConfigAttrs[configurationAttributeKey].push(Object.assign({}, configurationAttribute, completion));
+            if (completedConfigurationAttributeValues[configurationAttributeKey].length == 0 || aggregateConfAttrValues) {
+                for (let configurationAttributeValue of configurationAttributeArray) {
+                    completedConfigurationAttributeValues[configurationAttributeKey].push(Object.assign({}, configurationAttributeValue, completion, { type: configurationAttribute.type }));
                 }
-            } else if (aggrConfigAttrs[configurationAttributeKey].length > 0) {
+            } else if (completedConfigurationAttributeValues[configurationAttributeKey].length > 0) {
                 if (completion.domain) {
                     logDebug(util.format("configurationAttribute '%s' of domain '%s' for user '%s' skipped sinced it already exists in Array", configurationAttributeKey, completion.domain, targetKey));
                 } else if (completion.group) {
