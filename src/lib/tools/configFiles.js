@@ -153,6 +153,8 @@ export function writeConfigFiles(configs, configsDir) {
         xmlFiles
     } = configs;
 
+    configsDir = configsDir ?? global.configsDir;
+
     if (
         fs.existsSync(configsDir) 
         && fs.statSync(configsDir).isDirectory() 

@@ -10,11 +10,7 @@ export default async function csReorganize(options) {
     if (configs == null) throw Error("config not set");
 
     let reorganized = reorganizeConfigs(configs);
-
-    targetDir = targetDir ? targetDir : global.configsDir;
-    if (targetDir != null) {
-        writeConfigFiles(reorganized, targetDir);
-    }
+    writeConfigFiles(reorganized, targetDir);
     return reorganized;
 }
 

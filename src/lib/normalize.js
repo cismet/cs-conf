@@ -36,11 +36,7 @@ export default async function csNormalize(options) {
     if (configs == null) throw Error("config not set");
 
     let normalized = normalizeConfigs(configs);
-    
-    targetDir = targetDir ? targetDir : global.configsDir;
-    if (targetDir != null) {
-        writeConfigFiles(normalized, targetDir);
-    }
+    writeConfigFiles(normalized, targetDir);
     return normalized;
 }
 

@@ -10,23 +10,20 @@ import { getClientInfo, initClient } from './tools/db';
 
 import { simplifyConfigs } from './simplify';
 import { reorganizeConfigs } from './reorganize';
-import { normalizeConfig } from './normalize';
+import {  normalizeConfigs } from './normalize';
 import { defaultConfigPolicyRules } from './tools/defaultObjects';
 
 export default async function csExport(options) {
-    let  { targetDir, normalized = false } = options;
+    let  { targetDir, reorganize = false, normalize = false } = options;
 
     let fetchedData = await fetch();
     let configs = exportConfigs(fetchedData, global.config);
 
-    configs = reorganizeConfigs(configs);
-
-    if (!normalized) {
-        configs = simplifyConfigs(configs);
-    }
-
-    let configsDir = targetDir ?? normalizeConfig(configs.config).configsDir;
-    writeConfigFiles(configs, configsDir);
+    let preprocessed = reorganize ? reorganizeConfigs(configs) : configs;
+    let simplified = simplifyConfigs(preprocessed);
+    let postprocessed = normalize ? normalizeConfigs(simplified) : simplified;    
+    writeConfigFiles(postprocessed, targetDir);
+    return postprocessed;
 }
 
 async function fetch() {

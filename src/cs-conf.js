@@ -82,8 +82,9 @@ program.command('\t');
 commands.set('export', program.command('export')
 	.description('exports the (cs_*)meta-information of a database into a configuration directory')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option('-t, --target <dirpath>', 'the target directory to export the config into', null)
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-N, --normalized', 'normalized config')
+	.option('-R, --reorganized', 'reorganized config')
 	.option(silentOption.flags, silentOption.description, silentOption.default)
 	.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 	.option(debugOption.flags, debugOption.description, debugOption.default)
@@ -91,6 +92,7 @@ commands.set('export', program.command('export')
 		cs('export', csExport, {
 			targetDir: cmd.target,
 			normalize: cmd.normalized !== undefined,
+			reorganize: cmd.reorganized !== undefined,
 		}, cmd);
 	})
 );
@@ -236,7 +238,7 @@ program.command('\t');
 commands.set('password', program.command('password')
 	.description('changes or sets the password for an user.')
 	.option(configOption.flags, configOption.description, configOption.default)
-	.option(targetOption.flags, targetOption.description, ".")
+	.option(targetOption.flags, targetOption.description, targetOption.default)
 	.option('-u, --user <user>', 'the login_name of the user')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-t, --time <timestamp>', 'the timestamp to use as last_pwd_change')
@@ -349,7 +351,7 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		global.verbose = cmd.verbose !== undefined;
 		global.debug = cmd.debug !== undefined;	
 		try {
-			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;
+			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;			
 		} catch (e1) {
 			if (configIsOptional) {
 				global.config = normalizeConfig();

@@ -113,10 +113,9 @@ async function csPassword(options) {
         if (!found) throw Error(util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName));
     }
 
-    targetDir = targetDir ? targetDir : global.configsDir;
-    if (targetDir != null) {
-        writeConfigFiles(reorganize ? Object.assign(configs, { usermanagement: reorganizeUsermanagement(configs.usermanagement)}) : configs, targetDir);
-    }
+    let preprocessed = reorganize ? Object.assign(configs, { usermanagement: reorganizeUsermanagement(configs.usermanagement)}) : configs;
+    writeConfigFiles(preprocessed, targetDir);
+
     return configs;    
 }   
 

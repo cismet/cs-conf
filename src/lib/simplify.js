@@ -60,13 +60,10 @@ export default async function csSimplify(options) {
     let configsDir = global.configsDir;
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw Error("config not set");
-    
-    let simplified = simplifyConfigs(reorganize ? reorganizeConfigs(configs) : configs);
 
-    targetDir = targetDir ? targetDir : global.configsDir;
-    if (targetDir != null) {
-        writeConfigFiles(simplified, targetDir);
-    }
+    let preprocessed = reorganize ? reorganizeConfigs(configs) : configs;
+    let simplified = simplifyConfigs(preprocessed);
+    writeConfigFiles(simplified, targetDir);
     return simplified;
 }
 
