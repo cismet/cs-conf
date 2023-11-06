@@ -10,14 +10,14 @@ async function csCheck(options) {
     if (configs == null) throw Error("config not set");
 
     let normalizedConfigs = normalizeConfigs(configs);
-    let unshadowedUsermanagement = unshadowUsermanagement(normalizedConfigs.usermanagement);
+    let unshadowedUsermanagement = unshadowUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.configurationAttributes);
 
     inspectConfigurationAttributes(normalizedConfigs, unshadowedUsermanagement);    
     inspectDomains(normalizedConfigs);
     inspectUsergroups(normalizedConfigs, unshadowedUsermanagement);
     inspectUsermanagement(normalizedConfigs, unshadowedUsermanagement);
 
-    logOut("configuration ok");
+    logOut("configuration ok", { noSilent: true });
 }
 
 export default csCheck;
