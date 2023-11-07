@@ -832,14 +832,14 @@ function prepareUsergroups({ usergroups, configurationAttributeValues, additiona
     return { csUgEntries };
 }
 
-function prepareUsermanagement({ usermanagement, configurationAttributes, configurationAttributeValues, additionalInfos }) {
+function prepareUsermanagement({ usermanagement, usergroups, configurationAttributes, configurationAttributeValues, additionalInfos }) {
     let csUserEntries = [];
     let csUgMembershipEntries = [];
 
-    let unshadowed = unshadowUsermanagement(usermanagement, configurationAttributes);
+    let preprocessed = preprocessUsermanagement(usermanagement, usergroups, configurationAttributes);
 
-    for (let userKey of Object.keys(unshadowed)) {
-        let user = unshadowed[userKey];
+    for (let userKey of Object.keys(preprocessed)) {
+        let user = preprocessed[userKey];
         csUserEntries.push([ 
             userKey, 
             user.pw_hash, 
@@ -905,60 +905,96 @@ function prepareUsermanagement({ usermanagement, configurationAttributes, config
     return { csUserEntries, csUgMembershipEntries };
 }
 
-export function unshadowUsermanagement(usermanagement, configurationAttributes) {
-    let unshadowed = {};
+export function preprocessUsermanagement(usermanagement, usergroups, configurationAttributes) {
+    if (!usermanagement) return usermanagement;
 
+    let preprocessed = {};
     let shadowDependencyGraph = Object.keys(usermanagement).reduce((graphed, userKey) => (graphed[userKey] = usermanagement[userKey].shadows, graphed), {});           
     let dependencySortedUsers = topologicalSort(shadowDependencyGraph);
     for (let userKey of dependencySortedUsers) {
-        let unshadowedUser = unshadowUser(userKey, usermanagement, configurationAttributes);
-        unshadowed[userKey] = unshadowedUser;
+        let preprocessedUser = preprocessUser(userKey, usermanagement, usergroups, configurationAttributes);
+        preprocessed[userKey] = preprocessedUser;
     }
-
-    return unshadowed;
+    return preprocessed;
 }
 
-export function unshadowUser(userKey, usermanagement, configurationAttributes) {      
-    let user = usermanagement[userKey];
+export function containAnyWildcards(groupKeys) {
+    return groupKeys ? groupKeys.some(groupKey => /[\*\?\!]/.test(groupKey)) : false;
+}
 
+export function preprocessUser(userKey, usermanagement, usergroups, configurationAttributes) {
+    let user = usermanagement[userKey];
     if (user == null) throw Error(util.format("user '%s' not found", userKey));
 
-    let users = [...user.shadows];
-    let ownGroups = [...user.groups];
-    let ownConfigurationAttributes = Object.assign({}, user.configurationAttributes);
+    let preprocessed = Object.assign({}, user);
 
-    let _shadow = user.shadows.length > 0 ? {
-        users,
-        ownGroups,
-        ownConfigurationAttributes,
-    } : undefined;
+    let hasShadows = user.shadows.length > 0;
+    let hasWildcards = containAnyWildcards(user.groups);
 
-    let groups = [...user.groups];
-    let configurationAttributeValues = Object.assign({}, user.configurationAttributes);
-    let additionalInfo = user.additional_info ? Object.assign({}, user.additional_info) : {};
+    let preprocssingNeeded = hasShadows || hasWildcards;
+    if (preprocssingNeeded) {
+        let _unprocessed = {
+            shadows: [...user.shadows],
+            groups: [...user.groups],
+            configurationAttributes: Object.assign({}, user.configurationAttributes),
+        }; 
 
-    if (_shadow) {             
-        for (let shadowKey of [..._shadow.users]) {
-            let shadowUser = usermanagement[shadowKey];
-
-            if (shadowUser && shadowUser.groups) {
-                groups.push(...shadowUser.groups);
-            }
-
-            if (shadowUser && shadowUser.configurationAttributes) {
-                completeConfigurationAttributeValues(configurationAttributes, configurationAttributeValues, shadowUser.configurationAttributes, shadowKey);
+        let preprocessedGroups = [];
+        let preprocessedConfigurationAttributeValues = Object.assign({}, user.configurationAttributes);
+        let preprocessedAdditionalInfo = Object.assign({}, user.additional_info, { _unprocessed });
+        
+        if (hasShadows) {             
+            for (let shadowKey of [..._unprocessed.shadows]) {
+                let shadowUser = usermanagement[shadowKey];
+    
+                if (shadowUser && shadowUser.groups) {
+                    preprocessedGroups.push(...shadowUser.groups);
+                }
+    
+                if (shadowUser && shadowUser.configurationAttributes) {
+                    completeConfigurationAttributeValues(configurationAttributes, preprocessedConfigurationAttributeValues, shadowUser.configurationAttributes, shadowKey);
+                }
             }
         }
-        Object.assign(additionalInfo, { _shadow });
+
+        preprocessedGroups.push(...user.groups);
+        
+        if (hasWildcards) {
+            let unwildcardedGroupkeySet = new Set();
+            for (let groupKey of preprocessedGroups) {
+                let groupKeys = Object.keys(usergroups);
+                if (groupKey.startsWith('!')) { 
+                    let wildcardRule = groupKey.substring(1);
+                    for (let removeMatchingGroupKey of applyUsergroupWildcard(wildcardRule, groupKeys)) {
+                        unwildcardedGroupkeySet.delete(removeMatchingGroupKey);
+                    }
+                } else {
+                    let wildcardRule = groupKey;
+                    for (let addMatchingGroupKey of applyUsergroupWildcard(wildcardRule, groupKeys)) {
+                        unwildcardedGroupkeySet.add(addMatchingGroupKey);
+                    }
+                }
+            }
+            preprocessedGroups = [...unwildcardedGroupkeySet];
+        }
+
+        preprocessed = Object.assign({}, user, { 
+            groups: preprocessedGroups,
+            configurationAttributes: preprocessedConfigurationAttributeValues,
+            additional_info: preprocessedAdditionalInfo,
+        });
     }
 
-    let unshadowed = Object.assign({}, user, {
-        groups,
-        configurationAttributes: configurationAttributeValues,
-        additional_info: additionalInfo,
-    });
+    return preprocessed;
+}
 
-    return unshadowed;
+export function applyUsergroupWildcard(wildcardRule, groupKeys) {
+    let wildcardGroups = [];
+    if (wildcardRule) {
+        let regexRule = util.format('^%s$', wildcardRule.replace(/\?/g, '.').replace(/\*/g, '.*'));
+        wildcardGroups.push(...groupKeys.filter(item => new RegExp(regexRule).test(item)));
+    }
+    return wildcardGroups;
 }
 
 // ---

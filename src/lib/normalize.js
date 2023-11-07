@@ -349,11 +349,11 @@ export function normalizeUser(user, userKey) {
 
         let additionalInfo = user.additional_info;
         if (additionalInfo) {
-            if (additionalInfo._shadow) {
-                let _shadow = additionalInfo._shadow
-                shadows = _shadow.users;
-                groups = _shadow.ownGroups ?? [];
-                configurationAttributes = _shadow.ownConfigurationAttributes ?? {};
+            if (additionalInfo._unprocessed) {
+                let _unprocessed = additionalInfo._unprocessed;
+                shadows = _unprocessed.shadows ?? [];
+                groups = _unprocessed.groups ?? [];
+                configurationAttributes = _unprocessed.configurationAttributes ?? {};
                 // TODO Warn if resulting groups and configuration-Attributes don't match
             }
         }    
@@ -479,11 +479,11 @@ export function normalizeConfigurationAttributeInspectedValues(configurationAttr
 
 
 
-export function normalizeConfigurationAttributeValues(configurationAttributes) {
+export function normalizeConfigurationAttributeValues(configurationAttributeValues) {
     let normalized = {};
-    if (configurationAttributes) {        
-        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
-            let configurationAttributeValue = configurationAttributes[configurationAttributeKey];
+    if (configurationAttributeValues) {        
+        for (let configurationAttributeKey of Object.keys(configurationAttributeValues)) {
+            let configurationAttributeValue = configurationAttributeValues[configurationAttributeKey];
             let configurationAttributeArray = Array.isArray(configurationAttributeValue) ? configurationAttributeValue : [configurationAttributeValue];
             normalized[configurationAttributeKey] = [];
             for (let configurationAttribute of configurationAttributeArray) {
@@ -494,12 +494,12 @@ export function normalizeConfigurationAttributeValues(configurationAttributes) {
     return normalized;
 }
 
-export function normalizeConfigurationAttributeValue(configurationAttribute) {
+export function normalizeConfigurationAttributeValue(configurationAttributeValue) {
     let normalized = Object.assign({}, defaultConfigurationAttributeValue);
-    if (configurationAttribute) {        
-        if (configurationAttribute.value != null && configurationAttribute.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
-        Object.assign(normalized, configurationAttribute, {
-            groups: normalizeConfigurationAttributeGroups(configurationAttribute.groups),
+    if (configurationAttributeValue) {        
+        if (configurationAttributeValue.value != null && configurationAttributeValue.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
+        Object.assign(normalized, configurationAttributeValue, {
+            groups: normalizeConfigurationAttributeGroups(configurationAttributeValue.groups),
         });
     }
     return normalized;

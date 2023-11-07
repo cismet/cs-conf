@@ -8,18 +8,19 @@ import { normalizeConfigs } from "./normalize";
 
 import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyConfigurationAttributes, simplifyUser } from "./simplify";
 import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains, reorganizeConfigurationAttributes } from "./reorganize";
-import { unshadowUsermanagement } from "./import";
+import { preprocessUser, preprocessUsermanagement } from "./import";
 import slug from "slug";
-import { shadowing } from "./export";
+import { postprocessUser } from "./export";
 
 export default async function csInspect({ configurationAttributeKey, domainKey, groupKey, userKey, aggregateConfigurationAttributeValues = false, print = false, fileTarget }) {
-    let configs = readConfigFiles(global.configsDir);
-    let normalizedConfigs = normalizeConfigs(configs);
-    Object.assign(normalizedConfigs, {
-        usermanagement: unshadowUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.configurationAttributes),
-    })
-
+    let configs = readConfigFiles(global.configsDir);    
     if (configs == null) throw Error("config not set");
+
+    let preprocessedConfigs = normalizeConfigs(configs);
+    let preprocessedUsermanagement = preprocessUsermanagement(preprocessedConfigs.usermanagement, preprocessedConfigs.usergroups, preprocessedConfigs.configurationAttributes)
+    Object.assign(preprocessedConfigs, {
+        usermanagement: preprocessedUsermanagement,
+    })
 
     let type = undefined;
     let keys = [];
@@ -40,26 +41,26 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
     switch (type) {
         case "user": {
             if (userKey == '*') {
-                let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsermanagement = inspectUsermanagement(preprocessedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
-                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeShadowInfo: false });
+                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeUnprocessedInfo: false });
                 result = simplifiedUsermanamgement;
             } else {
-                let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsermanagement = inspectUser(userKey, preprocessedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
-                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeShadowInfo: false })
+                let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeUnprocessedInfo: false })
                 result = simplifiedUsermanamgement;
             }    
         } break;
         case "group": {
             if (groupKey == '*') {
-                let inspectedUsergroups = inspectUsergroups(normalizedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsergroups = inspectUsergroups(preprocessedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
                 let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
                 result = simplifiedUsergroups;
             } else {
                 let normalizedGroupKey = extendLocalDomain(groupKey);
-                let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedGroups = inspectUsergroup(normalizedGroupKey, preprocessedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
                 let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
                 result = simplifiedGroups;
@@ -67,12 +68,12 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
             } break;
         case "domain": {
             if (domainKey == '*') {
-                let inspectedDomains = inspectDomains(normalizedConfigs);
+                let inspectedDomains = inspectDomains(preprocessedConfigs);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);
                 result = simplifiedDomains;
             } else {
-                let inspectedDomains = inspectDomain(domainKey, normalizedConfigs);
+                let inspectedDomains = inspectDomain(domainKey, preprocessedConfigs);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);            
                 result = simplifiedDomains;
@@ -80,12 +81,12 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
         } break;
         case "configurationAttribute": {
             if (configurationAttributeKey == '*') {
-                let inspectedConfigurationAttributes = inspectConfigurationAttributes(normalizedConfigs);
+                let inspectedConfigurationAttributes = inspectConfigurationAttributes(preprocessedConfigs);
                 let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
                 let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);
                 result = simplifiedConfigurationAttributes;
             } else {
-                let inspectedConfigurationAttributes = inspectConfigurationAttribute(configurationAttributeKey, normalizedConfigs);
+                let inspectedConfigurationAttributes = inspectConfigurationAttribute(configurationAttributeKey, preprocessedConfigs);
                 let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
                 let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);            
                 result = simplifiedConfigurationAttributes;
@@ -172,7 +173,7 @@ export function inspectUsermanagement(configs, { aggregateConfigurationAttribute
     return inspected;
 }
 
-export function inspectUser(userKey, { usermanagement, configurationAttributes, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
+export function inspectUser(userKey, { usermanagement, usergroups, domains, configurationAttributes, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
     if (!userKey) throw Error(util.format("userKey is missing"));
 
     let user = usermanagement[userKey];
@@ -208,10 +209,10 @@ export function inspectUser(userKey, { usermanagement, configurationAttributes, 
         completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, userKey, completition, aggregateConfigurationAttributeValues);
     }
 
-    let shadowedUser = simplifyUser(shadowing(user));
+    let postprocessedUser = simplifyUser(postprocessUser(user));
     let shadowMemberOf = {};
-    if (shadowedUser.shadows) {
-        for (let shadowKey of shadowedUser.shadows) {
+    if (postprocessedUser.shadows) {
+        for (let shadowKey of postprocessedUser.shadows) {
             shadowMemberOf[shadowKey] = usermanagement[shadowKey].groups;
         }
     }
@@ -226,7 +227,7 @@ export function inspectUser(userKey, { usermanagement, configurationAttributes, 
     };
 
     let inspected = {};
-    inspected[userKey] = Object.assign({}, shadowedUser, { inspected: inspectedUser });
+    inspected[userKey] = Object.assign({}, postprocessedUser, { inspected: inspectedUser });
 
     return inspected;
 }

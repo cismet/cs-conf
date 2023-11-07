@@ -61,8 +61,9 @@ export default async function csSimplify(options) {
     let configs = readConfigFiles(configsDir);
     if (configs == null) throw Error("config not set");
 
-    let preprocessed = reorganize ? reorganizeConfigs(configs) : configs;
-    let simplified = simplifyConfigs(preprocessed);
+    configs = reorganize ? reorganizeConfigs(configs) : configs;
+
+    let simplified = simplifyConfigs(configs);
     writeConfigFiles(simplified, targetDir);
     return simplified;
 }
@@ -80,7 +81,7 @@ export function simplifyConfigs(configs) {
         dynchildhelpers: simplifyDynchildhelpers(configs.dynchildhelpers),
         structure: simplifyStructure(configs.structure, config.policies), 
         usergroups: simplifyUsergroups(configs.usergroups), 
-        usermanagement: simplifyUsermanagement(configs.usermanagement), 
+        usermanagement: simplifyUsermanagement(configs.usermanagement, {normalize: false}), 
     });
 }
 
@@ -139,7 +140,7 @@ export function simplifyAdditionalInfos(additionalInfos) {
                 for (let key of Object.keys(normalized[type])) {
                     simplifiedType[key] = normalized[type][key];
                 }
-                delete simplifiedType._shadow;
+                delete simplifiedType._unprocessed;
                 if (Object.keys(simplifiedType).length) {
                     simplified[type] = simplifiedType;
                 }
@@ -345,7 +346,7 @@ export function simplifyUsergroupInspectedPermissions(usergroupInspectedPermissi
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true, normalize = true } = {}) {
+export function simplifyUsermanagement(usermanagement, { removeUnprocessedInfo = true, normalize = true } = {}) {
     if (!usermanagement) return undefined;
 
     let simplified = {};
@@ -354,7 +355,7 @@ export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true
     for (let userKey of Object.keys(preprocessed)) {
         let user = preprocessed[userKey];
 
-        let simplifiedUser = simplifyUser(user, { removeShadowInfo, normalize: false});
+        let simplifiedUser = simplifyUser(user, { removeUnprocessedInfo, normalize });
         if (simplifiedUser != null) {
             simplified[userKey] = simplifiedUser;
         }
@@ -363,23 +364,23 @@ export function simplifyUsermanagement(usermanagement, { removeShadowInfo = true
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyUser(user, { removeShadowInfo = true, normalize = true } = {}) {
+export function simplifyUser(user, { removeUnprocessedInfo = true, normalize = true } = {}) {
     if (!user) return undefined;
 
     let simplified = null;    
-    let preprocessed = normalize ? normalizeUser(user) : user;
+    let normalized = normalize ? normalizeUser(user) : user;
 
-    if (preprocessed != null) {    
-        let additionalInfo = Object.assign({}, preprocessed.additional_info); 
-        if (removeShadowInfo && additionalInfo._shadow) {
-            delete additionalInfo._shadow;
+    if (normalized != null) {    
+        let additionalInfo = Object.assign({}, normalized.additional_info); 
+        if (removeUnprocessedInfo && additionalInfo._unprocessed) {
+            delete additionalInfo._unprocessed;
         }
 
-        simplified = copyFromTemplate(Object.assign({}, preprocessed, { 
-            groups: simplifyGroups(preprocessed.groups),
-            configurationAttributes: simplifyConfigurationAttributeValues( preprocessed.configurationAttributes),
+        simplified = copyFromTemplate(Object.assign({}, normalized, { 
+            groups: simplifyGroups(normalized.groups),
+            configurationAttributes: simplifyConfigurationAttributeValues(normalized.configurationAttributes),
             additional_info: additionalInfo,
-            inspected: simplifyUserInspected(preprocessed.inspected),
+            inspected: simplifyUserInspected(normalized.inspected),
         }), defaultUser);
     }
     return Object.keys(simplified).length ? simplified : undefined;
@@ -581,12 +582,12 @@ export function simplifyConfigurationAttributeValue(configurationAttributeValue)
 
 function simplifyConfigurationAttributeGroups(groups) {
     let simplified = [];
-
     if (groups != null) {
         for (let group of groups) {
-            simplified.push(removeLocalDomain(group));
+            if (group != null) {
+                simplified.push(removeLocalDomain(group));
+            }
         }
     }
-
     return simplified.length ? simplified : undefined;
 }

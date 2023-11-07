@@ -1,5 +1,6 @@
 import { readConfigFiles, writeConfigFiles } from "./tools/configFiles";
 import { extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
+import { containAnyWildcards } from "./import";
 
 // ---
 
@@ -317,7 +318,8 @@ export function reorganizeUsergroups(usergroups) {
 
     let reorganized = {};
     if (usergroups != null) {
-        let sortedGroupKeys = Object.keys(usergroups).sort((a, b) => {
+        let groupKeys = Object.keys(usergroups);
+        let sortedGroupKeys = groupKeys.sort((a, b) => {
             let aGroupAndDomain = extractGroupAndDomain(extendLocalDomain(a));
             let bGroupAndDomain = extractGroupAndDomain(extendLocalDomain(b));
             let aDomain = aGroupAndDomain.domain != 'LOCAL' ? aGroupAndDomain.domain : ''
@@ -405,10 +407,9 @@ export function reorganizeUser(user) {
 
     let reorganized = {};
     if (user) {
+        let groupKeys = user.groups;
         Object.assign(reorganized, user, {
-            groups : user.groups ? [...user.groups.sort((a, b) => { 
-                return a.localeCompare(b);
-            })] : user.groups,
+            groups : groupKeys && !containAnyWildcards(groupKeys) ? [...groupKeys.sort((a, b) => a.localeCompare(b))] : groupKeys,
             configurationAttributes : user.configurationAttributes ? reorganizeConfigurationAttributeValues(user.configurationAttributes) : user.configurationAttributes,
             inspected: user.inspected ? reorganizeUserInspected(user.inspected) : user.inspected 
         });

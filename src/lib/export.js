@@ -19,11 +19,12 @@ export default async function csExport(options) {
     let fetchedData = await fetch();
     let configs = exportConfigs(fetchedData, global.config);
 
-    let preprocessed = reorganize ? reorganizeConfigs(configs) : configs;
-    let simplified = simplifyConfigs(preprocessed);
-    let postprocessed = normalize ? normalizeConfigs(simplified) : simplified;    
-    writeConfigFiles(postprocessed, targetDir);
-    return postprocessed;
+    configs = reorganize ? reorganizeConfigs(configs) : configs;
+    configs = simplifyConfigs(configs);
+    configs = normalize ? normalizeConfigs(configs) : configs;    
+
+    writeConfigFiles(configs, targetDir);
+    return configs;
 }
 
 async function fetch() {
@@ -90,29 +91,36 @@ function exportConfigs(fetchedData, config) {
     logVerbose(" ↳ creating structure.json and structure-dyn-children-stmnts files");
     Object.assign(configs, exportStructure(fetchedData, configs));
 
+    let postprocessedUsermanagement = postprocessUsermanagement(configs.usermanagement, configs.additionalInfos);
+    
+    Object.assign(configs, {
+        usermanagement: postprocessedUsermanagement,
+    });
 
-    let {usermanagement, additionalInfos} = configs;
-    for (let userKey of Object.keys(usermanagement)) {
-        let user = usermanagement[userKey];
-        let additionalInfo = additionalInfos && additionalInfos.user ? additionalInfos.user[userKey] : {};
-        usermanagement[userKey] = shadowing(user, additionalInfo);
-    }
     return configs;
 }
 
-export function shadowing(user, additionalInfo = user.additional_info) {
+export function postprocessUsermanagement(usermanagement, additionalInfos) {
+    if (!usermanagement) return usermanagement;
+
+    let postprocessed = {}
+    for (let userKey of Object.keys(usermanagement)) {
+        let user = usermanagement[userKey];
+        let additionalInfo = additionalInfos && additionalInfos.user ? additionalInfos.user[userKey] : {};
+        let postprocessedUser = postprocessUser(user, additionalInfo);
+        postprocessed[userKey] = postprocessedUser;
+    }
+    return postprocessed;
+}
+
+export function postprocessUser(user, additionalInfo = user.additional_info) {
     if (!user) return user;
 
-    let shadowed = Object.assign({}, user);
-    if (additionalInfo && additionalInfo._shadow) {
-        let _shadow = additionalInfo._shadow;
-
-        Object.assign(shadowed, {
-            groups: _shadow.ownGroups ? [... _shadow.ownGroups] : [],
-            configurationAttributes: _shadow.ownConfigurationAttributes ? Object.assign({}, _shadow.ownConfigurationAttributes) : {},
-        });
+    let postprocessed = Object.assign({}, user);
+    if (additionalInfo && additionalInfo._unprocessed) {
+        Object.assign(postprocessed, additionalInfo._unprocessed);
     }
-    return shadowed;
+    return postprocessed;
 }
 
 // ---

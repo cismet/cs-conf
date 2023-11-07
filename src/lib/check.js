@@ -1,4 +1,4 @@
-import { unshadowUsermanagement } from "./import";
+import { preprocessUsermanagement } from "./import";
 import { inspectConfigurationAttributes, inspectDomains, inspectUsergroups, inspectUsermanagement } from "./inspect";
 import { normalizeConfigs } from "./normalize";
 import { readConfigFiles } from "./tools/configFiles";
@@ -10,12 +10,12 @@ async function csCheck(options) {
     if (configs == null) throw Error("config not set");
 
     let normalizedConfigs = normalizeConfigs(configs);
-    let unshadowedUsermanagement = unshadowUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.configurationAttributes);
+    let preprocessedUsermanagement = preprocessUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.usergroups, normalizedConfigs.configurationAttributes);
 
-    inspectConfigurationAttributes(normalizedConfigs, unshadowedUsermanagement);    
+    inspectConfigurationAttributes(normalizedConfigs, preprocessedUsermanagement);    
     inspectDomains(normalizedConfigs);
-    inspectUsergroups(normalizedConfigs, unshadowedUsermanagement);
-    inspectUsermanagement(normalizedConfigs, unshadowedUsermanagement);
+    inspectUsergroups(normalizedConfigs, preprocessedUsermanagement);
+    inspectUsermanagement(normalizedConfigs, preprocessedUsermanagement);
 
     logOut("configuration ok", { noSilent: true });
 }
