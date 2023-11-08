@@ -2,7 +2,7 @@
     "Group1@LOCAL": {
         "descr": "Descr1",
         "prio": 0,
-        "configurationAttributes": { "test": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null }]},
+        "configurationAttributes": { "test": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null, "normalized": true }]},
         "additional_info": null,
         "inspected": {
             "members": [],
@@ -11,9 +11,12 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true   
+            },
+            "normalized": true
+        },
+        "normalized": true     
     }, 
     "Group2@LOCAL": { 
         "descr": null,
@@ -27,8 +30,11 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true
+            },
+            "normalized": true
+        },
+        "normalized": true
     }
 }

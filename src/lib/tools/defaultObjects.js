@@ -1,44 +1,49 @@
 //config
-export const defaultConfigConnection = {
+export const defaultConfigConnection = () => ({
     jdbc: null,
     user: null,
     password: null,
-};
+    normalized: false,
+});
 
-export const defaultConfigSync = {
+export const defaultConfigSync = () => ({
     noDropTables: [],
     noDropColumns: [],
-};
+    normalized: false,
+});
 
-export const defaultConfig = {
+export const defaultConfig = () => ({
     formatVersion: 1,
     configsDir: '.',
     domainName: null,
-    connection: defaultConfigConnection,
+    connection: defaultConfigConnection(),
     schema: 'public',
-    policies: defaultConfigPolicies,
-    policyRules: defaultConfigPolicyRules,
-    sync: defaultConfigSync,
+    policies: defaultConfigPolicies(),
+    policyRules: defaultConfigPolicyRules(),
+    sync: defaultConfigSync(),
     maxFileLength: 80,
-};
+    normalized: false,
+});
 
-export const defaultConfigPolicies = {
+export const defaultConfigPolicies = () => ({
     server: "STANDARD",
     attributes: "STANDARD",
     classNodes: "STANDARD",
     pureNodes: "STANDARD",
-}
+    normalized: false,
+});
 
-export const defaultAdditionalInfos = {
+export const defaultAdditionalInfos = () => ({
     user: {},
     group: {},
     domain: {},
     class: {},
     configurationAttribute: {},
-};
+    normalized: false,
+});
 
 // classes
-export const defaultAttribute = {
+export const defaultAttribute = () => ({
     name: null,
     descr: '',
     dbType: null,
@@ -57,21 +62,23 @@ export const defaultAttribute = {
     readPerms: [],
     writePerms: [],
     additional_info: null,
-};
+    normalized: false,
+});
 
 export const defaultAttributePrimary = (table_name, pk) => { 
-    return Object.assign({}, defaultAttribute, {
+    return Object.assign({}, defaultAttribute(), {
         name: pk,
         descr: 'Primary Key',
         dbType: 'INTEGER',
         mandatory: true,
         defaultValue: 'nextval(\'' + table_name + '_seq\')',
         hidden: true,
+        normalized: false,
     })
 };
 
 // classes
-export const defaultClass = {
+export const defaultClass = () => ({
     enforcedId: null,
     enforcedIdReason: null,
     name: null,
@@ -95,39 +102,44 @@ export const defaultClass = {
     attributesOrder: 'auto',
     additionalAttributes: null,
     additional_info: null,
-};
+    normalized: false,
+});
 
 // domains, usergroups, usermanagement
-export const defaultConfigurationAttributeValue = {
+export const defaultConfigurationAttributeValue = () => ({
     groups: [],
     type: null,
     value: null,
     xmlfile: null,
     domain: null,
     group: null,
-};
+    normalized: false,
+});
 
-export const defaultConfigurationAttributeKey = {
+export const defaultConfigurationAttribute = () => ({
     type: "action",
     additional_info: null,
-    inspected: {},
-};
+    inspected: defaultConfigurationAttributeInspected(),
+    normalized: false,
+});
 
 // domains
-export const defaultDomain = {
+export const defaultDomain = () => ({
     configurationAttributes: {},
     additional_info: null,
-    inspected: {},
-};
+    inspected: defaultDomainInspected(),
+    normalized: false,
+});
 
 // dynchildhelpers
-export const defaultDynchildhelper = {
+export const defaultDynchildhelper = () => ({
     code: null,
     code_file: null,
-};
+    normalized: false,
+});
 
 // structure
-export const defaultNode = {
+export const defaultNode = () => ({
     name: null,
     table: null,
     derive_permissions_from_class: false,
@@ -143,19 +155,21 @@ export const defaultNode = {
     key: null,
     link: null,
     url: null,
-};
+    normalized: false,
+});
 
 // usergroups
-export const defaultUserGroup = {
+export const defaultUserGroup = () => ({
     descr: null,
     prio: 0,
     configurationAttributes: {},
     additional_info: null,
-    inspected: {},
-};
+    inspected: defaultUserGroupInspected(),
+    normalized: false,
+});
 
 // usermanagement
-export const defaultUser = {
+export const defaultUser = () => ({
     pw_hash: null,
     salt: null,
     last_pwd_change: null,
@@ -163,85 +177,64 @@ export const defaultUser = {
     groups: [],
     configurationAttributes: {},
     additional_info: null,
-    inspected : {},
-};
+    inspected : defaultUserInspected(),
+    normalized: false,
+});
 
 // ---
 
-export const defaultConfigurationAttributeInspected = {    
+export const defaultConfigurationAttributeInspected = () => ({    
     domainValues: {},
     groupValues: {},
     userValues: {},
-};
+    normalized: false,
+});
 
-export const defaultUserInspected = {
+export const defaultUserInspected = () => ({
     memberOf: [],
     shadowMemberOf: {},
     allConfigurationAttributes: {},
-    permissions: {},
-};
+    permissions: defaultUserInspectedPermissions(),
+    normalized: false,
+});
 
-export const defaultUserInspectedPermissions = {
+export const defaultUserInspectedPermissions = () => ({
     canReadClasses: [],
     canWriteClasses: [],
     canReadAttributes: [],
     canWriteAttributes: [],
-};
+    normalized: false,
+});
 
-export const defaultUserGroupInspected = {
+export const defaultUserGroupInspected = () => ({
     members: [],
     allConfigurationAttributes: {},
-    permissions: {},
-};
+    permissions: defaultUserGroupInspectedPermissions(),
+    normalized: false,
+});
 
-export const defaultUserGroupInspectedPermissions = {
+export const defaultUserGroupInspectedPermissions = () => ({
     canReadClasses: [],
     canWriteClasses: [],
     canReadAttributes: [],
     canWriteAttributes: [],
-};
+    normalized: false,
+});
 
 // policyRules
-export const defaultConfigPolicyRules = () => {
-    return {
-        STANDARD: defaultConfigPolicyRule(),
-        WIKI: defaultConfigPolicyRule(true, true),
-        SECURE: defaultConfigPolicyRule(false, false),
-    }
-};
+export const defaultConfigPolicyRules = () => ({
+    STANDARD: defaultConfigPolicyRule(),
+    WIKI: defaultConfigPolicyRule(true, true),
+    SECURE: defaultConfigPolicyRule(false, false),
+});
 
-export const defaultConfigPolicyRule = (defaultRead = true, defaultWrite = false) => {
-    return {
-        defaultRead,
-        defaultWrite,
-    }
-};
+const defaultConfigPolicyRule = (defaultRead = true, defaultWrite = false) => ({
+    defaultRead,
+    defaultWrite,
+    normalized: false,
+});
 
-export const defaultPermissionInspected = {
-    read: [],
-    write: [],
-}    
-
-export const defaultDomainInspected = {
+export const defaultDomainInspected = () => ({
     groups: [],
-};
-
-// ---
-
-export function copyFromTemplate(object, template) {
-    let copy = {};
-    for (let [key, value] of Object.entries(template)) {
-        let check = object[key];
-        if (
-            check != null && !(
-                check == value || 
-                (check.constructor === Array && check.length == 0) ||
-                (check.constructor === Object && Object.keys(check).length == 0) ||  
-                false // does nothing, except allows adding by c&p of the last line with ||
-            )
-        ) {
-            copy[key] = object[key];
-        }
-    }
-    return copy;
-}
+    normalized: false,
+});

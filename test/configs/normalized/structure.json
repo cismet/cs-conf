@@ -14,7 +14,8 @@
         "artificial_id": null,
         "key": null,
         "link": null,
-        "url": null
+        "url": null,
+        "normalized": true
     },
     {
         "name": "Node 2",
@@ -43,12 +44,14 @@
                 "artificial_id": null,
                 "key": null,
                 "link": null,
-                "url": null
+                "url": null,
+                "normalized": true
             }
         ],
         "artificial_id": null,
         "key": null,
         "link": null,
-        "url": null
+        "url": null,
+        "normalized": true
     }
 ]

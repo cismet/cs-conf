@@ -5,8 +5,10 @@
         "inspected": {
             "domainValues": {},
             "groupValues": {},
-            "userValues": {}
-        }
+            "userValues": {},
+            "normalized": true
+        },
+        "normalized": true
     },
     "xml": { 
         "type": "xml", 
@@ -14,8 +16,10 @@
         "inspected": {
             "domainValues": {},
             "groupValues": {},
-            "userValues": {}
-        }
+            "userValues": {},
+            "normalized": true
+        },
+        "normalized": true
     },
     "value": { 
         "type": "value", 
@@ -23,7 +27,9 @@
         "inspected": {
             "domainValues": {},
             "groupValues": {},
-            "userValues": {}
-        }
+            "userValues": {},
+            "normalized": true
+        },
+        "normalized": true
     }
 }

@@ -1,10 +1,12 @@
 {
   "helper1": {
       "code" : "SELECT stuff FROM somewhere",
-      "code_file" : null 
+      "code_file" : null,
+      "normalized": true 
     }, 
     "helper2": { 
         "code": null,
-        "code_file" : "helper2.sql"
+        "code_file" : "helper2.sql",
+        "normalized": true
     }
   }

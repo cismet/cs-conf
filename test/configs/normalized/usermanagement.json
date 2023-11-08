@@ -5,7 +5,7 @@
         "last_pwd_change": null,
         "shadows": [],        
         "groups": ["Group1@LOCAL", "Group2@LOCAL"],
-        "configurationAttributes": { "test": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null }] },
+        "configurationAttributes": { "test": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null, "normalized": true }] },
         "additional_info": null,
         "inspected": {
             "memberOf": [],
@@ -15,9 +15,12 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true
+            },
+            "normalized": true
+        },
+        "normalized": true
     }, 
     "User2": {
         "pw_hash": "HashyHash2",
@@ -35,9 +38,12 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true
+            },
+            "normalized": true
+        },
+        "normalized": true 
     }, 
     "User3": {
         "pw_hash": "HashyHash3",
@@ -55,9 +61,12 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true
+            },
+            "normalized": true
+        },
+        "normalized": true      
     }, 
     "User4": {
         "pw_hash": "HashyHash4",
@@ -75,8 +84,11 @@
                 "canReadClasses": [],
                 "canWriteClasses": [],
                 "canReadAttributes": [],
-                "canWriteAttributes": []    
-            }
-        }      
+                "canWriteAttributes": [],
+                "normalized": true    
+            },
+            "normalized": true
+        },
+        "normalized": true
     }
 }

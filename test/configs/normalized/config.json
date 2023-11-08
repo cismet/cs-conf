@@ -5,32 +5,39 @@
     "connection": {
         "jdbc": "jdbc:postgresql://localhost:5432/test",
         "user": "postgres",
-        "password": "secret"
+        "password": "secret",
+        "normalized": true
     },
     "schema": "public",
     "policies": {
         "server": "STANDARD", 
         "attributes": "STANDARD",
         "classNodes": "STANDARD",
-        "pureNodes": "STANDARD"
+        "pureNodes": "STANDARD",
+        "normalized": true
     },
     "policyRules": {
         "STANDARD": {
             "defaultRead": true,
-            "defaultWrite": false
+            "defaultWrite": false,
+            "normalized": true
         },
         "WIKI": {
             "defaultRead": true,
-            "defaultWrite": true
+            "defaultWrite": true,
+            "normalized": true
         },
         "SECURE": {
             "defaultRead": false,
-            "defaultWrite": false
+            "defaultWrite": false,
+            "normalized": true
         }
     },
     "sync": {
         "noDropTables": [],
-        "noDropColumns": []
+        "noDropColumns": [],
+        "normalized": true
     },
-    "maxFileLength": 80
+    "maxFileLength": 80,
+    "normalized": true
 }

@@ -38,7 +38,8 @@
                 "arrayKey": null, 
                 "readPerms": [], 
                 "writePerms": [], 
-                "additional_info": null
+                "additional_info": null,
+                "normalized": true
             },
             "id": {
                 "name": "id",
@@ -58,11 +59,13 @@
                 "arrayKey": null, 
                 "readPerms": [], 
                 "writePerms": [], 
-                "additional_info": null
+                "additional_info": null,
+                "normalized": true
             }
         },
         "attributesOrder": "auto",
         "additionalAttributes": null, 
-        "additional_info": null
+        "additional_info": null,
+        "normalized": true
     }          
 }
