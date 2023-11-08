@@ -1,5 +1,5 @@
 {
-  "name": "csconf",
+  "name": "@cismet/csconf",
   "version": "2.2.2",
   "main": "cs-conf.js",
   "license": "MIT",
