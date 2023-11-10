@@ -218,7 +218,7 @@ export function normalizeConfigPolicyRule(policyRule = {}, policyRuleKey) {
     return normalized;
 }
 
-export function normalizeStructure(structure = {}) {
+export function normalizeStructure(structure = []) {
        return normalizeNodes(structure);
 }
 
