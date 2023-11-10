@@ -549,60 +549,68 @@ function prepareClasses({ classes, additionalInfos }) {
      };
 }
 
-function prepareConfigurationAttributes({ xmlFiles, configurationAttributeValues }) {
+function prepareConfigurationAttributes({ xmlFiles, additionalInfos, configurationAttributes, configurationAttributeValues }) {
     let csConfigAttrKeyEntries = []
     let csConfigAttrValueEntries = new Map([['true', ['true', null]]]);
     let csConfigAttrValues4A = []; //only action attrs
     let csConfigAttrValues4CandX = []; //normal configuration attrs and xml attributes
-    
-    if (configurationAttributeValues) {
-        let id = 1;
-        let duplicateKeyFinder = new Set();
-        for (let configurationAttributeKey of Object.keys(configurationAttributeValues)) {
-            let configurationAttributeArray = configurationAttributeValues[configurationAttributeKey];
-            for (let configurationAttribute of configurationAttributeArray) {
-                let type;
-                if (configurationAttribute.value != null) {
-                    type = 'C';
-                } else if (configurationAttribute.xmlfile != null) {
-                    type = 'X';
-                } else {
-                    type = 'A';
-                }
 
-                if (!duplicateKeyFinder.has(configurationAttributeKey)) {
-                    csConfigAttrKeyEntries.push([configurationAttributeKey]);
-                    duplicateKeyFinder.add(configurationAttributeKey);
-                }
+    if (configurationAttributes) {
+        let jtId = 1;
+        for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+            let configurationAttribte = configurationAttributes[configurationAttributeKey];
+            csConfigAttrKeyEntries.push([configurationAttributeKey]);
 
-                if (type === 'X' || type === 'C') {
-                    let value = (type === 'X') ? xmlFiles.get(configurationAttribute.xmlfile) : configurationAttribute.value;
-                    let filename = (type === 'X') ? configurationAttribute.xmlfile : null;
-                    csConfigAttrValueEntries.set(value, [ 
-                        value, 
-                        filename 
-                    ]);
-                    csConfigAttrValues4CandX.push([
-                        configurationAttribute.domain, 
-                        configurationAttribute.group, 
-                        configurationAttribute.user, 
-                        configurationAttributeKey, 
-                        type, 
-                        value,
-                        id++, 
-                    ]);
-                } else {
-                    csConfigAttrValues4A.push([
-                        configurationAttribute.domain, 
-                        configurationAttribute.group, 
-                        configurationAttribute.user, 
-                        configurationAttributeKey,
-                        id++, 
-                    ]);
-                }   
+            if (configurationAttributeValues) {
+                let configurationAttributeArray = configurationAttributeValues[configurationAttributeKey];
+                if (configurationAttributeArray) {
+                    for (let configurationAttributeValue of configurationAttributeArray) {
+                        let type;
+                        if (configurationAttributeValue.value != null) {
+                            type = 'C';
+                        } else if (configurationAttributeValue.xmlfile != null) {
+                            type = 'X';
+                        } else {
+                            type = 'A';
+                        }
+        
+                        if (type === 'X' || type === 'C') {
+                            let value = (type === 'X') ? xmlFiles.get(configurationAttributeValue.xmlfile) : configurationAttributeValue.value;
+                            let filename = (type === 'X') ? configurationAttributeValue.xmlfile : null;
+                            csConfigAttrValueEntries.set(value, [ 
+                                value, 
+                                filename 
+                            ]);
+                            csConfigAttrValues4CandX.push([
+                                configurationAttributeValue.domain, 
+                                configurationAttributeValue.group, 
+                                configurationAttributeValue.user, 
+                                configurationAttributeKey, 
+                                type, 
+                                value,
+                                jtId++, 
+                            ]);
+                        } else {
+                            csConfigAttrValues4A.push([
+                                configurationAttributeValue.domain, 
+                                configurationAttributeValue.group, 
+                                configurationAttributeValue.user, 
+                                configurationAttributeKey,
+                                jtId++, 
+                            ]);
+                        }   
+                    }
+                }
             }
+
+            if (configurationAttribte.additional_info && Object.keys(configurationAttribte.additional_info).length > 0) {
+                console.log(configurationAttribte.additional_info);
+                additionalInfos.configurationAttribute[configurationAttributeKey] = Object.assign({}, configurationAttribte.additional_info);
+            }        
+        
         }
     }
+    
     let csConfigAttrValueEntriesArray = Array.from(csConfigAttrValueEntries.values());
 
     return { csConfigAttrKeyEntries, csConfigAttrValues4A, csConfigAttrValues4CandX , csConfigAttrValueEntriesArray};
