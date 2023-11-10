@@ -88,7 +88,7 @@ export default async function csSimplify(options) {
 
 export function simplifyConfigs(configs) {
     if (!configs) return undefined;
-    let normalized = configs.normalized ? configs : normalizeConfigs(configs);
+    let normalized = normalizeConfigs(configs);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         config: simplifyConfig(normalized.config), 
@@ -106,7 +106,7 @@ export function simplifyConfigs(configs) {
 
 export function simplifyConfig(config) {
     if (!config) return undefined;
-    let normalized = config.normalized ? config : normalizeConfig(config);
+    let normalized = normalizeConfig(config);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         connection: simplifyConfigConnection(normalized.connection),
@@ -122,7 +122,7 @@ export function simplifyConfig(config) {
 
 export function simplifyConfigConnection(connection) {
     if (!connection) return undefined;
-    let normalized = connection.normalized ? connection : normalizeConfigConnection(connection)
+    let normalized = normalizeConfigConnection(connection)
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         normalized: false,
@@ -134,7 +134,7 @@ export function simplifyConfigConnection(connection) {
 
 export function simplifyConfigPolicies(policies) {
     if (!policies) return undefined;
-    let normalized = policies.normalized ? policies : normalizeConfigPolicies(policies)
+    let normalized = normalizeConfigPolicies(policies)
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         normalized: false,
@@ -146,7 +146,7 @@ export function simplifyConfigPolicies(policies) {
 
 export function simplifyConfigSync(sync) {
     if (!sync) return undefined;
-    let normalized = sync.normalized ? sync : normalizeConfigSync(sync)
+    let normalized = normalizeConfigSync(sync)
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         normalized: false,
@@ -158,7 +158,7 @@ export function simplifyConfigSync(sync) {
 
 export function simplifyAdditionalInfos(additionalInfos) {
     if (!additionalInfos) return undefined;
-    let normalized = additionalInfos.normalized ? additionalInfos : normalizeAdditionalInfos(additionalInfos);
+    let normalized = normalizeAdditionalInfos(additionalInfos);
 
     let simplified = {};
     for (let type of Object.keys(normalized)) {
@@ -195,8 +195,8 @@ export function simplifyClasses(classes, policies) {
 
 export function simplifyClass(classKey, clazz, policies) {
     if (!clazz) return undefined;
-    let normalized = clazz.normalized ? clazz : normalizeClass(classKey, clazz, normalizedPolicies);
-    let normalizedPolicies = policies && policies.normalized ? policies : normalizeConfigPolicies(policies);
+    let normalized = normalizeClass(classKey, clazz, normalizedPolicies);
+    let normalizedPolicies = normalizeConfigPolicies(policies);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         name: normalized.name == classKey ? undefined : normalized.name,
@@ -232,7 +232,7 @@ export function simplifyDomains(domains) {
 
 export function simplifyDomain(domain) {
     if (!domain) return undefined;
-    let normalized = domain.normalized ? domain : normalizeDomain(domain);
+    let normalized = normalizeDomain(domain);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         configurationAttributes: simplifyConfigurationAttributeValues(normalized.configurationAttributes),
@@ -246,7 +246,7 @@ export function simplifyDomain(domain) {
 
 export function simplifyDomainInspected(domainInspected) {
     if (!domainInspected) return undefined;
-    let normalized = domainInspected.normalized ? domainInspected : normalizeDomainInspected(domainInspected);
+    let normalized = normalizeDomainInspected(domainInspected);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         groups: normalized.groups.length ? normalized.groups : undefined,
@@ -273,7 +273,7 @@ export function simplifyDynchildhelpers(dynchildhelpers) {
 
 export function simplifyDynchildhelper(dynchildhelper) {
     if (!dynchildhelper) return undefined;
-    let normalized = dynchildhelper.normalized ? dynchildhelper : normalizeDynchildhelper(dynchildhelper);
+    let normalized = normalizeDynchildhelper(dynchildhelper);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         normalized: false,
@@ -299,7 +299,7 @@ export function simplifyConfigPolicyRules(policyRules) {
 
 export function simplifyPolicyRule(policyRule, policyRuleKey) {
     if (!policyRule) return undefined;
-    let normalized = policyRule.normalized ? policyRule : normalizeConfigPolicyRule(policyRule);
+    let normalized = normalizeConfigPolicyRule(policyRule);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         normalized: false,
@@ -338,7 +338,7 @@ export function simplifyUsergroups(usergroups) {
 
 export function simplifyUsergroup(group) {
     if (!group) return undefined;
-    let normalized = group.normalized ? group : normalizeUsergroup(group);
+    let normalized = normalizeUsergroup(group);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         configurationAttributes: simplifyConfigurationAttributeValues(normalized.configurationAttributes),
@@ -352,7 +352,7 @@ export function simplifyUsergroup(group) {
 
 export function simplifyUsergroupInspected(usergroupInspected) {
     if (!usergroupInspected) return undefined;
-    let normalized = usergroupInspected.normalized ? usergroupInspected : normalizeUsergroupInspected(usergroupInspected);
+    let normalized = normalizeUsergroupInspected(usergroupInspected);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         members: normalized.members.length ? [...normalized.members] : undefined,
@@ -367,7 +367,7 @@ export function simplifyUsergroupInspected(usergroupInspected) {
 
 export function simplifyUsergroupInspectedPermissions(usergroupInspectedPermissions) {
     if (!usergroupInspectedPermissions) return undefined;
-    let normalized = usergroupInspectedPermissions.normalized ? usergroupInspectedPermissions : normalizeUsergroupInspectedPermissions(usergroupInspectedPermissions);
+    let normalized = normalizeUsergroupInspectedPermissions(usergroupInspectedPermissions);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         canReadClasses: normalized.canReadClasses && normalized.canReadClasses.length ? [...normalized.canReadClasses] : undefined,
@@ -401,7 +401,7 @@ export function simplifyUsermanagement(usermanagement, { removeUnprocessedInfo =
 
 export function simplifyUser(user, { removeUnprocessedInfo = true } = {}) {
     if (!user) return undefined;
-    let normalized = user.normalized ? user : normalizeUser(user);
+    let normalized = normalizeUser(user);
 
     let additionalInfo = Object.assign({}, normalized.additional_info); 
     if (removeUnprocessedInfo && additionalInfo._unprocessed) {
@@ -422,7 +422,7 @@ export function simplifyUser(user, { removeUnprocessedInfo = true } = {}) {
 
 export function simplifyUserInspected(userInspected) {
     if (!userInspected) return undefined;
-    let normalized = userInspected.normalized ? userInspected : normalizeUserInspected(userInspected);
+    let normalized = normalizeUserInspected(userInspected);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         memberOf: simplifyGroups(normalized.memberOf),
@@ -438,7 +438,7 @@ export function simplifyUserInspected(userInspected) {
 
 export function simplifyUserInspectedPermissions(userInspectedPermissions) {
     if (!userInspectedPermissions) return undefined;
-    let normalized = userInspectedPermissions.normalized ? userInspectedPermissions : normalizeUserInspectedPermissions(userInspectedPermissions);
+    let normalized = normalizeUserInspectedPermissions(userInspectedPermissions);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         canReadClasses: normalized.canReadClasses.length ? [...normalized.canReadClasses] : undefined,
@@ -502,7 +502,7 @@ function simplifyNodes(nodes, policies) {
 function simplifyNode(node, policies) {
     if (!node) return undefined;
 
-    let normalized = node.normalized ? node : normalizeNode(node);
+    let normalized = normalizeNode(node);
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         readPerms: simplifyPerms(normalized.readPerms),
         writePerms: simplifyPerms(normalized.writePerms),
@@ -587,7 +587,7 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
 
 export function simplifyConfigurationAttribute(configurationAttribute) {
     if (!configurationAttribute) return undefined;
-    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAttribute(configurationAttribute);
+    let normalized = normalizeConfigurationAttribute(configurationAttribute);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         inspected: simplifyConfigurationAttributeInspected(normalized.inspected),
@@ -600,7 +600,7 @@ export function simplifyConfigurationAttribute(configurationAttribute) {
 
 export function simplifyConfigurationAttributeInspected(configurationAttributeInspected) {
     if (!configurationAttributeInspected) return undefined;
-    let normalized = configurationAttributeInspected.normalized ? configurationAttributeInspected : normalizeConfigurationAttributeInspected(configurationAttributeInspected);
+    let normalized = normalizeConfigurationAttributeInspected(configurationAttributeInspected);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         domainValues: simplifyConfigurationAttributeValues(normalized.domainValues),
@@ -641,7 +641,7 @@ export function simplifyConfigurationAttributeValues(configurationAttributeValue
 
 export function simplifyConfigurationAttributeValue(configurationAttributeValue) {
     if (!configurationAttributeValue) return undefined;
-    let normalized = configurationAttributeValue.normalized ? configurationAttributeValue : normalizeConfigurationAttributeValue(configurationAttributeValue);
+    let normalized = normalizeConfigurationAttributeValue(configurationAttributeValue);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, { 
         groups: simplifyConfigurationAttributeGroups(normalized.groups),

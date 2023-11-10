@@ -1,10 +1,8 @@
 import util from "util";
 
-import { preprocessUsermanagement } from "./import";
-import { inspectConfigurationAttributes, inspectDomains, inspectUsergroups, inspectUsermanagement } from "./inspect";
-import { normalizeAttribute, normalizeAttributes, normalizeClass, normalizeConfigs, normalizeConfigurationAttribute, normalizeConfigurationAttributeValue, normalizeDomain, normalizeDynchildhelper, normalizeNode, normalizeUser, normalizeUsergroup } from "./normalize";
+import { normalizeAttribute, normalizeClass, normalizeConfig, normalizeConfigs, normalizeConfigurationAttribute, normalizeConfigurationAttributeValue, normalizeDomain, normalizeDynchildhelper, normalizeNode, normalizeUser, normalizeUsergroup } from "./normalize";
 import { readConfigFiles } from "./tools/configFiles";
-import { logOut, logVerbose } from "./tools/tools";
+import { logOut, logVerbose, logWarn } from "./tools/tools";
 import { extractGroupAndDomain } from "./tools/cids";
 
 export default async function csCheck(options) {
@@ -42,7 +40,7 @@ export function checkConfigurationAttribute(configurationAttributeKey, configs) 
     let configurationAttribute = configs.configurationAttributes[configurationAttributeKey]
     if (!configurationAttribute) throw Error(util.format("configurationAttribute '%s' not found", configurationAttributeKey));
 
-    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAttribute();
+    let normalized = normalizeConfigurationAttribute(configurationAttribute);
 
     let foundAny = false;
     for (let domain of Object.values(configs.domains)) {
@@ -79,7 +77,7 @@ export function checkDomain(domainKey, configs) {
     let domain = configs.domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' not found", domainKey));
 
-    let normalized = domain.normalized ? domain : normalizeDomain(domainKey, domain);
+    let normalized = normalizeDomain(domainKey, domain);
     checkConfigurationAttributeValues(normalized.configurationAttributes, configs);
 }
 
@@ -95,7 +93,7 @@ export function checkUsergroup(usergroupKey, config) {
     let usergroup = config.usergroups[usergroupKey];
     if (!usergroup) throw Error(util.format("usergroup '%s' not found", usergroupKey));
 
-    let normalized = usergroup.normalized ? usergroup : normalizeUsergroup(usergroupKey, usergroup);
+    let normalized = normalizeUsergroup(usergroupKey, usergroup);
 
     let groupAndDomainKeys = extractGroupAndDomain(usergroupKey);
     let domainKey = groupAndDomainKeys.domain;
@@ -117,13 +115,17 @@ export function checkUser(userKey, config) {
     let user = config.usermanagement[userKey];
     if (!user) throw Error(util.format("user '%s' not found", userKey));
 
-    let normalized = user.normalized ? user : normalizeUser(user);
+    let normalized = normalizeUser(user);
 
     if (normalized.pw_hash == null) throw Error(util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey));
     if (normalized.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
     if (normalized.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
 
-    for (let shadowUserKey of user.shadows) {
+    for (let groupKey of normalized.groups) {
+        if (!config.usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
+    }
+
+    for (let shadowUserKey of normalized.shadows) {
         let shadowUser = config.usermanagement[shadowUserKey];
         if (!shadowUser) throw Error(util.format("shadowUser '%s' not found for '%s'", shadowUserKey, userKey));
     }
@@ -141,7 +143,7 @@ export function checkClasses(configs) {
 export function checkClass(classKey, configs) {
     let clazz = configs.classes[classKey];
     let policies = configs.config.policies;
-    let normalized = clazz.normalized ? clazz : normalizeClass(classKey, clazz, policies);
+    let normalized = normalizeClass(classKey, clazz, policies);
 
     checkSpecial(normalized.toString);
     checkSpecial(normalized.editor);
@@ -149,8 +151,7 @@ export function checkClass(classKey, configs) {
 
     let normalizedAttributes = normalized.attributes;
     for (let attributeKey of Object.keys(normalizedAttributes)) {
-        let attribute = normalizedAttributes[attributeKey];
-        checkAttribute(attribute, attributeKey, classKey);
+        checkAttribute(attributeKey, classKey, configs);
     }
 
     let attributePk = normalizedAttributes[normalized.pk];
@@ -170,8 +171,13 @@ function checkSpecial(special, classKey) {
     }
 }
 
-export function checkAttribute(attribute, attributeKey, classKey) {
-    let normalized = attribute.normalized ? attribute : normalizeAttribute(attribute, attributeKey);    
+export function checkAttribute(attributeKey, classKey, configs) {
+    let config = configs.config;
+    let normalizedConfigs = normalizeConfig(config);
+    let clazz = configs.classes[classKey];
+    let normalizedClass = normalizeClass(classKey, clazz, normalizedConfigs.policies);
+    let attribute = normalizedClass.attributes[attributeKey];
+    let normalized = normalizeAttribute(attribute, attributeKey);    
 
     let types = [];
     if (normalized.dbType != null) types.push(normalized.dbType);
@@ -197,7 +203,7 @@ export function checkNodes(nodes, configs) {
 }
 
 export function checkNode(node, previousNode, configs) {
-    let normalized = node.normalized ? node : normalizeNode(node);
+    let normalized = normalizeNode(node);
     if (normalized.link == null) {
         if (normalized.name == null) throw Error(util.format("normalizeStructure: missing name for node", previousNode ? util.format("the one after %s)", previousNode.name) : "(the first one)"));
         if (normalized.dynamic_children_file != null && normalized.dynamic_children != null) throw Error(util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", normalized.name));
@@ -214,10 +220,10 @@ export function checkDynchildhelpers(configs) {
 
 export function checkDynchildhelper(dynchildhelperKey, configs) {
     let dynchildhelper = configs.dynchildhelpers[dynchildhelperKey];
-    let normalized = dynchildhelper.normalized ? dynchildhelper : normalizeDynchildhelper(dynchildhelper);
+    let normalized = normalizeDynchildhelper(dynchildhelper);
 
-    if (normalized.code == null && normalized.code_file == null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
-    if (normalized.code != null && normalized.code_file != null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
+    if (normalized.code == null && normalized.code_file == null) throw Error(util.format("dynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
+    if (normalized.code != null && normalized.code_file != null) throw Error(util.format("dynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
 }
 
 export function checkConfigurationAttributeValues(configurationAttributeValues, configs) {
@@ -227,13 +233,30 @@ export function checkConfigurationAttributeValues(configurationAttributeValues, 
         for (let configurationAttributeValue of configurationAttributeArray) {
             let configurationAttribute = configs.configurationAttributes[configurationAttributeKey];
             if (!configurationAttribute) throw Error(util.format("configurationAttribute '%s' not found", configurationAttributeKey));
-            checkConfigurationAttributeValue(configurationAttributeKey, configurationAttributeValue);
+            checkConfigurationAttributeValue(configurationAttributeKey, configurationAttributeValue, configurationAttribute);
         }
     }    
 }
 
-export function checkConfigurationAttributeValue(configurationAttributeKey, configurationAttributeValue) {
-    let normalized = configurationAttributeValue.normalized ? configurationAttributeValue : normalizeConfigurationAttributeValue(configurationAttributeValue);
+export function checkConfigurationAttributeValue(configurationAttributeKey, configurationAttributeValue, configurationAttribute) {
+    let normalized = normalizeConfigurationAttributeValue(configurationAttributeValue);
+    let normalizedConfigurationAttribute = normalizeConfigurationAttribute(configurationAttribute);
 
-    if (normalized.value != null && normalized.xmlfile != null) throw Error(util.format("normalizeConfigurationAttributes: value and xmlfile can't both be set for '%s'", configurationAttributeKey));
+    if (!normalizedConfigurationAttribute) throw Error(util.format("configurationAttribute '%s' node found", configurationAttributeKey));
+    if (normalizedConfigurationAttribute.type == null) throw Error(util.format("'type' for configurationAttribute '%s' is missing", configurationAttributeKey));
+    switch (normalizedConfigurationAttribute.type) {
+        case 'action': {
+            if (normalized.value != null) throw Error(util.format("configurationAttribute '%s' is of type 'action'. no 'value' is allowed.", configurationAttributeKey));
+            if (normalized.xmlfile != null) throw Error(util.format("configurationAttribute '%s' is of type 'action'. 'xmfile' is allowed.", configurationAttributeKey));
+        } break;
+        case 'value': {
+            if (normalized.xmlfile != null) throw Error(util.format("configurationAttribute '%s' is of type 'value'. 'xmfile' is allowed.", configurationAttributeKey));
+            if (normalized.value == null) throw Error(util.format("configurationAttribute '%s' is of type 'value', but no 'value' is set.", configurationAttributeKey));
+        } break;
+        case 'xml': {
+            if (normalized.value != null) throw Error(util.format("configurationAttribute '%s' is of type 'action'. no 'value' is allowed.", configurationAttributeKey));
+            if (normalized.xmlfile == null) throw Error(util.format("configurationAttribute '%s' is of type 'xml', but no 'xmlfile' is set.", configurationAttributeKey));
+        } break;
+    }
+
 }

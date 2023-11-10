@@ -118,7 +118,7 @@ export function inspectConfigurationAttribute(configurationAttributeKey, configs
 
     let { configurationAttributes, usermanagement, usergroups, domains } = configs;
     let configurationAttribute = configurationAttributes[configurationAttributeKey];
-    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAttribute(configurationAttribute);
+    let normalized = normalizeConfigurationAttribute(configurationAttribute);
 
     let domainValues = {};
     for (let [ domainKey, domain ] of Object.entries(domains)) {
@@ -166,7 +166,7 @@ export function inspectUser(userKey, configs, { aggregateConfigurationAttributeV
 
     let { usermanagement, usergroups, domains, configurationAttributes, classes, config } = configs;
     let user = usermanagement[userKey];
-    let normalized = user.normalized ? user : normalizeUser(user);
+    let normalized = normalizeUser(user);
 
     let domainKeySet = new Set();
     let groupKeySet = new Set();
@@ -180,8 +180,6 @@ export function inspectUser(userKey, configs, { aggregateConfigurationAttributeV
         let domainKey = groupAndDomain.domain;
         domainKeySet.add(domainKey);
         groupKeySet.add(groupKey);
-
-        if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
     let allConfigurationAttributeValues = Object.assign({}, normalized.configurationAttributes);    
@@ -236,7 +234,7 @@ export function inspectUsergroup(usergroupKey, configs, { aggregateConfiguration
 
     let { usermanagement, configurationAttributes, usergroups, domains, classes, config } = configs;
     let usergroup = usergroups[usergroupKey];
-    let normalized = usergroup.normalized ? usergroup : normalizeUsergroup(usergroup);
+    let normalized = normalizeUsergroup(usergroup);
 
     let groupAndDomainKeys = extractGroupAndDomain(usergroupKey);
     let domainKey = groupAndDomainKeys.domain;
@@ -284,7 +282,7 @@ export function inspectDomain(domainKey, configs) {
 
     let { domains, usergroups } = configs;
     let domain = domains[domainKey];
-    let normalized = domain.normalized ? domain : normalizeDomain(domain);
+    let normalized = normalizeDomain(domain);
 
     let groupKeySet = new Set();
     for (let groupKey of Object.keys(usergroups)) {

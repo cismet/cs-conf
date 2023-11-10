@@ -2,7 +2,7 @@
     "Group1@LOCAL": {
         "descr": "Descr1",
         "prio": 0,
-        "configurationAttributes": { "testValue": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null, "normalized": true }]},
+        "configurationAttributes": { "testValue": [{ "groups": [], "type": null, "value": "test", "xmlfile": null, "domain": null, "group": null, "normalized": true }]},
         "additional_info": null,
         "inspected": {
             "members": [],

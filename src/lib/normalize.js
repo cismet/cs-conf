@@ -206,13 +206,13 @@ export function normalizeConfigPolicyRules(policyRules = {}) {
     let normalized = Object.assign(defaultConfigPolicyRules());    
     for (let policyRuleKey of Object.keys(normalized)) {
         let policyRule = policyRules[policyRuleKey];
-        normalized[policyRuleKey] = normalizeConfigPolicyRule(policyRuleKey, policyRule);
+        normalized[policyRuleKey] = normalizeConfigPolicyRule(policyRule, policyRuleKey);
     }
     return normalized;
 }
 
-export function normalizeConfigPolicyRule(policyRuleKey, policyRule = {}) {
-    let normalized = policyRuleKey.normalized ? policyRuleKey : Object.assign({}, (defaultConfigPolicyRules()[policyRuleKey]), policyRule, { 
+export function normalizeConfigPolicyRule(policyRule = {}, policyRuleKey) {
+    let normalized = policyRule.normalized ? policyRule : Object.assign({}, (defaultConfigPolicyRules()[policyRuleKey]), policyRule, { 
         normalized: true,
     });    
     return normalized;
