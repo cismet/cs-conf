@@ -1,6 +1,6 @@
 {
   "LOCAL": {
-    "configurationAttributes": {"test": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null, "normalized": true }]}, 
+    "configurationAttributes": {"testAction": [{ "groups": [], "type": null, "value": null, "xmlfile": null, "domain": null, "group": null, "normalized": true }]}, 
     "additional_info": null,
     "inspected": {
       "groups": [],

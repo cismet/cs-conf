@@ -3,7 +3,7 @@
         "pw_hash": "HashyHash1",
         "salt": "saltySalt1",
         "groups": ["Group1", "Group2"],
-        "configurationAttributes": { "test": {} }
+        "configurationAttributes": { "testXml": {} }
     }, 
     "User2": {
         "pw_hash": "HashyHash2",

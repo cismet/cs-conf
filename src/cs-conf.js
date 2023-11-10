@@ -157,6 +157,7 @@ commands.set('import', program.command('import')
 	.description('imports the (cs_*)meta-information from a configuration directory into a database')
 	.option(configOption.flags, configOption.description, configOption.default)
 	.option('-b, --backup-dir <dirpath>', 'the directory where the backups should be written')	
+	.option('--skip-check', 'does not check configs before import')	
 	.option('--skip-backup', 'does not create backup before import')	
 	.option('--backup-prefix', 'backup file prefix', null)	
 	.option('--recreate', 'purge and recreate cs_* structure before import')	
@@ -168,6 +169,7 @@ commands.set('import', program.command('import')
 		cs('import', csImport, {
 			execute: cmd.import !== undefined,
 			recreate: cmd.recreate !== undefined, 
+			skipCheck: cmd.skipCheck !== undefined,
 			skipBackup: cmd.skipBackup !== undefined,
 			backupPrefix: cmd.backupPrefix,
 			backupDir: cmd.backupDir,

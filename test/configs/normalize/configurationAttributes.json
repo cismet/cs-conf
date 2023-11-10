@@ -1,5 +1,5 @@
 {
-    "action": { "type": "action" },
-    "xml": { "type": "xml" },
-    "value": { "type": "value" }
+    "testAction": { "type": "action" },
+    "testXml": { "type": "xml" },
+    "testValue": { "type": "value" }
 }

@@ -43,7 +43,7 @@ async function csPassword(options) {
         groups: groups != null ? groups.split(',') : undefined,
     };
 
-    newUser = normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser);
+    newUser = normalized ? normalizeUser(newUser) : simplifyUser(newUser);
 
     if (printOnly) {
         logOut(util.format("\"%s\": %s", loginName, stringify(newUser)), { noSilent: true });
@@ -68,7 +68,7 @@ async function csPassword(options) {
         }
         usermanagement[loginName] = newUser;
         logInfo(util.format("user '%s' added", loginName));
-        logOut(stringify(normalized ? normalizeUser(newUser, loginName) : simplifyUser(newUser)), { noSilent: true });
+        logOut(stringify(normalized ? normalizeUser(newUser) : simplifyUser(newUser)), { noSilent: true });
     } else {
         let found = false;
         for (let userKey of Object.keys(usermanagement)) {
@@ -91,7 +91,7 @@ async function csPassword(options) {
                     pw_hash: newHash,
                     last_pwd_change: newLastPwdChange,
                 };
-                let modifiedUser = normalizeUser(Object.assign({}, user), loginName);
+                let modifiedUser = normalizeUser(Object.assign({}, user));
                 for (let key in modifiedUser) {
                     if (user[key] === undefined && newInfo === undefined) {
                         delete modifiedUser[key];
@@ -107,7 +107,7 @@ async function csPassword(options) {
                 // ---
 
                 logInfo(util.format("password changed for '%s'", loginName));
-                logOut(stringify(normalized ? normalizeUser(user, loginName) : simplifyUser(user)), { noSilent: true });
+                logOut(stringify(normalized ? normalizeUser(user) : simplifyUser(user)), { noSilent: true });
             }
         }
         if (!found) throw Error(util.format("user '%s' not found. Use '-A|--add' to add a new user", loginName));

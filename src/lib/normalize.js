@@ -25,6 +25,8 @@ import {
     defaultConfigPolicies,
     defaultUserGroupInspectedPermissions,
     defaultUserInspectedPermissions,
+    defaultConfigs,
+    defaultAttributePrimary,
 } from "./tools/defaultObjects";
 
 // ---
@@ -41,24 +43,25 @@ export default async function csNormalize(options) {
 
 // ---
 
-export function normalizeConfigs(configs = {}) {    
-    let normalized = Object.assign({}, configs, {
+export function normalizeConfigs(configs = {}) {
+    let normalized = configs.normalized ? configs : Object.assign(defaultConfigs(), configs, {
         config: normalizeConfig(configs.config),
         additionalInfos: normalizeAdditionalInfos(configs.additionalInfos),
-        classes: normalizeClasses(configs.classes, configs.config.policies), 
         configurationAttributes: normalizeConfigurationAttributes(configs.configurationAttributes),
         domains: normalizeDomains(configs.domains), 
-        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),        
-        structure: normalizeStructure(configs.structure), 
         usergroups: normalizeUsergroups(configs.usergroups), 
         usermanagement: normalizeUsermanagement(configs.usermanagement), 
+        classes: normalizeClasses(configs.classes, configs.config.policies), 
+        dynchildhelpers: normalizeDynchildhelpers(configs.dynchildhelpers),        
+        structure: normalizeStructure(configs.structure), 
+        normalized: true
     });
 
     return normalized;
 }
 
 export function normalizeConfig(config = {}) {
-    let normalized = Object.assign(defaultConfig(), config, {
+    let normalized = config.normalized ? config : Object.assign(defaultConfig(), config, {
         connection: normalizeConfigConnection(config.connection),
         sync: normalizeConfigSync(config.sync),
         policies: normalizeConfigPolicies(config.policies),
@@ -69,28 +72,28 @@ export function normalizeConfig(config = {}) {
 }
 
 export function normalizeConfigConnection(connection = {}) {
-    let normalized = Object.assign(defaultConfigConnection(), connection, { 
+    let normalized = connection.normalized ? connection : Object.assign(defaultConfigConnection(), connection, { 
         normalized: true, 
     });
     return normalized;
 }
 
 export function normalizeConfigSync(sync = {}) {
-    let normalized = Object.assign(defaultConfigSync(), sync, { 
+    let normalized = sync.normalized ? sync : Object.assign(defaultConfigSync(), sync, { 
         normalized: true,
     });
     return normalized;
 }
 
 export function normalizeConfigPolicies(policies = {}) {
-    let normalized = Object.assign(defaultConfigPolicies(), policies, { 
+    let normalized = policies.normalized ? policies : Object.assign(defaultConfigPolicies(), policies, { 
         normalized: true,
     });
     return normalized;
 }
 
 export function normalizeAdditionalInfos(additionalInfos = {}) {
-    let normalized = Object.assign(defaultAdditionalInfos(), additionalInfos, { 
+    let normalized = additionalInfos.normalized ? additionalInfos : Object.assign(defaultAdditionalInfos(), additionalInfos, { 
         normalized: true,
     });
     return normalized;
@@ -107,13 +110,13 @@ export function normalizeClasses(classes = {}, policies = defaultConfigPolicies(
 }
 
 export function normalizeClass(classKey, clazz = {}, policies = defaultConfigPolicies()) {
-    let normalized = Object.assign(defaultClass(), clazz, {
+    let normalized = clazz.normalized ? clazz : Object.assign(defaultClass(), clazz, {
         name: clazz.name ?? classKey,
-        toString: normalizeSpecial(clazz.toString, classKey),
-        editor: normalizeSpecial(clazz.editor, classKey),
-        renderer: normalizeSpecial(clazz.renderer, classKey),
+        toString: normalizeSpecial(clazz.toString),
+        editor: normalizeSpecial(clazz.editor),
+        renderer: normalizeSpecial(clazz.renderer),
         pk: clazz.pk ? clazz.pk.toLowerCase() : defaultClass().pk,
-        attributes: normalizeAttributes(clazz.attributes, clazz.pk, classKey),
+        attributes: normalizeAttributes(clazz.attributes, clazz.pk ?? defaultClass().pk, classKey),
         icon: null,
         policy: clazz.policy ?? policies.server,
         attribute_policy: clazz.attribute_policy ?? policies.attributes,
@@ -126,75 +129,35 @@ export function normalizeClass(classKey, clazz = {}, policies = defaultConfigPol
     return normalized;
 }
 
-export function normalizeAttributes(attributes = {}, pk = defaultClass().pk, classKey) {
+function normalizeAttributes(attributes, pk, classKey) {
     let normalized = {};
 
     if (attributes) {
-        let pkMissing = true;
-        let pkDummy = Object.assign({}, defaultAttribute(), {
-            descr: "Primary Key",
-            dbType: "INTEGER",
-            mandatory: true,
-            defaultValue: util.format("nextval('%s_seq')", classKey),
-            hidden: true,
-            normalized: true,
-        });
         for (let attributeKey of Object.keys(attributes)) {
-            let attribute = attributes[attributeKey];
-            
-            if (attribute.cidsType != null) {
-                attribute.cidsType = attribute.cidsType.toLowerCase();
-            }
-            if (attribute.oneToMany != null) {
-                attribute.oneToMany = attribute.oneToMany.toLowerCase();
-            }
-            if (attribute.manyToMany != null) {
-                attribute.manyToMany = attribute.manyToMany.toLowerCase();
-            }
-
-            if (attribute.dbType == null && (attribute.precision != null || attribute.scale != null)) throw Error(util.format("normalizeAttributes: [%s.%s] precision and scale can only be set if dbType is set", classKey, attributeKey));
-
-            let normalizedAttribute;
-            if (pk !== undefined && attributeKey.toLowerCase() == pk.toLowerCase()) {
-                pkMissing = false;
-                if (
-                    attribute.cidsType != null ||
-                    attribute.oneToMany != null ||
-                    attribute.manyToMany != null                
-                ) throw Error("normalizeAttributes: primary key can only have dbType, no cidsType allowed");
-                
-                normalizedAttribute = Object.assign({}, pkDummy, attribute, {
-                    defaultValue: attribute.defaultValue || util.format("nextval('%s_seq')", classKey),
-                    name: attribute.name || attributeKey.toLowerCase(),
-                    readPerms: normalizePerms(attribute.readPerms),
-                    writePerms: normalizePerms(attribute.writePerms),
-                });    
-            } else {
-                let types = [];
-                if (attribute.dbType != null) types.push(attribute.dbType);
-                if (attribute.cidsType != null) types.push(attribute.cidsType);
-                if (attribute.oneToMany != null) types.push(attribute.oneToMany);
-                if (attribute.manyToMany != null) types.push(attribute.manyToMany);
-
-                if (types.length == 0) throw Error(util.format("normalizeAttributes: [%s.%s] either dbType or cidsType or oneToMany or manyToMany missing", classKey, attributeKey)); 
-                if (types.length > 1) throw Error(util.format("normalizeAttributes: [%s.%s] type has to be either dbType or cidsType or oneToMany or manyToMany", classKey, attributeKey));
-
-                normalizedAttribute = Object.assign({}, defaultAttribute(), attribute, {
-                    name: attribute.name || attributeKey.toLowerCase(),
-                    readPerms: normalizePerms(attribute.readPerms),
-                    writePerms: normalizePerms(attribute.writePerms),    
-                });    
-            }
-            Object.assign(normalizedAttribute, { normalized: true })
-            normalized[attributeKey.toLowerCase()] = normalizedAttribute;
+            let attribute = attributeKey == pk ? Object.assign({}, defaultAttributePrimary(classKey, pk), attributes[attributeKey]) : attributes[attributeKey];
+            normalized[attributeKey.toLowerCase()] = normalizeAttribute(attribute, attributeKey);
         }
-        if (pkMissing) {
-            normalized[pk.toLowerCase()] = Object.assign({}, pkDummy, {
-                name: pk.toLowerCase(),
-            });
-        }
+
     }
+    let attributePk = normalized[pk] ?? defaultAttributePrimary(classKey, pk);
+    Object.assign(attributePk, {
+        defaultValue: attributePk.defaultValue || util.format("nextval('%s_seq')", classKey),
+    });
+    normalized[pk] = normalizeAttribute(attributePk, pk);
 
+    return normalized;
+}
+
+export function normalizeAttribute(attribute = {}, attributeKey) {
+    let normalized = attribute.normalized ? attribute : Object.assign({}, defaultAttribute(), attribute, {
+        name: attribute.name || attributeKey.toLowerCase(),
+        cidsType: attribute.cidsType ? attribute.cidsType.toLowerCase() : null,
+        oneToMany: attribute.oneToMany ? attribute.oneToMany.toLowerCase() : null,
+        manyToMany: attribute.manyToMany ? attribute.manyToMany.toLowerCase() : null,
+        readPerms: normalizePerms(attribute.readPerms),
+        writePerms: normalizePerms(attribute.writePerms),
+        normalized: true,
+    });    
     return normalized;
 }
 
@@ -208,7 +171,7 @@ export function normalizeDomains(domains = {}) {
 }
 
 export function normalizeDomain(domain = {}) {
-    let normalized = Object.assign(defaultDomain(), domain, {
+    let normalized = domain.normalized ? domain : Object.assign(defaultDomain(), domain, {
         configurationAttributes: normalizeConfigurationAttributeValues(domain.configurationAttributes),
         inspected: normalizeDomainInspected(domain.inspected),
         normalized: true,
@@ -217,7 +180,7 @@ export function normalizeDomain(domain = {}) {
 }
 
 export function normalizeDomainInspected(domainInspected = {}) {
-    let normalized = Object.assign(defaultDomainInspected(), domainInspected, { 
+    let normalized = domainInspected.normalized ? domainInspected : Object.assign(defaultDomainInspected(), domainInspected, { 
         normalized: true,
     });
     return normalized;
@@ -233,11 +196,9 @@ export function normalizeDynchildhelpers(dynchildhelpers = {}) {
 }
 
 export function normalizeDynchildhelper(dynchildhelper = {}) {
-    let normalized = Object.assign(defaultDynchildhelper(), dynchildhelper, { 
+    let normalized = dynchildhelper.normalized ? dynchildhelper : Object.assign(defaultDynchildhelper(), dynchildhelper, { 
         normalized: true,
     });
-    if (normalized.code == null && normalized.code_file == null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file missing", dynchildhelper.name));
-    if (normalized.code != null && normalized.code_file != null) throw Error(util.format("normalizeDynchildhelpers: [%s] either code or code_file can't be set both", dynchildhelper.name));
     return normalized;
 }
 
@@ -251,8 +212,7 @@ export function normalizeConfigPolicyRules(policyRules = {}) {
 }
 
 export function normalizeConfigPolicyRule(policyRuleKey, policyRule = {}) {
-    let defaultConfigPolicyRule = defaultConfigPolicyRules()[policyRuleKey]
-    let normalized = Object.assign({}, defaultConfigPolicyRule, policyRule, { 
+    let normalized = policyRuleKey.normalized ? policyRuleKey : Object.assign({}, (defaultConfigPolicyRules()[policyRuleKey]), policyRule, { 
         normalized: true,
     });    
     return normalized;
@@ -272,7 +232,7 @@ export function normalizeUsergroups(usergroups = {}) {
 }
 
 export function normalizeUsergroup(usergroup = {}) {
-    let normalized = Object.assign(defaultUserGroup(), usergroup, {
+    let normalized = usergroup.normalized ? usergroup : Object.assign(defaultUserGroup(), usergroup, {
         configurationAttributes: normalizeConfigurationAttributeValues(usergroup.configurationAttributes),
         inspected: normalizeUsergroupInspected(usergroup.inspected),
         normalized: true,
@@ -281,7 +241,7 @@ export function normalizeUsergroup(usergroup = {}) {
 }
 
 export function normalizeUsergroupInspected(usergroupInspected = {}) {
-    let normalized = Object.assign(defaultUserGroupInspected(), usergroupInspected, {
+    let normalized = usergroupInspected.normalized ? usergroupInspected : Object.assign(defaultUserGroupInspected(), usergroupInspected, {
         allConfigurationAttributes: normalizeConfigurationAttributeValues(usergroupInspected.allConfigurationAttributes),
         permissions: normalizeUsergroupInspectedPermissions(usergroupInspected.permissions),
         normalized: true,
@@ -290,7 +250,7 @@ export function normalizeUsergroupInspected(usergroupInspected = {}) {
 }
 
 export function normalizeUsergroupInspectedPermissions(usergroupInspectedPermissions = {}) {
-    let normalized = Object.assign(defaultUserGroupInspectedPermissions(), usergroupInspectedPermissions, {
+    let normalized = usergroupInspectedPermissions.normalized ? usergroupInspectedPermissions : Object.assign(defaultUserGroupInspectedPermissions(), usergroupInspectedPermissions, {
         normalized: true,
     });
     return normalized;
@@ -300,43 +260,44 @@ export function normalizeUsermanagement(usermanagement = {}) {
     let normalized = {};
     for (let userKey of Object.keys(usermanagement)) {
         let user = usermanagement[userKey];
-        normalized[userKey] = normalizeUser(user, userKey);
+        normalized[userKey] = normalizeUser(user);
     }
     return normalized;
 }
 
-export function normalizeUser(user = {}, userKey) {
-    if (user.pw_hash == null) throw Error(util.format("normalizeUsermanagement: [%s] missing pw_hash", userKey));
-    if (user.salt == null) throw Error(util.format("normalizeUsermanagement: [%s] missing salt", userKey));
-    if (user.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
+export function normalizeUser(user = {}) {
+    let normalized;
+    if (user.normalized) {
+        normalized = user;
+    } else {
+        let shadows = user.shadows ? [...user.shadows] : [];
+        let groups = normalizeGroups(user.groups);
+        let configurationAttributes = normalizeConfigurationAttributeValues(user.configurationAttributes);
 
-    let shadows = user.shadows ? [...user.shadows] : [];
-    let groups = normalizeGroups(user.groups);
-    let configurationAttributes = normalizeConfigurationAttributeValues(user.configurationAttributes);
+        let additionalInfo = user.additional_info;
+        if (additionalInfo) {
+            if (additionalInfo._unprocessed) {
+                let _unprocessed = additionalInfo._unprocessed;
+                shadows = _unprocessed.shadows ?? [];
+                groups = _unprocessed.groups ?? [];
+                configurationAttributes = _unprocessed.configurationAttributes ?? {};
+                // TODO Warn if resulting groups and configuration-Attributes don't match
+            }
+        }    
 
-    let additionalInfo = user.additional_info;
-    if (additionalInfo) {
-        if (additionalInfo._unprocessed) {
-            let _unprocessed = additionalInfo._unprocessed;
-            shadows = _unprocessed.shadows ?? [];
-            groups = _unprocessed.groups ?? [];
-            configurationAttributes = _unprocessed.configurationAttributes ?? {};
-            // TODO Warn if resulting groups and configuration-Attributes don't match
-        }
-    }    
-
-    let normalized = Object.assign(defaultUser(), user, {
-        shadows,
-        groups,
-        configurationAttributes,
-        inspected: normalizeUserInspected(user.inspected),
-        normalized: true,
-    });
+        normalized = Object.assign(defaultUser(), user, {
+            shadows,
+            groups,
+            configurationAttributes,
+            inspected: normalizeUserInspected(user.inspected),
+            normalized: true,
+        });
+    }
     return normalized;
 }
 
 export function normalizeUserInspected(userInspected = {}) {
-    let normalized = Object.assign(defaultUserInspected(), userInspected, { 
+    let normalized = userInspected.normalized ? userInspected : Object.assign(defaultUserInspected(), userInspected, { 
         memberOf: normalizeGroups(userInspected.memberOf),
         shadowMemberOf: normalizeshadowMemberOf(userInspected.shadowMemberOf),
         allConfigurationAttributes: normalizeConfigurationAttributeValues(userInspected.allConfigurationAttributes),
@@ -347,7 +308,7 @@ export function normalizeUserInspected(userInspected = {}) {
 }
 
 export function normalizeUserInspectedPermissions(userInspectedPermissions = {}) {
-    let normalized = Object.assign(defaultUserInspectedPermissions(), userInspectedPermissions, {
+    let normalized = userInspectedPermissions.normalized ? userInspectedPermissions : Object.assign(defaultUserInspectedPermissions(), userInspectedPermissions, {
         normalized: true,
     });
     return normalized;
@@ -390,14 +351,14 @@ export function normalizeConfigurationAttributes(configurationAtributes = {}) {
     for (let configurationAttributeKey of Object.keys(configurationAtributes)) {
         let configurationAtribute = configurationAtributes[configurationAttributeKey];
         if (configurationAtribute != null) {
-            normalized[configurationAttributeKey] = normalizeConfigurationAtribute(configurationAtribute);
+            normalized[configurationAttributeKey] = normalizeConfigurationAttribute(configurationAtribute);
         }
     }
     return normalized;
 }
 
-export function normalizeConfigurationAtribute(configurationAttribute = {}) {
-    let normalized = Object.assign(defaultConfigurationAttribute(), configurationAttribute, {
+export function normalizeConfigurationAttribute(configurationAttribute = {}) {
+    let normalized = configurationAttribute.normalized ? configurationAttribute : Object.assign(defaultConfigurationAttribute(), configurationAttribute, {
         inspected: normalizeConfigurationAttributeInspected(configurationAttribute.inspected),
         normalized: true,
     });
@@ -405,7 +366,7 @@ export function normalizeConfigurationAtribute(configurationAttribute = {}) {
 }
 
 export function normalizeConfigurationAttributeInspected(configurationAttributeInspected = {}) {
-    let normalized = Object.assign(defaultConfigurationAttributeInspected(), configurationAttributeInspected, {
+    let normalized = configurationAttributeInspected.normalized ? configurationAttributeInspected : Object.assign(defaultConfigurationAttributeInspected(), configurationAttributeInspected, {
         domainValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.domainValues),
         groupValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.groupValues),
         userValues: normalizeConfigurationAttributeInspectedValues(configurationAttributeInspected.userValues),
@@ -423,8 +384,6 @@ export function normalizeConfigurationAttributeInspectedValues(configurationAttr
     return normalized;
 }
 
-
-
 export function normalizeConfigurationAttributeValues(configurationAttributeValues = {}) {
     let normalized = {};
     for (let configurationAttributeKey of Object.keys(configurationAttributeValues)) {
@@ -439,11 +398,10 @@ export function normalizeConfigurationAttributeValues(configurationAttributeValu
 }
 
 export function normalizeConfigurationAttributeValue(configurationAttributeValue = {}) {
-    let normalized = Object.assign(defaultConfigurationAttributeValue(), configurationAttributeValue, {
+    let normalized = configurationAttributeValue.normalized ? configurationAttributeValue : Object.assign(defaultConfigurationAttributeValue(), configurationAttributeValue, {
         groups: normalizeConfigurationAttributeGroups(configurationAttributeValue.groups),
         normalized: true,
     });
-    if (normalized.value != null && normalized.xmlfile != null) throw Error("normalizeConfigurationAttributes: value and xmlfile can't both be set");
     return normalized;
 }
 
@@ -459,20 +417,14 @@ export function normalizeNodes(nodes = []) {
     return normalized;
 }
 
-export function normalizeNode(node = {}, lastNode = {}) {
-    let normalized = Object.assign(defaultNode(), node, {
+export function normalizeNode(node = {}) {
+    let normalized = node.normalized ? node : Object.assign(defaultNode(), node, {
         table: node.table != null ? node.table.toLowerCase() : node.table,
         children: normalizeNodes(node.children),
         readPerms: normalizePerms(node.readPerms),
         writePerms: normalizePerms(node.writePerms),
         normalized: true,
      });
-
-    if (normalized.link == null) {
-        if (normalized.name == null) throw Error(util.format("normalizeStructure: missing name for node (the one after %s)", lastNode.name));
-        if (normalized.dynamic_children_file != null && normalized.dynamic_children != null) throw Error(util.format("normalizeStructure: [%s] dynamic_children and dynamic_children_file can't both be set", normalized.name));
-        //if (normalized.children != null && (normalized.dynamic_children_file != null || nodnormalizede.dynamic_children != null)){ console.table(normalized);  throw Error("children and dynamic_children(_file) can't both be set"});
-    }
     return normalized
 }
 
@@ -486,15 +438,14 @@ function normalizeConfigurationAttributeGroups(groups = []) {
     return normalized;
 }
 
-function normalizeSpecial(special, table) {
+function normalizeSpecial(special) {
     // exclude toString()
     if (typeof special !== 'function' && special != null) {
-        if (special.type == null) throw Error(util.format("normalizeClasses: [%s] type missing", table));
-        if (special.class == null) throw Error(util.format("normalizeClasses: [%s] class missing", table));
         return {
             type: special.type,
             class: special.class,
         };    
+    } else {
+        return null;
     }
-    return null;
 }

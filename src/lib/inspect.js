@@ -1,16 +1,18 @@
 import util from "util";
 import stringify from "json-stringify-pretty-compact";
+import slug from "slug";
 
 import { readConfigFiles, writeFile } from "./tools/configFiles";
 import { logOut, logWarn } from "./tools/tools";
 import { completeConfigurationAttributeValues, extendLocalDomain, extractGroupAndDomain } from "./tools/cids";
-import { normalizeConfigs } from "./normalize";
 
+import { normalizeConfigs, normalizeConfigurationAttribute, normalizeDomain, normalizeUser, normalizeUsergroup } from "./normalize";
 import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyConfigurationAttributes, simplifyUser } from "./simplify";
 import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains, reorganizeConfigurationAttributes } from "./reorganize";
-import { preprocessUser, preprocessUsermanagement } from "./import";
-import slug from "slug";
+import { preprocessUsermanagement } from "./import";
 import { postprocessUser } from "./export";
+import { checkConfigurationAttribute, checkDomain, checkUsergroup } from "./check";
+import { checkUser } from "../../build/lib/check";
 
 export default async function csInspect({ configurationAttributeKey, domainKey, groupKey, userKey, aggregateConfigurationAttributeValues = false, print = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);    
@@ -105,27 +107,23 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
 
 export function inspectConfigurationAttributes(configs) {
     let inspected = {};
-    
-    let { configurationAttributes } = configs;
-    for (let configurationAttributeKey of Object.keys(configurationAttributes)) {
+    for (let configurationAttributeKey of Object.keys(configs.configurationAttributes)) {
         Object.assign(inspected, inspectConfigurationAttribute(configurationAttributeKey, configs));
     }
-
     return inspected;
 }
 
-export function inspectConfigurationAttribute(configurationAttributeKey, { usermanagement, configurationAttributes, usergroups, domains }) {
-    if (!configurationAttributeKey) throw Error(util.format("configurationAttributeKey is missing"));
+export function inspectConfigurationAttribute(configurationAttributeKey, configs) {
+    checkConfigurationAttribute(configurationAttributeKey, configs);
 
+    let { configurationAttributes, usermanagement, usergroups, domains } = configs;
     let configurationAttribute = configurationAttributes[configurationAttributeKey];
-    if (!configurationAttribute) throw Error(util.format("configurationAttribute '%s' not found", configurationAttributeKey));
+    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAttribute(configurationAttribute);
 
-    let foundAny = false;
     let domainValues = {};
     for (let [ domainKey, domain ] of Object.entries(domains)) {
         if (domain && domain.configurationAttributes && domain.configurationAttributes[configurationAttributeKey]) {
             domainValues[domainKey] = domain.configurationAttributes[configurationAttributeKey];
-            foundAny = true;
         }
     }
 
@@ -133,7 +131,6 @@ export function inspectConfigurationAttribute(configurationAttributeKey, { userm
     for (let [ groupKey, group ] of Object.entries(usergroups)) {
         if (group && group.configurationAttributes && group.configurationAttributes[configurationAttributeKey]) {
             groupValues[groupKey] = group.configurationAttributes[configurationAttributeKey];
-            foundAny = true;
         }
     }
 
@@ -141,7 +138,6 @@ export function inspectConfigurationAttribute(configurationAttributeKey, { userm
     for (let [ userKey, user ] of Object.entries(usermanagement)) {
         if (user && user.configurationAttributes && user.configurationAttributes[configurationAttributeKey]) {
             userValues[userKey] = user.configurationAttributes[configurationAttributeKey];
-            foundAny = true;
         }
     }
 
@@ -151,37 +147,30 @@ export function inspectConfigurationAttribute(configurationAttributeKey, { userm
         userValues,
     });
 
-    if (!foundAny) {
-        logWarn(util.format("configurationAttribute '%s' is not used anywhere.", configurationAttributeKey));
-    }
-
     let inspected = {};
-    inspected[configurationAttributeKey] = Object.assign({}, configurationAttribute, { inspected: inspectedConfigurationAttribute });
-
+    inspected[configurationAttributeKey] = Object.assign({}, normalized, { inspected: inspectedConfigurationAttribute });
     return inspected;
 
 }
 
 export function inspectUsermanagement(configs, { aggregateConfigurationAttributeValues = false } = {}) {
-    let inspected = {};
-    
-    let { usermanagement } = configs;
-    for (let userKey of Object.keys(usermanagement)) {
+    let inspected = {};    
+    for (let userKey of Object.keys(configs.usermanagement)) {
         Object.assign(inspected, inspectUser(userKey, configs, { aggregateConfigurationAttributeValues }));
     }
-
     return inspected;
 }
 
-export function inspectUser(userKey, { usermanagement, usergroups, domains, configurationAttributes, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
-    if (!userKey) throw Error(util.format("userKey is missing"));
+export function inspectUser(userKey, configs, { aggregateConfigurationAttributeValues = false } = {}) {
+    checkUser(userKey, configs);    
 
+    let { usermanagement, usergroups, domains, configurationAttributes, classes, config } = configs;
     let user = usermanagement[userKey];
-    if (!user) throw Error(util.format("user '%s' not found", userKey));
+    let normalized = user.normalized ? user : normalizeUser(user);
 
     let domainKeySet = new Set();
     let groupKeySet = new Set();
-    for (let groupKey of user.groups.sort((a, b) => {
+    for (let groupKey of normalized.groups.sort((a, b) => {
         if (a.prio === null && b.prio === null) return 0;
         if (a.prio === null) return 1;
         if (b.prio === null) return -1;
@@ -195,7 +184,7 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, conf
         if (!usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
-    let allConfigurationAttributeValues = Object.assign({}, user.configurationAttributes);    
+    let allConfigurationAttributeValues = Object.assign({}, normalized.configurationAttributes);    
     for (let groupKey of groupKeySet) {
         let group = usergroups[groupKey];
         let groupConfigurationAttributeValues = group.configurationAttributes;
@@ -209,7 +198,7 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, conf
         completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, userKey, completition, aggregateConfigurationAttributeValues);
     }
 
-    let postprocessedUser = simplifyUser(postprocessUser(user));
+    let postprocessedUser = simplifyUser(postprocessUser(normalized));
     let shadowMemberOf = {};
     if (postprocessedUser.shadows) {
         for (let shadowKey of postprocessedUser.shadows) {
@@ -235,42 +224,38 @@ export function inspectUser(userKey, { usermanagement, usergroups, domains, conf
 // ---
 
 export function inspectUsergroups(configs, { aggregateConfigurationAttributeValues = false } = {}) {
-    let inspected = {};
-    
-    let { usergroups } = configs;
-    for (let groupKey of Object.keys(usergroups)) {
+    let inspected = {};    
+    for (let groupKey of Object.keys(configs.usergroups)) {
         Object.assign(inspected, inspectUsergroup(groupKey, configs, { aggregateConfigurationAttributeValues }));
     }
-
     return inspected;
 }
 
-export function inspectUsergroup(groupKey, { usermanagement, configurationAttributes, usergroups, domains, classes, config }, { aggregateConfigurationAttributeValues = false } = {}) {
-    if (!groupKey) throw Error(util.format("groupKey is missing"));
+export function inspectUsergroup(usergroupKey, configs, { aggregateConfigurationAttributeValues = false } = {}) {
+    checkUsergroup(usergroupKey, configs);
 
-    let group = usergroups[groupKey];
-    if (!group) throw Error(util.format("group '%s' not found", groupKey));
+    let { usermanagement, configurationAttributes, usergroups, domains, classes, config } = configs;
+    let usergroup = usergroups[usergroupKey];
+    let normalized = usergroup.normalized ? usergroup : normalizeUsergroup(usergroup);
 
-    let groupAndDomainKeys = extractGroupAndDomain(groupKey);
+    let groupAndDomainKeys = extractGroupAndDomain(usergroupKey);
     let domainKey = groupAndDomainKeys.domain;
-
     let domain = domains[domainKey];
-    if (!domain) throw Error(util.format("domain '%s' of usergroup '%s' not found", domainKey, groupKey));
 
-    let allConfigurationAttributeValues = Object.assign({}, group.configurationAttributes);
+    let allConfigurationAttributeValues = Object.assign({}, normalized.configurationAttributes);
     let completition = {domain: domainKey};
     let domainConfigurationAttributeValues = domain.configurationAttributes;
-    completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, groupKey, completition, aggregateConfigurationAttributeValues);
+    completeConfigurationAttributeValues(configurationAttributes, allConfigurationAttributeValues, domainConfigurationAttributeValues, usergroupKey, completition, aggregateConfigurationAttributeValues);
 
     let userKeySet = new Set();
     for (let userKey of Object.keys(usermanagement)) {
         let user = usermanagement[userKey];
-        if (user.groups && user.groups.includes(groupKey)) {
+        if (user.groups && user.groups.includes(usergroupKey)) {
             userKeySet.add(userKey);
         }
     }
     let members = [...userKeySet];
-    let permissions = permissionsForGroups([groupKey], classes, config.policyRules);
+    let permissions = permissionsForGroups([usergroupKey], classes, config.policyRules);
 
     let inspectedGroup = { 
         members,
@@ -279,7 +264,7 @@ export function inspectUsergroup(groupKey, { usermanagement, configurationAttrib
     };
 
     let inspected = {};
-    inspected[groupKey] = Object.assign({}, group, { inspected: inspectedGroup });
+    inspected[usergroupKey] = Object.assign({}, normalized, { inspected: inspectedGroup });
 
     return inspected;
 }
@@ -288,20 +273,18 @@ export function inspectUsergroup(groupKey, { usermanagement, configurationAttrib
 
 export function inspectDomains(configs) {
     let inspected = {};
-    
-    let { domains } = configs;
-    for (let domainKey of Object.keys(domains)) {
+    for (let domainKey of Object.keys(configs.domains)) {
         Object.assign(inspected, inspectDomain(domainKey, configs));
     }
-
     return inspected;
 }
 
-export function inspectDomain(domainKey, { domains, usergroups }) {
-    if (!domainKey) throw Error(util.format("domainKey is missing"));
+export function inspectDomain(domainKey, configs) {
+    checkDomain(domainKey, configs);
 
+    let { domains, usergroups } = configs;
     let domain = domains[domainKey];
-    if (!domain) throw Error(util.format("domain '%s' not found", domainKey));
+    let normalized = domain.normalized ? domain : normalizeDomain(domain);
 
     let groupKeySet = new Set();
     for (let groupKey of Object.keys(usergroups)) {
@@ -318,7 +301,7 @@ export function inspectDomain(domainKey, { domains, usergroups }) {
     });
 
     let inspected = {};
-    inspected[domainKey] = Object.assign({}, domain, { inspected: inspectedDomain });
+    inspected[domainKey] = Object.assign({}, normalized, { inspected: inspectedDomain });
 
     return inspected;
 }

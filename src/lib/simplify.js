@@ -29,6 +29,7 @@ import {
     defaultUserGroupInspectedPermissions,
     defaultUserInspectedPermissions,
     defaultUserGroupInspected,
+    defaultConfigs,
 } from "./tools/defaultObjects";
 
 import { 
@@ -60,7 +61,7 @@ import {
     normalizeUsergroupInspectedPermissions,
     normalizeUserInspected,
     normalizeUserInspectedPermissions,
-    normalizeConfigurationAtribute,
+    normalizeConfigurationAttribute,
     normalizeConfigurationAttributeValue,
     normalizeConfigurationAttributeInspected, 
 } from "./normalize";
@@ -86,18 +87,20 @@ export default async function csSimplify(options) {
 // ---
 
 export function simplifyConfigs(configs) {
-    let normalized = normalizeConfigs(configs);
-    let simplified = Object.assign({}, normalized, {
+    if (!configs) return undefined;
+    let normalized = configs.normalized ? configs : normalizeConfigs(configs);
+
+    let simplified = copyFromTemplate(Object.assign({}, normalized, {
         config: simplifyConfig(normalized.config), 
-        configurationAttributes: simplifyConfigurationAttributes(normalized.configurationAttributes), 
         additionalInfos: simplifyAdditionalInfos(normalized.additionalInfos), 
-        classes: simplifyClasses(normalized.classes, normalized.config.policies), 
+        configurationAttributes: simplifyConfigurationAttributes(normalized.configurationAttributes), 
         domains: simplifyDomains(normalized.domains), 
-        dynchildhelpers: simplifyDynchildhelpers(normalized.dynchildhelpers),
-        structure: simplifyStructure(normalized.structure, normalized.config.policies), 
         usergroups: simplifyUsergroups(normalized.usergroups), 
         usermanagement: simplifyUsermanagement(normalized.usermanagement), 
-    });
+        classes: simplifyClasses(normalized.classes, normalized.config.policies), 
+        dynchildhelpers: simplifyDynchildhelpers(normalized.dynchildhelpers),
+        structure: simplifyStructure(normalized.structure, normalized.config.policies), 
+    }), defaultConfigs());
     return simplified;
 }
 
@@ -513,11 +516,10 @@ function simplifyNode(node, policies) {
 
 function simplifyAttributes(attributes, pk = defaultClass().pk, classKey) {
     if (attributes == null) return null;
-    let normalized = normalizeAttributes(attributes, pk, classKey);
 
     let simplified = {};
-    for (let attributeKey of Object.keys(normalized)) {
-        let attribute = normalized[attributeKey];
+    for (let attributeKey of Object.keys(attributes)) {
+        let attribute = attributes[attributeKey];
         if (attribute != null) {
             let simplifiedAttribute = copyFromTemplate(Object.assign({}, attribute, {
                 normalized: false,
@@ -585,7 +587,7 @@ export function simplifyConfigurationAttributes(configurationAttributes) {
 
 export function simplifyConfigurationAttribute(configurationAttribute) {
     if (!configurationAttribute) return undefined;
-    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAtribute(configurationAttribute);
+    let normalized = configurationAttribute.normalized ? configurationAttribute : normalizeConfigurationAttribute(configurationAttribute);
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         inspected: simplifyConfigurationAttributeInspected(normalized.inspected),

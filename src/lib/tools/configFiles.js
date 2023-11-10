@@ -123,17 +123,17 @@ export function readConfigFiles(configsDir, topics) {
 
     return {
         config,
-        configurationAttributes,
         additionalInfos,
+        xmlFiles,
+        configurationAttributes,
         domains, 
         usergroups, 
         usermanagement, 
         classes, 
-        structure, 
+        helperSqlFiles,
         dynchildhelpers,
-        xmlFiles,
         structureSqlFiles,
-        helperSqlFiles
+        structure, 
     }
 }
 
@@ -141,16 +141,16 @@ export function writeConfigFiles(configs, configsDir) {
     let {
         config,
         additionalInfos,
+        xmlFiles,
         configurationAttributes,
         domains,
-        usermanagement,
         usergroups,
+        usermanagement,
         classes,
-        structure,
+        helperSqlFiles,
         dynchildhelpers,
         structureSqlFiles,
-        helperSqlFiles,
-        xmlFiles
+        structure,
     } = configs;
 
     configsDir = configsDir ?? global.configsDir;

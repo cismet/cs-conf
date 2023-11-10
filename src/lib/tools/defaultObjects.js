@@ -1,17 +1,20 @@
+export const defaultConfigs = () => ({
+    config: defaultConfig(),
+    additionalInfos: defaultAdditionalInfos(),
+    xmlFiles: [],
+    configurationAttributes: {},
+    domains: {}, 
+    usergroups: {}, 
+    usermanagement: {}, 
+    classes: {}, 
+    helperSqlFiles: [],
+    dynchildhelpers: {},
+    structureSqlFiles: [],
+    structure: [], 
+    normalized: false,
+});
+
 //config
-export const defaultConfigConnection = () => ({
-    jdbc: null,
-    user: null,
-    password: null,
-    normalized: false,
-});
-
-export const defaultConfigSync = () => ({
-    noDropTables: [],
-    noDropColumns: [],
-    normalized: false,
-});
-
 export const defaultConfig = () => ({
     formatVersion: 1,
     configsDir: '.',
@@ -22,6 +25,19 @@ export const defaultConfig = () => ({
     policyRules: defaultConfigPolicyRules(),
     sync: defaultConfigSync(),
     maxFileLength: 80,
+    normalized: false,
+});
+
+export const defaultConfigConnection = () => ({
+    jdbc: null,
+    user: null,
+    password: null,
+    normalized: false,
+});
+
+export const defaultConfigSync = () => ({
+    noDropTables: [],
+    noDropColumns: [],
     normalized: false,
 });
 

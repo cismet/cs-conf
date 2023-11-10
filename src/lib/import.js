@@ -10,16 +10,24 @@ import csCreate from './create';
 import csTruncate from './truncate';
 import csBackup from './backup';
 import { normalizeConfigs } from './normalize';
+import { checkConfigs } from './check';
 
 export default async function csImport(options) {
-    let { backupDir, backupPrefix, execute, init, recreate, skipBackup } = options;
+    let { backupDir, backupPrefix, execute, init, recreate, skipBackup, skipCheck } = options;
 
     if (execute && !skipBackup && backupDir == null) throw Error("backupDir has to be set !");
 
     let configs = readConfigFiles(global.configsDir);
 
-    logOut("Preparing import ...");
-    let prepared = prepareImport(configs);
+    logVerbose(" ↳ normalizing configuration");
+    let normalizedConfigs = normalizeConfigs(configs);
+
+    if (!skipCheck) {
+        checkConfigs(normalizedConfigs);
+    }
+
+    logOut("Preparing Database entries ...");
+    let preparedDataForDB = prepareImport(normalizedConfigs);
 
     let schema = global.config.schema;
     let client = await initClient(global.config.connection, execute);
@@ -51,7 +59,7 @@ export default async function csImport(options) {
             csCatNodePermEntries,
             csDynamicChildrenHelperEntries,
             csInfoEntries,
-        } = prepared;
+        } = preparedDataForDB;
     
         if (!skipBackup) {
             await csBackup({
@@ -186,20 +194,14 @@ export default async function csImport(options) {
         await client.query("SELECT cs_refresh_dynchilds_functions();");    
         await client.query('COMMIT;');
     } else {
-        logDebug(prepared, { table: true });
+        logDebug(preparedDataForDB, { table: true });
 
         logInfo("DRY RUN ! Nothing happend yet. Use -X to execute import.");
     }
 }   
 
-export function prepareImport(configs) {
-    logVerbose(" ↳ normalizing configuration");
-    let normalizedConfigs = Object.assign(
-        {
-            configurationAttributeValues: {},
-        },
-        normalizeConfigs(configs)
-    );
+export function prepareImport(normalizedConfigs) {
+    normalizedConfigs = Object.assign(normalizedConfigs, { configurationAttributeValues: {} });
 
     let csEntries = {};
 
@@ -604,7 +606,6 @@ function prepareConfigurationAttributes({ xmlFiles, additionalInfos, configurati
             }
 
             if (configurationAttribte.additional_info && Object.keys(configurationAttribte.additional_info).length > 0) {
-                console.log(configurationAttribte.additional_info);
                 additionalInfos.configurationAttribute[configurationAttributeKey] = Object.assign({}, configurationAttribte.additional_info);
             }        
         

@@ -1,5 +1,5 @@
 {
-    "action": { 
+    "testAction": { 
         "type": "action", 
         "additional_info": null,
         "inspected": {
@@ -10,7 +10,7 @@
         },
         "normalized": true
     },
-    "xml": { 
+    "testXml": { 
         "type": "xml", 
         "additional_info": null ,
         "inspected": {
@@ -21,7 +21,7 @@
         },
         "normalized": true
     },
-    "value": { 
+    "testValue": { 
         "type": "value", 
         "additional_info": null, 
         "inspected": {
