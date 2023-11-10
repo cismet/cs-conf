@@ -245,7 +245,8 @@ commands.set('password', program.command('password')
 	.option('-p, --password <password>', 'the password to set')
 	.option('-t, --time <timestamp>', 'the timestamp to use as last_pwd_change')
 	.option('-g, --groups <groups>', 'comma separated list of groups')
-	.option('-s, --salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
+	.option('-s, --shadows <users>', 'comma separated list of shadow users')
+	.option('--salt <salt>', 'the salt to use (optional, a random one is generated if not set)')
 	.option('-R, --reorganize', 'reorganize config')
 	.option('-N, --normalized', 'normalize the user informations')
 	.option('-A, --add', 'add a new user with the given password and groups')	
@@ -258,6 +259,7 @@ commands.set('password', program.command('password')
 			targetDir: cmd.target,
 			loginName: cmd.user,
 			groups: cmd.groups,
+			shadows: cmd.shadows,
 			password: cmd.password,
 			salt: cmd.salt,
 			time: cmd.time,

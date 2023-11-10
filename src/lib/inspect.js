@@ -11,16 +11,18 @@ import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyCo
 import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains, reorganizeConfigurationAttributes } from "./reorganize";
 import { preprocessUsermanagement } from "./import";
 import { postprocessUser } from "./export";
-import { checkConfigurationAttribute, checkDomain, checkUsergroup } from "./check";
+import { checkConfigurationAttribute, checkDomain, checkUsergroup, checkUsermanagement } from "./check";
 import { checkUser } from "../../build/lib/check";
 
 export default async function csInspect({ configurationAttributeKey, domainKey, groupKey, userKey, aggregateConfigurationAttributeValues = false, print = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);    
     if (configs == null) throw Error("config not set");
 
-    let preprocessedConfigs = normalizeConfigs(configs);
-    let preprocessedUsermanagement = preprocessUsermanagement(preprocessedConfigs.usermanagement, preprocessedConfigs.usergroups, preprocessedConfigs.configurationAttributes)
-    Object.assign(preprocessedConfigs, {
+    let normalizedConfigs = normalizeConfigs(configs);
+    checkUsermanagement(normalizedConfigs);
+    
+    let preprocessedUsermanagement = preprocessUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.usergroups, normalizedConfigs.configurationAttributes)
+    Object.assign(normalizedConfigs, {
         usermanagement: preprocessedUsermanagement,
     })
 
@@ -43,12 +45,12 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
     switch (type) {
         case "user": {
             if (userKey == '*') {
-                let inspectedUsermanagement = inspectUsermanagement(preprocessedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsermanagement = inspectUsermanagement(normalizedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
                 let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { removeUnprocessedInfo: false });
                 result = simplifiedUsermanamgement;
             } else {
-                let inspectedUsermanagement = inspectUser(userKey, preprocessedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsermanagement = inspectUser(userKey, normalizedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsermanagement = reorganizeUsermanagement(inspectedUsermanagement);
                 let simplifiedUsermanamgement = simplifyUsermanagement(reorganizedUsermanagement, { normalize: false, removeUnprocessedInfo: false })
                 result = simplifiedUsermanamgement;
@@ -56,13 +58,13 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
         } break;
         case "group": {
             if (groupKey == '*') {
-                let inspectedUsergroups = inspectUsergroups(preprocessedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedUsergroups = inspectUsergroups(normalizedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedUsergroups = reorganizeUsergroups(inspectedUsergroups);
                 let simplifiedUsergroups = simplifyUsergroups(reorganizedUsergroups);
                 result = simplifiedUsergroups;
             } else {
                 let normalizedGroupKey = extendLocalDomain(groupKey);
-                let inspectedGroups = inspectUsergroup(normalizedGroupKey, preprocessedConfigs, { aggregateConfigurationAttributeValues });
+                let inspectedGroups = inspectUsergroup(normalizedGroupKey, normalizedConfigs, { aggregateConfigurationAttributeValues });
                 let reorganizedGroups = reorganizeUsergroups(inspectedGroups);
                 let simplifiedGroups = simplifyUsergroups(reorganizedGroups);
                 result = simplifiedGroups;
@@ -70,12 +72,12 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
             } break;
         case "domain": {
             if (domainKey == '*') {
-                let inspectedDomains = inspectDomains(preprocessedConfigs);
+                let inspectedDomains = inspectDomains(normalizedConfigs);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);
                 result = simplifiedDomains;
             } else {
-                let inspectedDomains = inspectDomain(domainKey, preprocessedConfigs);
+                let inspectedDomains = inspectDomain(domainKey, normalizedConfigs);
                 let reorganizedDomains = reorganizeDomains(inspectedDomains);
                 let simplifiedDomains = simplifyDomains(reorganizedDomains);            
                 result = simplifiedDomains;
@@ -83,12 +85,12 @@ export default async function csInspect({ configurationAttributeKey, domainKey, 
         } break;
         case "configurationAttribute": {
             if (configurationAttributeKey == '*') {
-                let inspectedConfigurationAttributes = inspectConfigurationAttributes(preprocessedConfigs);
+                let inspectedConfigurationAttributes = inspectConfigurationAttributes(normalizedConfigs);
                 let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
                 let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);
                 result = simplifiedConfigurationAttributes;
             } else {
-                let inspectedConfigurationAttributes = inspectConfigurationAttribute(configurationAttributeKey, preprocessedConfigs);
+                let inspectedConfigurationAttributes = inspectConfigurationAttribute(configurationAttributeKey, normalizedConfigs);
                 let reorganizedConfigurationAttributes = reorganizeConfigurationAttributes(inspectedConfigurationAttributes);
                 let simplifiedConfigurationAttributes = simplifyConfigurationAttributes(reorganizedConfigurationAttributes);            
                 result = simplifiedConfigurationAttributes;

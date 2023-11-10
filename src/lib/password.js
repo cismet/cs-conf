@@ -5,10 +5,11 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { logInfo, logOut } from './tools/tools';
 import { readConfigFiles, writeConfigFiles } from './tools/configFiles';
-import { normalizeConfig, normalizeUser } from './normalize';
+import { normalizeConfig, normalizeConfigs, normalizeUser } from './normalize';
 import stringify from 'json-stringify-pretty-compact';
 import { simplifyUser } from './simplify';
 import { reorganizeUsermanagement } from './reorganize';
+import { checkUsermanagement } from './check';
 
 dayjs.extend(customParseFormat);
 
@@ -21,7 +22,7 @@ function createHash(password, salt = createSalt()) {
 }
 
 async function csPassword(options) {
-    let { targetDir, loginName, password, groups, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
+    let { targetDir, loginName, password, groups, shadows, salt, time, reorganize = false, normalized = false, add = false, print: printOnly = false } = options;
 
     if (loginName == null && password == null) throw Error("user and password are mandatory");
     if (loginName == null) throw Error("user is mandatory");    
@@ -40,6 +41,7 @@ async function csPassword(options) {
         salt: newSalt,
         pw_hash: createHash(password, newSalt),
         last_pwd_change: newLastPwdChange,
+        shadows: shadows != null ? shadows.split(',') : undefined,
         groups: groups != null ? groups.split(',') : undefined,
     };
 
@@ -57,7 +59,6 @@ async function csPassword(options) {
     }
 
     let configs = readConfigFiles(global.configsDir);
-    
     if (configs == null) throw Error("config not set");
 
     let { usermanagement } = configs;
@@ -67,6 +68,9 @@ async function csPassword(options) {
             if (userKey == loginName) throw Error(util.format('user %s already exists', loginName));
         }
         usermanagement[loginName] = newUser;
+
+        checkUsermanagement(normalizeConfigs(configs));
+
         logInfo(util.format("user '%s' added", loginName));
         logOut(stringify(normalized ? normalizeUser(newUser) : simplifyUser(newUser)), { noSilent: true });
     } else {
