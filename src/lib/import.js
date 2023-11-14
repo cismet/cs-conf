@@ -927,6 +927,10 @@ export function preprocessUsermanagement(usermanagement, usergroups, configurati
     return preprocessed;
 }
 
+export function containWildcards(groupKey) {
+    return groupKey ? groupKey => /[\*\?\!]/.test(groupKey) : false;
+}
+
 export function containAnyWildcards(groupKeys) {
     return groupKeys ? groupKeys.some(groupKey => /[\*\?\!]/.test(groupKey)) : false;
 }

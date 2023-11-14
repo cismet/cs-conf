@@ -11,20 +11,19 @@ import { simplifyUsermanagement, simplifyUsergroups, simplifyDomains, simplifyCo
 import { reorganizeUsermanagement, reorganizeUsergroups, reorganizeDomains, reorganizeConfigurationAttributes } from "./reorganize";
 import { preprocessUsermanagement } from "./import";
 import { postprocessUser } from "./export";
-import { checkConfigurationAttribute, checkDomain, checkUsergroup, checkUsermanagement } from "./check";
-import { checkUser } from "../../build/lib/check";
+import { checkConfigurationAttribute, checkDomain, checkUser, checkUsergroup, checkUsermanagement } from "./check";
 
 export default async function csInspect({ configurationAttributeKey, domainKey, groupKey, userKey, aggregateConfigurationAttributeValues = false, print = false, fileTarget }) {
     let configs = readConfigFiles(global.configsDir);    
     if (configs == null) throw Error("config not set");
 
     let normalizedConfigs = normalizeConfigs(configs);
-    checkUsermanagement(normalizedConfigs);
     
-    let preprocessedUsermanagement = preprocessUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.usergroups, normalizedConfigs.configurationAttributes)
+    let preprocessedUsermanagement = preprocessUsermanagement(normalizedConfigs.usermanagement, normalizedConfigs.usergroups, normalizedConfigs.configurationAttributes);
     Object.assign(normalizedConfigs, {
         usermanagement: preprocessedUsermanagement,
     })
+    checkUsermanagement(normalizedConfigs);
 
     let type = undefined;
     let keys = [];

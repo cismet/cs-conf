@@ -4,6 +4,7 @@ import { normalizeAttribute, normalizeClass, normalizeConfig, normalizeConfigs, 
 import { readConfigFiles } from "./tools/configFiles";
 import { logOut, logVerbose, logWarn } from "./tools/tools";
 import { extractGroupAndDomain } from "./tools/cids";
+import { containWildcards } from "./import";
 
 export default async function csCheck(options) {
     let configs = readConfigFiles(global.configsDir);
@@ -103,16 +104,16 @@ export function checkUsergroup(usergroupKey, config) {
     checkConfigurationAttributeValues(normalized.configurationAttributes, config);
 }
 
-export function checkUsermanagement(config) {
+export function checkUsermanagement(configs) {
     logVerbose(" ↳ checking usermanagement");
-    for (let userKey of Object.keys(config.usermanagement)) {
-        checkUser(userKey, config);
+    for (let userKey of Object.keys(configs.usermanagement)) {
+        checkUser(userKey, configs);
     }
 }
 
-export function checkUser(userKey, config) {
+export function checkUser(userKey, configs) {
     if (!userKey) throw Error(util.format("userKey is missing"));
-    let user = config.usermanagement[userKey];
+    let user = configs.usermanagement[userKey];
     if (!user) throw Error(util.format("user '%s' not found", userKey));
 
     let normalized = normalizeUser(user);
@@ -122,15 +123,16 @@ export function checkUser(userKey, config) {
     if (normalized.password != null) throw Error(util.format("normalizeUsermanagement: [%s] password not allowed", userKey));
 
     for (let groupKey of normalized.groups) {
-        if (!config.usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
+        if (containWildcards(groupKey)) continue;
+        if (!configs.usergroups[groupKey]) throw Error(util.format("usergroup '%s' of user '%s' not found", groupKey, userKey));
     }
 
     for (let shadowUserKey of normalized.shadows) {
-        let shadowUser = config.usermanagement[shadowUserKey];
+        let shadowUser = configs.usermanagement[shadowUserKey];
         if (!shadowUser) throw Error(util.format("shadowUser '%s' not found for '%s'", shadowUserKey, userKey));
     }
 
-    checkConfigurationAttributeValues(normalized.configurationAttributes, config);
+    checkConfigurationAttributeValues(normalized.configurationAttributes, configs);
 }
 
 export function checkClasses(configs) {
