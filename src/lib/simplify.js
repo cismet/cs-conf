@@ -306,17 +306,14 @@ export function simplifyPolicyRule(policyRule, policyRuleKey) {
     }), defaultConfigPolicyRules()[policyRuleKey])
 
     clean(simplified);
-    return Object.keys(simplified).length === 0 ? undefined : simplified;
+    return Object.keys(simplified).length ? simplified : undefined;
 }
 
 export function simplifyStructure(structure, policies) {
     if (!structure) return undefined;
     let normalized = normalizeStructure(structure);
 
-    let simplified = simplifyNodes(normalized, policies);
-
-    clean(simplified);
-    return Object.keys(simplified).length ? simplified : undefined;
+    return simplifyNodes(normalized, policies);
 }
 
 
