@@ -38,7 +38,7 @@
     "buildDocker": "docker/buildImage.sh",
     "test": "mocha --require @babel/register --recursive || true",
     "postversion": "echo 'building binaries'; pkg .",
-    "deploy": "scp build/bin/csconf-linux cismet@s10222:~/docker/200-cids-live/scripts/csconf; scp build/bin/csconf-linux s10221:webspace/auslieferung/csconf; scp build/bin/csconf-win.exe s10221:webspace/auslieferung/csconf.exe"
+    "deploy": "scp build/bin/csconf-linux cismet@s10222:~/docker/200-cids-live/scripts/csconf; scp build/bin/csconf-linux cismet@s10221:webspace/auslieferung/csconf; scp build/bin/csconf-win.exe cismet@s10221:webspace/auslieferung/csconf.exe"
   },
   "pkg": {
     "assets": [
