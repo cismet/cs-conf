@@ -917,11 +917,11 @@ function prepareUsermanagement({ usermanagement, usergroups, configurationAttrib
 export function preprocessUsermanagement(usermanagement, usergroups, configurationAttributes) {
     if (!usermanagement) return usermanagement;
 
-    let preprocessed = {};
+    let preprocessed = Object.assign({}, usermanagement);
     let shadowDependencyGraph = Object.keys(usermanagement).reduce((graphed, userKey) => (graphed[userKey] = usermanagement[userKey].shadows, graphed), {});           
     let dependencySortedUsers = topologicalSort(shadowDependencyGraph);
     for (let userKey of dependencySortedUsers) {
-        let preprocessedUser = preprocessUser(userKey, usermanagement, usergroups, configurationAttributes);
+        let preprocessedUser = preprocessUser(userKey, preprocessed, usergroups, configurationAttributes);
         preprocessed[userKey] = preprocessedUser;
     }
     return preprocessed;
