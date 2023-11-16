@@ -78,7 +78,7 @@ export function checkDomain(domainKey, configs) {
     let domain = configs.domains[domainKey];
     if (!domain) throw Error(util.format("domain '%s' not found", domainKey));
 
-    let normalized = normalizeDomain(domainKey, domain);
+    let normalized = normalizeDomain(domain);
     checkConfigurationAttributeValues(normalized.configurationAttributes, configs);
 }
 
@@ -94,7 +94,7 @@ export function checkUsergroup(usergroupKey, config) {
     let usergroup = config.usergroups[usergroupKey];
     if (!usergroup) throw Error(util.format("usergroup '%s' not found", usergroupKey));
 
-    let normalized = normalizeUsergroup(usergroupKey, usergroup);
+    let normalized = normalizeUsergroup(usergroup);
 
     let groupAndDomainKeys = extractGroupAndDomain(usergroupKey);
     let domainKey = groupAndDomainKeys.domain;
@@ -244,7 +244,7 @@ export function checkConfigurationAttributeValue(configurationAttributeKey, conf
     let normalized = normalizeConfigurationAttributeValue(configurationAttributeValue);
     let normalizedConfigurationAttribute = normalizeConfigurationAttribute(configurationAttribute);
 
-    if (!normalizedConfigurationAttribute) throw Error(util.format("configurationAttribute '%s' node found", configurationAttributeKey));
+    if (!normalizedConfigurationAttribute) throw Error(util.format("configurationAttribute '%s' not found", configurationAttributeKey));    
     if (normalizedConfigurationAttribute.type == null) throw Error(util.format("'type' for configurationAttribute '%s' is missing", configurationAttributeKey));
     switch (normalizedConfigurationAttribute.type) {
         case 'action': {
