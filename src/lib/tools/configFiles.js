@@ -77,10 +77,10 @@ export function readConfigFiles(configsDir, topics) {
     let config = readConfigFile(util.format("%s/config.json", configsDir), true);
     let additionalInfos = readConfigFile(util.format("%s/additionalInfos.json", configsDir), true);
 
-    let configurationAttributes = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/configurationAttributes.json", configsDir), true) : null;
-    let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : null;
-    let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configsDir), true) : null;
-    let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configsDir), true) : null;
+    let configurationAttributes = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/configurationAttributes.json", configsDir), true) : undefined;
+    let domains = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/domains.json", configsDir), true) : undefined;
+    let usergroups = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usergroups.json", configsDir), true) : undefined;
+    let usermanagement = topics == null || topics.includes("accessControl") ? readConfigFile(util.format("%s/usermanagement.json", configsDir), true) : undefined;
     let xmlFiles = new Map();
     if (topics == null || topics.includes("accessControl")) {
         let confAttrXmlSnippetsFolder = util.format("%s/%s", configsDir, confAttrXmlSnippetsFolderConst);
@@ -93,10 +93,10 @@ export function readConfigFiles(configsDir, topics) {
         }
     }
 
-    let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configsDir), true) : null;
+    let classes = topics == null || topics.includes("classes") ? readConfigFile(util.format("%s/classes.json", configsDir), true) : undefined;
 
-    let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configsDir), true) : null;
-    let dynchildhelpers = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configsDir), true) : null;
+    let structure = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/structure.json", configsDir), true) : undefined;
+    let dynchildhelpers = topics == null || topics.includes("structure") ? readConfigFile(util.format("%s/dynchildhelpers.json", configsDir), true) : undefined;
 
     let structureSqlFiles=new Map();
     let helperSqlFiles=new Map();
