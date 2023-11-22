@@ -83,6 +83,11 @@ async function createSyncStatements(client, existingData, allCidsClasses, tables
                 if (cidsAttributes) {                
                     for (let cidsAttributeKey of Object.keys(cidsAttributes)) {
                         let cidsAttribute = cidsAttributes[cidsAttributeKey];
+
+                        if (cidsAttribute.defaultValue) {
+                            cidsAttribute.defaultValue = cidsAttribute.defaultValue.toLowerCase();
+                        }
+
                         if (!(cidsAttribute.extension_attr || cidsAttribute.oneToMany)) {
                             columnsDone.push(cidsAttributeKey);
 
@@ -450,7 +455,7 @@ async function csSync(options) {
 
     let attributesCount = Object.keys(allCidsClasses).reduce((count, cidsClassKey) => allCidsClasses[cidsClassKey].attributes ? count + Object.keys(allCidsClasses[cidsClassKey].attributes).length : count, 0);
 
-    logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, normalized.classes.length));
+    logVerbose(util.format(" ↳ %d attributes found in %d classes.", attributesCount, Object.keys(normalized.classes).length));
 
     let existingData = {
         tables : {},
@@ -538,10 +543,20 @@ async function csSync(options) {
     let tablesDone = [];
     let dropTables = [];
     let dropColumns = [];
+    let allCidsClassesArray = [];
+    let allClassesAsMap = {};
 
-    while(allCidsClasses.length > 0) {
-        let cidsClass = allCidsClasses.pop();
-        statements.push(... await createSyncStatements(client, existingData, allCidsClasses, tablesDone, cidsClass, normalized.config.sync.noDropColumns, dropColumns));
+    for (const [key, value] of Object.entries(allCidsClasses)) {
+        let object = {};
+        Object.assign(object, value, {"table": key});
+        allCidsClassesArray.push(object);
+        allClassesAsMap[key] = object
+    }
+
+    while(allCidsClassesArray.length > 0) {
+        let cidsClass = allCidsClassesArray.pop();
+
+        statements.push(... await createSyncStatements(client, existingData, allClassesAsMap, tablesDone, cidsClass, normalized.config.sync.noDropColumns, dropColumns));
     }    
     if (statements.length > 0) {
         logVerbose(statements, { table: true });
