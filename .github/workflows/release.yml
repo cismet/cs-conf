@@ -45,7 +45,7 @@ jobs:
       - name: Build the binaries
         run: npm run pkg
       - name: .npmrc
-        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > dist/.npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > .npmrc
       - name: Publish the package
         # run: npm publish --access public
         run: npm publish --access public --dry-run
