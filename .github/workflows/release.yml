@@ -42,11 +42,12 @@ jobs:
         run: npm run build
         env:
           CI: false
+      - name: Build the binaries
+        run: npm run pkg
+
       - name: show the build folder
         run: ls -R build
 
-      - name: Build the binaries
-        run: npm run pkg
       - name: .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > .npmrc
       - name: Publish the package
