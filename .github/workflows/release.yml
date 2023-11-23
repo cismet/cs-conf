@@ -1,4 +1,4 @@
-name: Release package
+name: Release csconf
 on:
   workflow_dispatch:
     inputs:
