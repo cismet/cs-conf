@@ -36,6 +36,8 @@ jobs:
         run: npm version ${{ env.RELEASE_TYPE }}
         env:
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+      - name: Get the new version number
+        run: echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
       - name: Install Packages
         run: npm install
       - name: Build the package
@@ -80,8 +82,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref == 'refs/tags/' && github.ref_name || 'default-tag' }}
-          release_name: Release ${{ github.ref == 'refs/tags/' && github.ref_name || 'default' }}
+          tag_name: v${{ env.NEW_VERSION }}
+          release_name: Release v${{ env.NEW_VERSION }}
           draft: false
           prerelease: false
           body: "Release of csconf by triggered Github Action"
