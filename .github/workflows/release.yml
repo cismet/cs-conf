@@ -108,3 +108,23 @@ jobs:
           asset_path: ./build/bin/csconf-linux-x64
           asset_name: csconf
           asset_content_type: application/octet-stream
+
+      - name: Upload Mac x64 Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf-macos-x64
+          asset_name: csconf-macos-x64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Mac Arm Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf-macos-arm64
+          asset_name: csconf-macos-arm64
+          asset_content_type: application/octet-stream
