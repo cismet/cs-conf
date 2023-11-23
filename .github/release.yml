@@ -1,0 +1,107 @@
+name: Release package
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: "Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease"
+        required: true
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+
+      - name: Install OpenSSL and OSSLSIGNCODE
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl osslsigncode
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Git configuration
+        run: |
+          git config --global user.email "902348742+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: Change release version
+        run: npm version ${{ env.RELEASE_TYPE }}
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+      - name: Install Packages
+        run: yarn install
+      - name: Build the package
+        run: yarn build
+        env:
+          CI: false
+      - name: Build the binaries
+        run: yarn pkg
+      - name: .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > dist/.npmrc
+      - name: Publish the package
+        # run: npm publish --access public
+        run: npm publish --access public --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push changes to repository
+        run: git push origin dev && git push --tags
+
+      - name: Setup Private Key
+        run: |
+          echo "${{ secrets.CSCONF_PRIVATE_KEY }}" > private.key
+
+      - name: Setup CERT
+        run: |
+          echo "${{ secrets.CSCONF_CERTIFICATE_CRT }}" > certificate.crt
+
+      - name: Generate pkcs12
+        run: |
+          openssl pkcs12 -export -out certificate.pfx -inkey private.key -in certificate.crt -passout pass:${{ secrets.OSSLSIGNCODE4CSCONF }}
+
+      - name: Sign Executable
+        run: |
+          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win.exe -out build/bin/csconf.exe
+      - name: Sign Executable 64
+        run: |
+          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf64.exe
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: "Release of csconf by triggered Github Action"
+          commitish: ${{ github.sha }}
+
+      - name: Upload Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf.exe
+          asset_name: csconf.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Executable 64 as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf64.exe
+          asset_name: csconf64.exe
+          asset_content_type: application/octet-stream
