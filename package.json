@@ -30,11 +30,13 @@
     "@babel/preset-env": "^7.18.2",
     "@babel/register": "^7.17.7",
     "chai": "^4.1.2",
-    "mocha": "^10.0.0"
+    "mocha": "^10.0.0",
+    "pkg": "^5.8.1"
   },
   "scripts": {
     "start": "babel-node src/cs-conf.js",
     "build": "babel -d ./build src/ --copy-files && chmod +x build/cs-conf.js && mv build/cs-conf.js build/csconf",
+    "pkg": "pkg .",
     "buildDocker": "docker/buildImage.sh",
     "test": "mocha --require @babel/register --recursive || true",
     "postversion": "echo 'building binaries'; pkg .",
@@ -48,6 +50,7 @@
     "targets": [
       "node18-linux-x64",
       "node18-macos-x64",
+      "node18-macos-arm64",
       "node18-win-x64"
     ]
   }
