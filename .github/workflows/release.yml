@@ -84,10 +84,7 @@ jobs:
         id: get_commits
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0)
-          COMMIT_MESSAGES=$(git log $LAST_TAG..HEAD --pretty=format:"* %s")
-          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
-          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
+          git log $LAST_TAG..HEAD --pretty=format:"* %s" > commit_messages.txt
 
       - name: Create Release
         id: create_release
@@ -100,10 +97,10 @@ jobs:
           draft: false
           prerelease: false
           body: |
-            ${{ github.event.inputs.release-description }}
+            ### ${{ github.event.inputs.release-description }}
 
-            ## Commits Since Last Release
-            ${{ env.COMMIT_MESSAGES }}
+            #### Commits Since Last Release
+            $(cat commit_messages.txt)
           commitish: ${{ github.sha }}
 
       - name: Upload Windows Executable as Release Asset
