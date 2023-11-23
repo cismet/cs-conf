@@ -72,7 +72,7 @@ jobs:
 
       - name: Sign Executable 64
         run: |
-          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf64.exe
+          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf.exe
 
       - name: Create Release
         id: create_release
@@ -95,14 +95,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./build/bin/csconf.exe
           asset_name: csconf.exe
-          asset_content_type: application/octet-stream
-
-      - name: Upload Executable 64 as Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/bin/csconf64.exe
-          asset_name: csconf64.exe
           asset_content_type: application/octet-stream
