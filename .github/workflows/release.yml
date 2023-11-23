@@ -85,17 +85,15 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0)
           git log $LAST_TAG..HEAD --pretty=format:"* %s" > commit_messages.txt
-      - name: Prepare release description
-        id: prepare_description
+      - name: Concatenate release description and commit messages
         run: |
-          echo "RELEASE_NOTES=$(cat << EOF
-          ### ${{ github.event.inputs.release-description }}
-
-          #### Commits Since Last Release
-          $(cat commit_messages.txt)
-          EOF
-          )" >> $GITHUB_ENV
-
+          echo "## ${{ github.event.inputs.release-description }}" > full_release_notes.txt
+          echho "" >> full_release_notes.txt
+          echo "#### Commits Since Last Release" >> full_release_notes.txt
+          cat commit_messages.txt >> full_release_notes.txt
+      - name: Read release notes
+        id: release_notes
+        run: echo "RELEASE_NOTES=$(< full_release_notes.txt)" >> $GITHUB_ENV
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
