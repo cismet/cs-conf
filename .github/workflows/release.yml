@@ -70,9 +70,6 @@ jobs:
         run: |
           openssl pkcs12 -export -out certificate.pfx -inkey private.key -in certificate.crt -passout pass:${{ secrets.OSSLSIGNCODE4CSCONF }}
 
-      - name: Sign Executable
-        run: |
-          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win.exe -out build/bin/csconf.exe
       - name: Sign Executable 64
         run: |
           osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf64.exe
