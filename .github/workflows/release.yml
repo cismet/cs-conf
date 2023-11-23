@@ -85,6 +85,16 @@ jobs:
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0)
           git log $LAST_TAG..HEAD --pretty=format:"* %s" > commit_messages.txt
+      - name: Prepare release description
+        id: prepare_description
+        run: |
+          echo "RELEASE_NOTES=$(cat << EOF
+          ### ${{ github.event.inputs.release-description }}
+
+          #### Commits Since Last Release
+          $(cat commit_messages.txt)
+          EOF
+          )" >> $GITHUB_ENV
 
       - name: Create Release
         id: create_release
@@ -96,11 +106,7 @@ jobs:
           release_name: Release v${{ env.NEW_VERSION }}
           draft: false
           prerelease: false
-          body: |
-            ### ${{ github.event.inputs.release-description }}
-
-            #### Commits Since Last Release
-            $(cat commit_messages.txt)
+          body: ${{ env.RELEASE_NOTES }}
           commitish: ${{ github.sha }}
 
       - name: Upload Windows Executable as Release Asset
