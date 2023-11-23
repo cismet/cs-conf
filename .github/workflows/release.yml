@@ -5,6 +5,10 @@ on:
       release-type:
         description: "Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease"
         required: true
+      release-description:
+        description: "Main description for the release"
+        required: false # Set to true if you want to enforce providing a description
+        default: "Release of csconf by triggered Github Action"
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -76,6 +80,15 @@ jobs:
         run: |
           osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf.exe
 
+      - name: Get commit messages
+        id: get_commits
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0)
+          COMMIT_MESSAGES=$(git log $LAST_TAG..HEAD --pretty=format:"* %s")
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -86,7 +99,11 @@ jobs:
           release_name: Release v${{ env.NEW_VERSION }}
           draft: false
           prerelease: false
-          body: "Release of csconf by triggered Github Action"
+          body: |
+            ${{ github.event.inputs.release-description }}
+
+            ## Commits Since Last Release
+            ${{ env.COMMIT_MESSAGES }}
           commitish: ${{ github.sha }}
 
       - name: Upload Windows Executable as Release Asset
