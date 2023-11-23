@@ -37,13 +37,13 @@ jobs:
         env:
           RELEASE_TYPE: ${{ github.event.inputs.release-type }}
       - name: Install Packages
-        run: yarn install
+        run: npm install
       - name: Build the package
-        run: yarn build
+        run: npm run build
         env:
           CI: false
       - name: Build the binaries
-        run: yarn pkg
+        run: npm run pkg
       - name: .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > dist/.npmrc
       - name: Publish the package
