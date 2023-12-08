@@ -1,0 +1,56 @@
+name: Debug Release csconf
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: "Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease"
+        required: true
+      release-description:
+        description: "Main description for the release"
+        required: false # Set to true if you want to enforce providing a description
+        default: "Release of csconf by triggered Github Action"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+
+      - name: Install OpenSSL and OSSLSIGNCODE
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl osslsigncode
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Git configuration
+        run: |
+          git config --global user.email "902348742+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+
+      - name: Push changes to repository
+        run: git push origin dev && git push --tags
+
+      - name: Setup Private Key
+        run: |
+          echo "${{ secrets.CSCONF_PRIVATE_KEY }}" > private.key
+      - name: Setup CERT
+        run: |
+          echo "${{ secrets.CSCONF_CERTIFICATE_CRT }}" > certificate.crt
+      - name: debug key stuff
+        run: |
+          cat private.key
+          cat certificate.crt
+
+      - name: Generate pkcs12
+        run: |
+          openssl pkcs12 -export -out certificate.pfx -inkey private.key -in certificate.crt -passout pass:${{ secrets.OSSLSIGNCODE4CSCONF }}
