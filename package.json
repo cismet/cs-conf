@@ -1,6 +1,6 @@
 {
   "name": "@cismet/csconf",
-  "version": "2.3.10-RELEASECANDIDATE-3",
+  "version": "2.3.10-RELEASECANDIDATE-4",
   "main": "src/cs-conf.js",
   "license": "MIT",
   "bin": {
