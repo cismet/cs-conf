@@ -1,0 +1,135 @@
+name: Release csconf
+on:
+  workflow_dispatch:
+    inputs:
+      release-type:
+        description: "Release type (one of): patch, minor, major, prepatch, preminor, premajor, prerelease"
+        required: true
+      release-description:
+        description: "Main description for the release"
+        required: false # Set to true if you want to enforce providing a description
+        default: "Release of csconf by triggered Github Action"
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: write
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+
+      - name: Install OpenSSL and OSSLSIGNCODE
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl osslsigncode
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Git configuration
+        run: |
+          git config --global user.email "902348742+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: Change release version
+        run: npm version ${{ env.RELEASE_TYPE }}
+        env:
+          RELEASE_TYPE: ${{ github.event.inputs.release-type }}
+      - name: Get the new version number
+        run: echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+      - name: Install Packages
+        run: npm install
+      - name: Build the package
+        run: npm run build
+        env:
+          CI: false
+      - name: Build the binaries
+        run: npm run pkg
+
+      - name: show the build folder
+        run: ls -R build
+
+      - name: .npmrc
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > .npmrc
+      - name: Publish the package
+        # run: npm publish --access public
+        run: npm publish --access public --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push changes to repository
+        run: git push origin dev && git push --tags
+
+      - name: Setup Private Key
+        run: |
+          echo "${{ secrets.CSCONF_PRIVATE_KEY }}" > private.key
+
+      - name: Setup CERT
+        run: |
+          echo "${{ secrets.CSCONF_CERTIFICATE_CRT }}" > certificate.crt
+
+      - name: Generate pkcs12
+        run: |
+          openssl pkcs12 -export -out certificate.pfx -inkey private.key -in certificate.crt -passout pass:${{ secrets.OSSLSIGNCODE4CSCONF }}
+
+      - name: Sign Executable 64
+        run: |
+          osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf.exe
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          release_name: Release v${{ env.NEW_VERSION }}
+          draft: false
+          prerelease: false
+          body: |
+            ${{ github.event.inputs.release-description }}
+          commitish: ${{ github.sha }}
+
+      - name: Upload Windows Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf.exe
+          asset_name: csconf.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload Linux Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf-linux-x64
+          asset_name: csconf
+          asset_content_type: application/octet-stream
+
+      - name: Upload Mac x64 Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf-macos-x64
+          asset_name: csconf-macos-x64
+          asset_content_type: application/octet-stream
+
+      - name: Upload Mac Arm Executable as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./build/bin/csconf-macos-arm64
+          asset_name: csconf-macos-arm64
+          asset_content_type: application/octet-stream
