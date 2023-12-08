@@ -57,8 +57,7 @@ jobs:
       - name: .npmrc
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_PUBLISHING_TOKEN }}" > .npmrc
       - name: Publish the package
-        # run: npm publish --access public
-        run: npm publish --access public
+        run: npm publish --access public --dry-run
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Push changes to repository
