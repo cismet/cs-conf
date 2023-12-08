@@ -66,10 +66,13 @@ jobs:
       - name: Setup Private Key
         run: |
           echo "${{ secrets.CSCONF_PRIVATE_KEY }}" > private.key
-
       - name: Setup CERT
         run: |
           echo "${{ secrets.CSCONF_CERTIFICATE_CRT }}" > certificate.crt
+      - name: debug key stuff
+        run: |
+          cat private.key
+          cat certificate.crt
 
       - name: Generate pkcs12
         run: |
