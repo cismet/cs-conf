@@ -80,6 +80,15 @@ jobs:
         run: |
           osslsigncode sign -pkcs12 certificate.pfx -pass ${{ secrets.OSSLSIGNCODE4CSCONF }} -n "csconf by cismet.de" -i https://updates.cismet.de/csconf/sign_csconf_certificate.crt.txt -in build/bin/csconf-win-x64.exe -out build/bin/csconf.exe
 
+      - name: Get commit messages
+        id: get_commits
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0)
+          COMMIT_MESSAGES=$(git log $LAST_TAG..HEAD --pretty=format:"* %s")
+          echo "COMMIT_MESSAGES<<EOF" >> $GITHUB_ENV
+          echo "$COMMIT_MESSAGES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -91,7 +100,10 @@ jobs:
           draft: false
           prerelease: false
           body: |
-          ### ${{ github.event.inputs.release-description }}
+            ${{ github.event.inputs.release-description }}
+
+            ## Commits Since Last Release
+            ${{ env.COMMIT_MESSAGES }}
           commitish: ${{ github.sha }}
 
       - name: Upload Windows Executable as Release Asset
