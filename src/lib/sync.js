@@ -1,5 +1,6 @@
 import fs from 'fs';
 import os from 'os';
+import path from 'path';
 import util from 'util';
 import wcmatch from 'wildcard-match';
 import csExport from './export';
@@ -430,8 +431,8 @@ async function csSync(options) {
             let prefix = util.format("%s_%s:%d", client.database, client.host, client.port);
             let formattedDate = new Date().toISOString().replace(/(\.\d{3})|[^\d]/g,'');
             let tmpDir = os.tmpdir();
-
-            targetDir = util.format("/%s/sync_%s.%s", tmpDir, prefix, formattedDate);
+            let fileName = util.format("sync_%s.%s", prefix, formattedDate);
+            targetDir = path.join(tmpDir, fileName);
         }
     
         await csExport({ targetDir });
