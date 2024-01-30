@@ -1,35 +1,36 @@
 import util from 'util';
 import { logInfo, logVerbose } from './tools/tools';
+import axios from 'axios';
 
 async function csVersion(options) {
-    let  { } = options;
+    let {} = options;
 
-    process.exit(!await checkVersion());
+    process.exit(!(await checkVersion()));
 }
 
 export async function checkVersion() {
-	let owner = 'cismet';
-	let repo = 'cs-conf';
+    let url = `https://api.github.com/repos/cismet/cs-conf/releases/latest`;
 
-	let url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
-	let response = await fetch(url);
+    try {
+        let response = await axios.get(url);
 
-	if (!response.ok) {
-		throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
-	}
-
-	let latestJson = await response.json();
-
-	let latestVersion = latestJson.tag_name;
-
-	let versionTag = util.format('v%s', global.version);
-	if (latestVersion === versionTag) {
-		logVerbose(`You are running the latest version (${versionTag}).`);
-        return true;
-	} else {
-		logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at https://github.com/${owner}/${repo}/releases/.`);
-        return false;
-	}
+        if (response.status === 200) {
+            let latestJson = response.data;
+            let latestVersion = latestJson.tag_name;
+            let versionTag = util.format('v%s', global.version);
+            if (latestVersion === versionTag) {
+                logVerbose(`You are running the latest version (${versionTag}).`);
+                return true;
+            } else {
+                logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at https://github.com/${owner}/${repo}/releases/.`);
+                return false;
+            }
+        } else {
+            throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        }
+    } catch (error) {
+        throw error;
+    }
 }
 
 export default csVersion;
