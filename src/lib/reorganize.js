@@ -163,14 +163,14 @@ export function reorganizeAttributes(attributes, order = 'auto') {
 
     for (let attributeKey of sortedAttributeKeys) {                    
         let attribute = attributes[attributeKey];
-        reorganized[attributeKey] = Object.assign({
+        reorganized[attributeKey] = Object.assign({}, attribute, {
             readPerms: attribute.readPerms ? [...attribute.readPerms].sort((a, b) => { 
                 return a.localeCompare(b);
             }) : attribute.readPerms, 
             writePerms: attribute.writePerms ? [...attribute.writePerms].sort((a, b) => { 
                 return a.localeCompare(b);
             }) : attribute.writePerms,
-        }, attribute)
+        })
     }
     return reorganized;         
 }
@@ -185,7 +185,7 @@ export function reorganizeClasses(classes) {
     let reorganized = {};
     for (let classKey of sortedClassKeys) {
         let clazz = classes[classKey];
-        reorganized[classKey] = Object.assign({
+        reorganized[classKey] = Object.assign({}, clazz, {
             readPerms: clazz.readPerms ? [...clazz.readPerms].sort((a, b) => { 
                 return a.localeCompare(b);
             }) : clazz.readPerms,
@@ -193,7 +193,7 @@ export function reorganizeClasses(classes) {
                 return a.localeCompare(b);
             }) : clazz.writePerms,
             attributes: reorganizeAttributes(clazz.attributes, clazz.attributesOrder),
-        }, clazz);
+        });
     }
     
     return reorganized;
