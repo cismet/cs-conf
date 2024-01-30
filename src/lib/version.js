@@ -22,7 +22,7 @@ export async function checkVersion() {
                 logVerbose(`You are running the latest version (${versionTag}).`);
                 return true;
             } else {
-                logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at https://github.com/${owner}/${repo}/releases/.`);
+                logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at https://github.com/cismet/cs-conf/releases/.`);
                 return false;
             }
         } else {
