@@ -1,6 +1,6 @@
 {
   "name": "@cismet/csconf",
-  "version": "2.5.2",
+  "version": "2.5.1",
   "main": "src/cs-conf.js",
   "license": "MIT",
   "bin": {
@@ -44,7 +44,8 @@
   },
   "pkg": {
     "assets": [
-      "ddl/**/*"
+      "ddl/**/*",
+      "node_modules/axios/dist/node/axios.cjs"
     ],
     "outputPath": "build/bin",
     "targets": [
