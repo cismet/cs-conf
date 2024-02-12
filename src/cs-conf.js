@@ -21,7 +21,7 @@ import csReorganize from './lib/reorganize';
 import csSimplify from './lib/simplify';
 import csInspect from './lib/inspect';
 import csCheck from './lib/check';
-import csVersion, { checkVersion } from './lib/version';
+import csVersion, { checkVersionForCommand } from './lib/version';
 
 import { readConfigJsonFile } from './lib/tools/configFiles';
 import { clean, logDebug, logErr } from './lib/tools/tools';
@@ -61,7 +61,7 @@ const targetOption = {
 
 async function main() {	
 	let program = new commander.Command();
-	program.version(version, '-v, --version', 'output the current version');
+	program.version(version, '--version', 'output the current version');
 
 	let commands = new Map();
 	program.command('\t');
@@ -82,6 +82,8 @@ async function main() {
 	);
 	program.command('\t');
 	commands.set('version', program.command('version').description('checks for new version of cs-conf')
+		.option(silentOption.flags, silentOption.description, silentOption.default)
+		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.action(async (cmd) => {
 			cs('version', csVersion, {}, cmd);
 		})
@@ -361,10 +363,6 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		global.debug = cmd.debug !== undefined;	
 		global.version = version;
 
-		if (functionName != 'version') {
-			await checkVersion();
-		}
-
 		try {
 			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;			
 		} catch (e1) {
@@ -376,6 +374,7 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		}
 		global.configsDir = cmd.config != null ? path.dirname(path.resolve(cmd.config)) : null;
 
+		await checkVersionForCommand(functionName);
 		await csFunction(Object.assign({}, options, { main: true }));
 	} catch (e) {
 		let logTemplate = "Error while execution of %s:";

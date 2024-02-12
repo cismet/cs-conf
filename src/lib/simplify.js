@@ -63,10 +63,12 @@ import {
     normalizeUserInspectedPermissions,
     normalizeConfigurationAttribute,
     normalizeConfigurationAttributeValue,
-    normalizeConfigurationAttributeInspected, 
+    normalizeConfigurationAttributeInspected,
+    normalizeConfigVersion, 
 } from "./normalize";
 import { clean } from "./tools/tools";
 import stringify from "json-stringify-pretty-compact";
+import { defaultConfigVersion } from "../../build/lib/tools/defaultObjects";
 
 // ---
 
@@ -112,6 +114,7 @@ export function simplifyConfig(config) {
         connection: simplifyConfigConnection(normalized.connection),
         policies: simplifyConfigPolicies(normalized.policies),
         policyRules: simplifyConfigPolicyRules(normalized.policyRules), 
+        version: simplifyConfigVersion(normalized.version),
         sync: simplifyConfigSync(normalized.sync),
         normalized: false,
     }), defaultConfig());
@@ -151,6 +154,18 @@ export function simplifyConfigSync(sync) {
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         normalized: false,
     }), defaultConfigSync());    
+
+    clean(simplified);
+    return Object.keys(simplified).length ? simplified : undefined;
+}
+
+export function simplifyConfigVersion(version) {
+    if (!version) return undefined;
+    let normalized = normalizeConfigVersion(version)
+
+    let simplified = copyFromTemplate(Object.assign({}, normalized, {
+        normalized: false,
+    }), defaultConfigVersion());    
 
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;

@@ -1,18 +1,20 @@
 import util from 'util';
-import { logInfo, logVerbose } from './tools/tools';
+import { logInfo, logVerbose, logWarn } from './tools/tools';
 import axios from 'axios';
+import { normalize } from 'path';
+import { normalizeConfig } from './normalize';
 
 async function csVersion(options) {
     let {} = options;
 
-    process.exit(!(await checkVersion()));
+    process.exit(!(await checkVersion(normalizeConfig())));
 }
 
-export async function checkVersion() {
-    let url = `https://api.github.com/repos/cismet/cs-conf/releases/latest`;
+export async function checkVersion(config) {
+    let checkUrl = config.version.checkUrl;
 
     try {
-        let response = await axios.get(url);
+        let response = await axios.get(checkUrl);
 
         if (response.status === 200) {
             let latestJson = response.data;
@@ -29,7 +31,18 @@ export async function checkVersion() {
             throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
         }
     } catch (error) {
-        throw error;
+        logWarn("could not check the version", error);
+    }
+}
+
+export async function checkVersionForCommand(command) {
+    let config = global.config || normalizeConfig();
+    if (command != 'version') {
+        let checkForCommands = config.version.checkForCommands;
+        console.log(checkForCommands);
+        if (checkForCommands == "all" || checkForCommands.includes(command)) {
+            await checkVersion(config);
+        }
     }
 }
 

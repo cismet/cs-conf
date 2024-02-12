@@ -27,6 +27,7 @@ import {
     defaultUserInspectedPermissions,
     defaultConfigs,
     defaultAttributePrimary,
+    defaultConfigVersion,
 } from "./tools/defaultObjects";
 
 // ---
@@ -63,6 +64,7 @@ export function normalizeConfigs(configs = {}) {
 export function normalizeConfig(config = {}) {
     let normalized = config.normalized ? config : Object.assign(defaultConfig(), config, {
         connection: normalizeConfigConnection(config.connection),
+        version: normalizeConfigVersion(config.version),
         sync: normalizeConfigSync(config.sync),
         policies: normalizeConfigPolicies(config.policies),
         policyRules: normalizeConfigPolicyRules(config.policyRules), 
@@ -80,6 +82,13 @@ export function normalizeConfigConnection(connection = {}) {
 
 export function normalizeConfigSync(sync = {}) {
     let normalized = sync.normalized ? sync : Object.assign(defaultConfigSync(), sync, { 
+        normalized: true,
+    });
+    return normalized;
+}
+
+export function normalizeConfigVersion(sync = {}) {
+    let normalized = sync.normalized ? sync : Object.assign(defaultConfigVersion(), sync, { 
         normalized: true,
     });
     return normalized;

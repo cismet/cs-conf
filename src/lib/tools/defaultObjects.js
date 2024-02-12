@@ -23,6 +23,7 @@ export const defaultConfig = () => ({
     schema: 'public',
     policies: defaultConfigPolicies(),
     policyRules: defaultConfigPolicyRules(),
+    version: defaultConfigVersion(),
     sync: defaultConfigSync(),
     maxFileLength: 80,
     normalized: false,
@@ -33,6 +34,11 @@ export const defaultConfigConnection = () => ({
     user: null,
     password: null,
     normalized: false,
+});
+
+export const defaultConfigVersion = () => ({
+    "checkForCommands": "all",
+    "checkUrl": "https://api.github.com/repos/cismet/cs-conf/releases/latest",
 });
 
 export const defaultConfigSync = () => ({
