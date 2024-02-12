@@ -67,7 +67,6 @@ import {
     normalizeConfigVersion, 
 } from "./normalize";
 import { clean } from "./tools/tools";
-import stringify from "json-stringify-pretty-compact";
 import { defaultConfigVersion } from "../../build/lib/tools/defaultObjects";
 
 // ---

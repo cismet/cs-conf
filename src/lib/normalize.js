@@ -87,8 +87,8 @@ export function normalizeConfigSync(sync = {}) {
     return normalized;
 }
 
-export function normalizeConfigVersion(sync = {}) {
-    let normalized = sync.normalized ? sync : Object.assign(defaultConfigVersion(), sync, { 
+export function normalizeConfigVersion(version = {}) {
+    let normalized = version.normalized ? version : Object.assign(defaultConfigVersion(), version, { 
         normalized: true,
     });
     return normalized;
