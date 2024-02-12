@@ -39,6 +39,7 @@ export const defaultConfigConnection = () => ({
 export const defaultConfigVersion = () => ({
     checkForCommands: "all",
     checkUrl: "https://api.github.com/repos/cismet/cs-conf/releases/latest",
+    releasesUrl: "https://github.com/cismet/cs-conf/releases/",
 });
 
 export const defaultConfigSync = () => ({

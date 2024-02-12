@@ -24,7 +24,8 @@ export async function checkVersion(config) {
                 logVerbose(`You are running the latest version (${versionTag}).`);
                 return true;
             } else {
-                logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at https://github.com/cismet/cs-conf/releases/.`);
+                let releasesUrl = "https://github.com/cismet/cs-conf/releases/";
+                logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at ${releasesUrl}.`);
                 return false;
             }
         } else {
