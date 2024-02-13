@@ -15,6 +15,13 @@ export const defaultConfigs = () => ({
 });
 
 //config
+export const defaultSettings = () => ({
+    formatVersion: 2,
+    version: defaultSettingsVersion(),
+    normalized: false,
+});
+
+//config
 export const defaultConfig = () => ({
     formatVersion: 1,
     configsDir: '.',
@@ -23,7 +30,6 @@ export const defaultConfig = () => ({
     schema: 'public',
     policies: defaultConfigPolicies(),
     policyRules: defaultConfigPolicyRules(),
-    version: defaultConfigVersion(),
     sync: defaultConfigSync(),
     maxFileLength: 80,
     normalized: false,
@@ -36,7 +42,7 @@ export const defaultConfigConnection = () => ({
     normalized: false,
 });
 
-export const defaultConfigVersion = () => ({
+export const defaultSettingsVersion = () => ({
     checkForCommands: "all",
     checkUrl: "https://api.github.com/repos/cismet/cs-conf/releases/latest",
     releasesUrl: "https://github.com/cismet/cs-conf/releases/",

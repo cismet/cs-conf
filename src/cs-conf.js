@@ -23,8 +23,9 @@ import csInspect from './lib/inspect';
 import csCheck from './lib/check';
 import csVersion, { checkVersionForCommand } from './lib/version';
 
-import { readConfigJsonFile } from './lib/tools/configFiles';
+import { readConfigJsonFile, readSettingsJsonFile } from './lib/tools/configFiles';
 import { clean, logDebug, logErr } from './lib/tools/tools';
+import csSettings from './lib/settings';
 
 global.rootSrcDir = __dirname;
 global.silent = false;
@@ -65,10 +66,29 @@ async function main() {
 
 	let commands = new Map();
 	program.command('\t');
+	commands.set('settings', program.command('settings').description('prints or creates a new settings file')
+		.option('-N, --normalized', 'normalize the settings file')
+		.option('-S, --simplified', 'simplify the settings file')
+		.option('-W, --write', 'writes the settings file')
+		.option('-P, --print', 'prints the settings file')
+		.option(silentOption.flags, silentOption.description, silentOption.default)
+		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
+		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.action(async (cmd) => {
+			cs('config', csSettings, {
+				show: cmd.show !== undefined,
+				normalize: cmd.normalized !== undefined,
+				simplify: cmd.simplified !== undefined,
+				print: cmd.print !== undefined,
+				write: cmd.write !== undefined,
+			}, cmd);
+		})
+	);
+	program.command('\t');
 	commands.set('config', program.command('config').description('creates a new config file')
 		.option(runtimePropertiesOption.flags, runtimePropertiesOption.description, runtimePropertiesOption.default)
 		.option("-f, --file <filepath>", "the config file", "config.json")
-		.option('-N, --normalized', 'normalize the config')
+		.option('-N, --normalized', 'normalize the config file')
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
@@ -362,6 +382,8 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		global.verbose = cmd.verbose !== undefined;
 		global.debug = cmd.debug !== undefined;	
 		global.version = version;
+
+		global.settings = readSettingsJsonFile();
 
 		try {
 			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;			

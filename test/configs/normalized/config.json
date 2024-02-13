@@ -33,12 +33,6 @@
             "normalized": true
         }
     },
-    "version": {
-        "checkForCommands": "all",
-        "checkUrl": "https://api.github.com/repos/cismet/cs-conf/releases/latest",
-        "releasesUrl": "https://github.com/cismet/cs-conf/releases/",
-        "normalized": true
-    },
     "sync": {
         "noDropTables": [],
         "noDropColumns": [],

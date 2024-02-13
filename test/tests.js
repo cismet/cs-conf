@@ -11,6 +11,7 @@ import {
   normalizeUsergroups,
   normalizeUsermanagement,
   normalizeConfigs,
+  normalizeSettings,
 } from "../src/lib/normalize";
 import {
   reorganizeClasses,
@@ -31,6 +32,7 @@ import {
   simplifyUsergroups,
   simplifyUsermanagement,
   simplifyConfigs,
+  simplifySettings,
 } from "../src/lib/simplify";
 import { checkConfigs } from "../src/lib/check";
 
@@ -40,6 +42,12 @@ const folderNormalize = "./test/configs/normalize";
 const folderNormalized = "./test/configs/normalized";
 
 const allFunctions = {
+    settings: {
+        load: (path) => readConfigFile(util.format("%s/settings.json", path)),
+        normalize: normalizeSettings,
+        simplify: simplifySettings,
+        reorganize: null,
+    },
     configs: {
         load: (path) => Object.assign(readConfigFiles(path), path == folderNormalized ? { normalized: true } : undefined),
         normalize: normalizeConfigs,

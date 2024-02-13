@@ -1,14 +1,37 @@
 import fs from 'fs';
 import util from 'util';
 import stringify from 'json-stringify-pretty-compact';
-import { extname } from 'path';
+import path, { extname } from 'path';
+import os from 'os';
 import { logOut, logVerbose } from './tools';
-import { normalizeConfig } from '../normalize';
+import { normalizeConfig, normalizeSettings } from '../normalize';
 import { version } from '../../../package.json';
 
 const structureDynamicChildrenFolderConst = "structure-dyn-children-stmnts";
 const structureHelperStatementsFolderConst = "structure-helper-stmnts";
 const confAttrXmlSnippetsFolderConst = "xml-config-attrs";
+
+export function getSettingsDir() {
+    let settingsDir = path.join(os.homedir(), '.csconf');
+    return settingsDir;
+}
+
+export function getSettingsJsonFile() {
+    let settingsFile = path.join(getSettingsDir(), 'settings.json');
+    return settingsFile;
+}
+
+export function readSettingsJsonFile(settingsFile = getSettingsJsonFile()) {
+    let settings = {};
+    if (fs.existsSync(settingsFile)) {
+        logVerbose(util.format("Reading settings file '%s' ...", settingsFile));
+        Object.assign(settings, readConfigFile(settingsFile, true));
+    }
+    let normalized = normalizeSettings(settings);
+    let majorVersion = getFormatVersion();
+    if (normalized.formatVersion != majorVersion) throw Error(util.format("the format version of the configuration files (%d) not compatible with the major version of csconf (%d)", normalized.formatVersion, majorVersion));
+    return normalized;
+}
 
 export function readConfigJsonFile(file) {    
     if (!fs.existsSync(file)) throw Error(util.format("config file '%s' doesn't exist", file));
@@ -39,7 +62,7 @@ export function readConfigFile(file, sub = false) {
 }
 
 export function writeConfigFile(config, file, sub = false) {    
-    writeOrDeleteFile(config != null ? stringify(config, { maxLength: global.config.maxFileLength }): null, file, { sub });
+    writeOrDeleteFile(config != null ? stringify(config, { maxLength: global.config ? global.config.maxFileLength : 80 }): null, file, { sub });
 }
 
 function writeOrDeleteFile(content, file, { sub = false, verboseOnly = true }) {    

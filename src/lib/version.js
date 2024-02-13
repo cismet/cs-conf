@@ -1,13 +1,11 @@
 import util from 'util';
 import { logInfo, logVerbose, logWarn } from './tools/tools';
 import axios from 'axios';
-import { normalize } from 'path';
-import { normalizeConfig } from './normalize';
 
 async function csVersion(options) {
     let {} = options;
 
-    let versionIsOk = await checkVersion(normalizeConfig());
+    let versionIsOk = await checkVersion();
     if (versionIsOk) {
         let infoText = util.format('You are using the latest version (v%s).', global.version);
         logInfo(infoText);
@@ -16,8 +14,9 @@ async function csVersion(options) {
     process.exit(!versionIsOk);
 }
 
-export async function checkVersion(config) {
-    let checkUrl = config.version.checkUrl;
+export async function checkVersion() {
+    let versionSettings = global.settings.version;
+    let checkUrl = versionSettings.checkUrl;
 
     try {
         let response = await axios.get(checkUrl);
@@ -33,7 +32,7 @@ export async function checkVersion(config) {
                 logVerbose(`You are running the latest version (${versionTag}).`);
                 return true;
             } else {
-                let releasesUrl = config.version.releasesUrl;
+                let releasesUrl = versionSettings.releasesUrl;
                 logInfo(`You are currently using an outdated version (${versionTag}). A new version (${latestVersion}) is available at ${releasesUrl}.`);
                 return false;
             }
@@ -46,11 +45,10 @@ export async function checkVersion(config) {
 }
 
 export async function checkVersionForCommand(command) {
-    let config = global.config || normalizeConfig();
     if (command != 'version') {
-        let checkForCommands = config.version.checkForCommands;
+        let checkForCommands = settings.version.checkForCommands;
         if (checkForCommands == "all" || checkForCommands.includes(command)) {
-            await checkVersion(config);
+            await checkVersion();
         }
     }
 }

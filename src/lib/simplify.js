@@ -30,6 +30,8 @@ import {
     defaultUserInspectedPermissions,
     defaultUserGroupInspected,
     defaultConfigs,
+    defaultSettings,
+    defaultSettingsVersion,
 } from "./tools/defaultObjects";
 
 import { 
@@ -64,10 +66,10 @@ import {
     normalizeConfigurationAttribute,
     normalizeConfigurationAttributeValue,
     normalizeConfigurationAttributeInspected,
-    normalizeConfigVersion, 
+    normalizeSettingsVersion,
+    normalizeSettings, 
 } from "./normalize";
 import { clean } from "./tools/tools";
-import { defaultConfigVersion } from "../../build/lib/tools/defaultObjects";
 
 // ---
 
@@ -105,6 +107,19 @@ export function simplifyConfigs(configs) {
     return simplified;
 }
 
+export function simplifySettings(settings) {
+    if (!settings) return undefined;
+    let normalized = normalizeSettings(settings);
+
+    let simplified = copyFromTemplate(Object.assign({}, normalized, {
+        version: simplifySettingsVersion(normalized.version),
+        normalized: false,
+    }), defaultSettings());
+
+    clean(simplified);
+    return simplified;
+}
+
 export function simplifyConfig(config) {
     if (!config) return undefined;
     let normalized = normalizeConfig(config);
@@ -113,7 +128,6 @@ export function simplifyConfig(config) {
         connection: simplifyConfigConnection(normalized.connection),
         policies: simplifyConfigPolicies(normalized.policies),
         policyRules: simplifyConfigPolicyRules(normalized.policyRules), 
-        version: simplifyConfigVersion(normalized.version),
         sync: simplifyConfigSync(normalized.sync),
         normalized: false,
     }), defaultConfig());
@@ -158,13 +172,13 @@ export function simplifyConfigSync(sync) {
     return Object.keys(simplified).length ? simplified : undefined;
 }
 
-export function simplifyConfigVersion(version) {
+export function simplifySettingsVersion(version) {
     if (!version) return undefined;
-    let normalized = normalizeConfigVersion(version)
+    let normalized = normalizeSettingsVersion(version)
 
     let simplified = copyFromTemplate(Object.assign({}, normalized, {
         normalized: false,
-    }), defaultConfigVersion());    
+    }), defaultSettingsVersion());    
 
     clean(simplified);
     return Object.keys(simplified).length ? simplified : undefined;
