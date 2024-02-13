@@ -46,8 +46,8 @@ export async function checkVersion() {
 
 export async function checkVersionForCommand(command) {
     if (command != 'version') {
-        let checkForCommands = settings.version.checkForCommands;
-        if (checkForCommands == "all" || checkForCommands.includes(command)) {
+        let checkForCommands = global.settings.version.checkForCommands;
+        if (!checkForCommands || checkForCommands.includes(command)) {
             await checkVersion();
         }
     }
