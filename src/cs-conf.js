@@ -37,6 +37,10 @@ const configOption = {
 	description: 'the config.json config file',
 	default: 'config.json',
 };
+const skipVersionCheckOption = { 
+	flags: '--skip-version-check', 
+	description: 'skips the automatic check for a new version',
+};
 const silentOption = { 
 	flags: '-q, --silent', 
 	description: 'disables default output (error and debug message are still printed)',
@@ -74,6 +78,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('config', csSettings, {
 				show: cmd.show !== undefined,
@@ -92,6 +97,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('config', csConfig, {
 				file: cmd.file, 
@@ -118,6 +124,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {		
 			cs('export', csExport, {
 				targetDir: cmd.target,
@@ -133,6 +140,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('normalize', csNormalize, { 
 				targetDir: cmd.target,
@@ -146,6 +154,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('reorganize', csReorganize, { 
 				targetDir: cmd.target,
@@ -160,6 +169,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('simplify', csSimplify, { 
 				targetDir: cmd.target,
@@ -175,6 +185,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('backup', csBackup, {
 				dir: cmd.dir, 
@@ -195,6 +206,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('import', csImport, {
 				execute: cmd.import !== undefined,
@@ -215,6 +227,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('create', csCreate, {
 				purge: cmd.purge !== undefined,
@@ -231,6 +244,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('truncate', csTruncate, {
 				execute: cmd.truncate !== undefined,
@@ -245,6 +259,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('purge', csPurge, {
 				execute: cmd.purge !== undefined,
@@ -259,6 +274,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('restore', csRestore, {
 				file: cmd.file,
@@ -284,6 +300,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('password', csPassword, {
 				targetDir: cmd.target,
@@ -314,6 +331,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('inspect', csInspect, { 
 				fileTarget: cmd.output,
@@ -332,6 +350,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('check', csCheck, {
 			}, cmd);
@@ -351,6 +370,7 @@ async function main() {
 		.option(silentOption.flags, silentOption.description, silentOption.default)
 		.option(verboseOption.flags, verboseOption.description, verboseOption.default)
 		.option(debugOption.flags, debugOption.description, debugOption.default)
+		.option(skipVersionCheckOption.flags, skipVersionCheckOption.description)
 		.action(async (cmd) => {
 			cs('sync', csSync, { 
 				targetDir: cmd.target,
@@ -385,6 +405,10 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 
 		global.settings = readSettingsJsonFile();
 
+		if (!cmd.skipVersionCheck) {
+			await checkVersionForCommand(functionName);
+		}
+
 		try {
 			global.config = cmd.config != null ? readConfigJsonFile(cmd.config) : null;			
 		} catch (e1) {
@@ -396,7 +420,6 @@ async function cs(functionName, csFunction, options, cmd, configIsOptional = fal
 		}
 		global.configsDir = cmd.config != null ? path.dirname(path.resolve(cmd.config)) : null;
 
-		await checkVersionForCommand(functionName);
 		await csFunction(Object.assign({}, options, { main: true }));
 	} catch (e) {
 		let logTemplate = "Error while execution of %s:";
